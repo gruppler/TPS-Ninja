@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+
+if (process.argv.length <= 2) {
+  console.log(
+    "Usage: TPStoPNG TPS [OPTION:VALUE]...\n" +
+      "TPS to PNG - Tak Positional System to Portable Network Graphics\n\n" +
+      "Options:\n" +
+      "  size           [xs|sm|md|lg|xl] Image size\n" +
+      "  axisLabels     [true|false] Show board coordinate labels\n" +
+      "  flatCounts     [true|false] Show flat count indicators\n" +
+      "  pieceShadows   [true|false] Show piece shadows or an outline\n" +
+      "  showRoads      [true|false] Show road connections\n" +
+      "  unplayedPieces [true|false] Show unplayed pieces\n" +
+      "  padding        [true|false] Pad the image\n\n" +
+      "  player1        Name of Player 1\n" +
+      "  player2        Name of Player 2\n" +
+      "  ply            PTN of a ply whose affected squares will be highlighted\n" +
+      "  caps           Override number of cap stones for both players\n" +
+      "  flats          Override number of flat stones for both players\n" +
+      "  caps1          Override number of cap stones for player 1\n" +
+      "  flats1         Override number of flat stones for player 1\n" +
+      "  caps2          Override number of cap stones for player 2\n" +
+      "  flats2         Override number of flat stones for player 2\n"
+  );
+} else {
+  try {
+    require("../src").TPStoPNG(process.argv.slice(2));
+  } catch (error) {
+    console.error(error);
+  }
+}
