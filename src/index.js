@@ -61,9 +61,12 @@ exports.TPStoPNG = function(args) {
     options[key] = value;
   });
 
-  const name = options.name || "tps";
+  let name = options.name || "tps";
+  if (!name.endsWith(".png")) {
+    name += ".png";
+  }
   const fs = require("fs");
-  const out = fs.createWriteStream(`./${name}.png`);
+  const out = fs.createWriteStream("./" + name);
   const stream = exports.TPStoCanvas(options).pngStream();
   stream.on("data", chunk => {
     out.write(chunk);
