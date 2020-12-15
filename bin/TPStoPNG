@@ -12,9 +12,11 @@ if (process.argv.length <= 2) {
       "  showRoads      [true|false] Show road connections\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
       "  padding        [true|false] Pad the image\n\n" +
+      "  name           Filename of exported PNG, defaults to TPS or game result\n" +
       "  player1        Name of Player 1\n" +
       "  player2        Name of Player 2\n" +
-      "  ply            PTN of a ply whose affected squares will be highlighted\n" +
+      "  hl             PTN of a ply whose affected squares will be highlighted\n" +
+      "  ply            PTN of a ply to be executed\n" +
       "  caps           Override number of cap stones for both players\n" +
       "  flats          Override number of flat stones for both players\n" +
       "  caps1          Override number of cap stones for player 1\n" +

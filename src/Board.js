@@ -3,13 +3,15 @@ const { Piece } = require("./Piece");
 const { findRoads } = require("./Roads");
 const { atoi } = require("./Square");
 
+const { times } = require("lodash");
+
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
   4: { flat: 15, cap: 0 },
   5: { flat: 21, cap: 1 },
   6: { flat: 30, cap: 1 },
   7: { flat: 40, cap: 2 },
-  8: { flat: 50, cap: 2 }
+  8: { flat: 50, cap: 2 },
 };
 
 exports.Board = class {
@@ -18,7 +20,7 @@ exports.Board = class {
     this.errors = [];
 
     const matchData = options.tps.match(
-      /(((x[1-8]?|[12]+[SC]?|,)+\/?)+)\s+([12])/
+      /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
     );
 
     if (!matchData) {
@@ -26,7 +28,7 @@ exports.Board = class {
       return;
     }
 
-    [, this.grid, , , this.player] = matchData;
+    [, this.grid, , , this.player, this.linenum] = matchData;
 
     this.grid = this.grid
       .replace(/x(\d)/g, (x, count) => {
@@ -36,20 +38,21 @@ exports.Board = class {
         }
         return spaces.join(",");
       })
-      .split("/")
+      .split(/[\/-]/)
       .reverse()
-      .map(row => row.split(","));
+      .map((row) => row.split(","));
     this.size = this.grid.length;
     this.player = Number(this.player);
+    this.linenum = Number(this.linenum);
 
-    if (this.grid.find(row => row.length !== this.size)) {
+    if (this.grid.find((row) => row.length !== this.size)) {
       this.errors.push("Invalid TPS grid");
     }
 
     // Set up piece counts
     this.pieceCounts = {
       1: { ...pieceCounts[this.size] },
-      2: { ...pieceCounts[this.size] }
+      2: { ...pieceCounts[this.size] },
     };
     if (options.flats) {
       this.pieceCounts[1].flat = Number(options.flats);
@@ -80,20 +83,20 @@ exports.Board = class {
     this.pieces = {
       all: {
         1: { flat: [], cap: [] },
-        2: { flat: [], cap: [] }
+        2: { flat: [], cap: [] },
       },
       played: {
         1: { flat: [], cap: [] },
-        2: { flat: [], cap: [] }
-      }
+        2: { flat: [], cap: [] },
+      },
     };
-    [1, 2].forEach(color => {
-      ["flat", "cap"].forEach(type => {
+    [1, 2].forEach((color) => {
+      ["flat", "cap"].forEach((type) => {
         for (let index = 0; index < this.pieceCounts[color][type]; index++) {
           this.pieces.all[color][type][index] = new Piece({
             index: index,
             color: color,
-            type: type
+            type: type,
           });
         }
       });
@@ -108,8 +111,8 @@ exports.Board = class {
     }
 
     // Create squares
-    this.squares.forEach(row => {
-      row.forEach(square => {
+    this.squares.forEach((row) => {
+      row.forEach((square) => {
         if (!square.edges.N) {
           square.neighbors.N = this.squares[square.y + 1][square.x];
         }
@@ -144,10 +147,14 @@ exports.Board = class {
       });
     });
 
+    this.afterPly();
+  }
+
+  afterPly() {
     // Count flats
     this.flats = [0, 0];
-    this.squares.forEach(row => {
-      row.forEach(square => {
+    this.squares.forEach((row) => {
+      row.forEach((square) => {
         if (square.color && square.piece.isFlat()) {
           this.flats[square.color - 1]++;
         }
@@ -155,15 +162,138 @@ exports.Board = class {
     });
 
     // Check for game end
+    this.isGameEnd = false;
+    this.result = "";
     const roads = findRoads(this.squares);
     if (roads) {
-      roads[1].concat(roads[2]).forEach(road => {
-        road.squares.forEach(coord => {
+      // Update road squares
+      roads[1].concat(roads[2]).forEach((road) => {
+        road.squares.forEach((coord) => {
           coord = atoi(coord);
           this.squares[coord[1]][coord[0]].setRoad(road);
         });
       });
+
+      // Check current player first
+      if (roads[this.player].length) {
+        this.result = this.player == 1 ? "R-0" : "0-R";
+      } else if (roads[this.player == 1 ? 2 : 1].length) {
+        // Completed opponent's road
+        this.result = this.player == 1 ? "0-R" : "R-0";
+      }
+      if (this.result) {
+        this.isGameEnd = true;
+      }
+    } else if (
+      this.pieces.played[this.player].flat.length +
+        this.pieces.played[this.player].cap.length ===
+        this.pieceCounts[this.player].total ||
+      !this.squares.find((row) => row.find((square) => !square.pieces.length))
+    ) {
+      // Last empty square or last piece
+      if (this.flats[0] == this.flats[1]) {
+        // Draw
+        this.result = "1/2-1/2";
+      } else if (this.flats[0] > this.flats[1]) {
+        this.result = "F-0";
+      } else {
+        this.result = "0-F";
+      }
+      this.isGameEnd = true;
     }
+  }
+
+  getTPS() {
+    const grid = this.squares
+      .map((row) => {
+        return row
+          .map((square) => {
+            if (square.pieces.length) {
+              return square.pieces
+                .map((piece) => piece.color + piece.typeCode())
+                .join("");
+            } else {
+              return "x";
+            }
+          })
+          .join(",");
+      })
+      .reverse()
+      .join("/")
+      .replace(/x((,x)+)/g, (spaces) => "x" + (1 + spaces.length) / 2);
+
+    return `${grid} ${this.player} ${this.linenum}`;
+  }
+
+  doPly(ply) {
+    let stack = [];
+    const moveset = ply.toMoveset();
+
+    if (moveset[0].errors) {
+      throw new Error(...moveset[0].errors);
+      return false;
+    }
+
+    for (let i = 0; i < moveset.length; i++) {
+      const move = moveset[i];
+      const action = move.action;
+      const x = move.x;
+      const y = move.y;
+      const count = move.count || 1;
+      let flatten = move.flatten;
+      const type = move.type;
+      const square = this.squares[y][x];
+
+      if (type) {
+        if (action === "pop") {
+          // Undo placement
+          this.unplayPiece(square);
+        } else {
+          // Do placement
+          const piece = this.playPiece(this.player, type, square);
+          if (!piece) {
+            return false;
+          }
+          piece.ply = ply;
+        }
+      } else if (action === "pop") {
+        // Undo movement
+        times(count, () => stack.push(square.popPiece()));
+        if (flatten && square.pieces.length) {
+          square.piece.isStanding = true;
+          square._setPiece(square.piece);
+        }
+      } else {
+        // Do movement
+        if (square.pieces.length && square.piece.isStanding) {
+          if (stack[0].isCapstone) {
+            if (ply && !flatten) {
+            }
+          } else {
+            throw new Error("Invalid ply");
+            return false;
+          }
+        }
+        if (flatten && square.pieces.length) {
+          square.piece.isStanding = false;
+          square._setPiece(square.piece);
+        }
+
+        times(count, () => {
+          let piece = stack.pop();
+          if (!piece) {
+            throw new Error("Invalid ply");
+            return false;
+          }
+          square.pushPiece(piece);
+        });
+      }
+    }
+
+    this.player = this.player === 2 ? 1 : 2;
+    this.linenum += Number(this.player === 1);
+
+    this.afterPly();
   }
 
   playPiece(color, type, square) {
@@ -178,6 +308,26 @@ exports.Board = class {
       piece.isStanding = isStanding;
       this.pieces.played[color][type].push(piece);
       square.pushPiece(piece);
+      return piece;
+    }
+    return null;
+  }
+
+  unplayPiece(square) {
+    const piece = square.popPiece();
+    if (piece) {
+      piece.isStanding = false;
+      const pieces = this.pieces.played[piece.color][piece.type];
+      if (piece.index !== pieces.length - 1) {
+        // Swap indices with the top of the stack
+        const lastPiece = pieces.pop();
+        pieces.splice(piece.index, 1, lastPiece);
+        [piece.index, lastPiece.index] = [lastPiece.index, piece.index];
+        this.pieces.all[piece.color][piece.type][piece.index] = piece;
+        this.pieces.all[piece.color][piece.type][lastPiece.index] = lastPiece;
+      } else {
+        this.pieces.played[piece.color][piece.type].pop();
+      }
       return piece;
     }
     return null;

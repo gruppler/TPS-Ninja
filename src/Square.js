@@ -1,6 +1,6 @@
-const atoi = coord => [
+const atoi = (coord) => [
   "abcdefgh".indexOf(coord[0]),
-  parseInt(coord[1], 10) - 1
+  parseInt(coord[1], 10) - 1,
 ];
 exports.atoi = atoi;
 
@@ -11,14 +11,14 @@ const OPPOSITE = {
   N: "S",
   S: "N",
   E: "W",
-  W: "E"
+  W: "E",
 };
 
 const EDGE = {
   N: "NS",
   S: "NS",
   E: "EW",
-  W: "EW"
+  W: "EW",
 };
 
 exports.Square = class {
@@ -30,18 +30,18 @@ exports.Square = class {
     this.isStanding = false;
     this.roads = new Sides();
     this.connected = new Sides({
-      disable: side => this.roads.set(side, false)
+      disable: (side) => this.roads.set(side, false),
     });
 
     this.coord = itoa(x, y);
     this.x = x;
     this.y = y;
     this.edges = new Sides({
-      enable: side => {
+      enable: (side) => {
         this.isEdge = true;
         this["is" + EDGE[side]] = true;
         this.isCorner = this.edges.length == 2;
-      }
+      },
     });
     this.isLight = x % 2 !== y % 2;
     this.isEdge = false;
@@ -53,7 +53,7 @@ exports.Square = class {
       N: y == size - 1,
       S: y == 0,
       E: x == size - 1,
-      W: x == 0
+      W: x == 0,
     });
   }
 
@@ -80,7 +80,7 @@ exports.Square = class {
 
   _updateConnected() {
     let neighbor, isConnected;
-    Object.keys(EDGE).forEach(side => {
+    Object.keys(EDGE).forEach((side) => {
       if (this.edges[side]) {
         this.connected[side] = Boolean(this.piece && !this.isStanding);
       } else if ((neighbor = this.neighbors[side])) {
@@ -97,7 +97,7 @@ exports.Square = class {
   }
 
   setRoad(road) {
-    this.connected.forEach(side => {
+    this.connected.forEach((side) => {
       const isRoad = Boolean(
         road &&
           ((this.edges[side] && road.edges[EDGE[side]]) ||
@@ -125,7 +125,7 @@ exports.Square = class {
   }
 
   pushPieces(pieces) {
-    pieces.forEach(piece => this.pushPiece(piece));
+    pieces.forEach((piece) => this.pushPiece(piece));
   }
 
   popPiece() {
@@ -159,12 +159,12 @@ class Sides {
       N: false,
       S: false,
       E: false,
-      W: false
+      W: false,
     };
-    Object.keys(this._index).forEach(side => {
+    Object.keys(this._index).forEach((side) => {
       Object.defineProperty(this, side, {
         get: () => this.get(side),
-        set: value => this.set(side, value)
+        set: (value) => this.set(side, value),
       });
     });
 
@@ -182,8 +182,8 @@ class Sides {
       "push",
       "shift",
       "splice",
-      "unshift"
-    ].forEach(fn => (this[fn] = this._array[fn].bind(this._array)));
+      "unshift",
+    ].forEach((fn) => (this[fn] = this._array[fn].bind(this._array)));
   }
 
   setSides(values) {

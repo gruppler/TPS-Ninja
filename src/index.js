@@ -8,7 +8,7 @@ const squareSizes = {
   sm: 50,
   md: 100,
   lg: 200,
-  xl: 400
+  xl: 400,
 };
 
 const defaults = {
@@ -18,7 +18,7 @@ const defaults = {
   pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
-  padding: true
+  padding: true,
 };
 
 const colors = {
@@ -39,7 +39,7 @@ const colors = {
       connection: "rgba(207, 216, 220, 0.2)",
       road: "rgba(207, 216, 220, 0.8)",
       stroke: "rgba(84, 110, 122, 0.5)",
-      border: "#546e7a"
+      border: "#546e7a",
     },
     2: {
       header: "#263238",
@@ -49,31 +49,32 @@ const colors = {
       connection: "rgba(69, 90, 100, 0.2)",
       road: "rgba(69, 90, 100, 0.8)",
       stroke: "rgba(38, 50, 56, 0.5)",
-      border: "#263238"
-    }
-  }
+      border: "#263238",
+    },
+  },
 };
 
-exports.TPStoPNG = function(args) {
+exports.TPStoPNG = function (args) {
   const options = { tps: args[0] };
-  args.slice(1).forEach(arg => {
+  args.slice(1).forEach((arg) => {
     let [key, value] = arg.split(":");
     options[key] = value;
   });
+  const canvas = exports.TPStoCanvas(options);
 
-  let name = options.name || "tps";
+  let name = options.name || canvas.id.replace(/\//g, "-");
   if (!name.endsWith(".png")) {
     name += ".png";
   }
   const fs = require("fs");
   const out = fs.createWriteStream("./" + name);
-  const stream = exports.TPStoCanvas(options).pngStream();
-  stream.on("data", chunk => {
+  const stream = canvas.pngStream();
+  stream.on("data", (chunk) => {
     out.write(chunk);
   });
 };
 
-exports.TPStoCanvas = function(options = {}) {
+exports.TPStoCanvas = function (options = {}) {
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (typeof defaults[key] === "boolean") {
@@ -93,7 +94,14 @@ exports.TPStoCanvas = function(options = {}) {
 
   let hlSquares = [];
   if (options.ply) {
-    hlSquares = new Ply(options.ply).squares;
+    if (board.isGameEnd) {
+      throw new Error(`The game has ended (${board.result})`);
+    }
+    const ply = new Ply(options.ply);
+    hlSquares = ply.squares;
+    board.doPly(ply);
+  } else if (options.hl) {
+    hlSquares = new Ply(options.hl).squares;
   }
 
   // Dimensions
@@ -108,7 +116,7 @@ exports.TPStoCanvas = function(options = {}) {
     N: [(squareSize - roadSize) / 2, 0],
     S: [(squareSize - roadSize) / 2, squareSize - roadSize],
     E: [squareSize - roadSize, (squareSize - roadSize) / 2],
-    W: [0, (squareSize - roadSize) / 2]
+    W: [0, (squareSize - roadSize) / 2],
   };
 
   const shadowBlur = Math.round(squareSize * 0.03);
@@ -271,7 +279,7 @@ exports.TPStoCanvas = function(options = {}) {
   );
 
   // Square
-  const drawSquare = square => {
+  const drawSquare = (square) => {
     ctx.save();
     ctx.translate(
       padding + axisSize + square.x * squareSize,
@@ -293,7 +301,7 @@ exports.TPStoCanvas = function(options = {}) {
     }
 
     if (options.showRoads && square.connected.length) {
-      square.connected.forEach(side => {
+      square.connected.forEach((side) => {
         const coords = sideCoords[side];
         ctx.fillStyle =
           colors.player[square.color][
@@ -315,7 +323,7 @@ exports.TPStoCanvas = function(options = {}) {
   };
 
   // Piece
-  const drawPiece = piece => {
+  const drawPiece = (piece) => {
     ctx.save();
 
     const pieces = piece.square ? piece.square.pieces : null;
@@ -403,7 +411,10 @@ exports.TPStoCanvas = function(options = {}) {
     ctx.restore();
   };
 
-  board.squares.reverse().forEach(row => row.forEach(drawSquare));
+  board.squares
+    .concat()
+    .reverse()
+    .forEach((row) => row.forEach(drawSquare));
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
@@ -418,7 +429,7 @@ exports.TPStoCanvas = function(options = {}) {
     );
     ctx.fill();
 
-    [1, 2].forEach(color => {
+    [1, 2].forEach((color) => {
       ctx.save();
       ctx.translate(
         padding +
@@ -427,7 +438,7 @@ exports.TPStoCanvas = function(options = {}) {
           (color === 2) * (pieceSize + (squareSize - pieceSize) / 2),
         padding + headerHeight + boardSize - squareSize
       );
-      ["flat", "cap"].forEach(type => {
+      ["flat", "cap"].forEach((type) => {
         const total = board.pieceCounts[color][type];
         const played = board.pieces.played[color][type].length;
         const remaining = total - played;
@@ -440,6 +451,7 @@ exports.TPStoCanvas = function(options = {}) {
     });
   }
 
+  canvas.id = board.result || board.getTPS();
   return canvas;
 };
 
@@ -460,7 +472,7 @@ function roundRect(ctx, x, y, width, height, radius) {
     tl: 0,
     tr: 0,
     bl: 0,
-    br: 0
+    br: 0,
   };
   if (typeof radius === "object") {
     for (let side in radius) {

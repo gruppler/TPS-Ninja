@@ -1,6 +1,6 @@
 const { cloneDeep, compact, isEmpty } = require("lodash");
 
-exports.findRoads = function(squares, player) {
+exports.findRoads = function (squares, player) {
   const players = player ? [player] : [1, 2];
   let possibleRoads = { 1: {}, 2: {} };
   let connections = {};
@@ -11,25 +11,25 @@ exports.findRoads = function(squares, player) {
     2: [],
     squares: {
       1: [],
-      2: []
+      2: [],
     },
     edges: {
       1: { NS: false, EW: false },
-      2: { NS: false, EW: false }
+      2: { NS: false, EW: false },
     },
-    length: 0
+    length: 0,
   };
   let road;
 
   // Gather player-controlled squares and dead ends
-  squares.forEach(row =>
-    row.forEach(square => {
+  squares.forEach((row) =>
+    row.forEach((square) => {
       let piece = square.piece;
       if (piece && !piece.isStanding) {
         let player = piece.color;
         connections[square.coord] = square.connected
-          .map(side => square.neighbors[side])
-          .filter(square => square);
+          .map((side) => square.neighbors[side])
+          .filter((square) => square);
 
         let neighbors = connections[square.coord];
 
@@ -48,8 +48,8 @@ exports.findRoads = function(squares, player) {
           if (
             square.isEdge &&
             neighbors.length === 2 &&
-            neighbors.find(square => square.isEdge) &&
-            neighbors.find(square => !square.isEdge)
+            neighbors.find((square) => square.isEdge) &&
+            neighbors.find((square) => !square.isEdge)
           ) {
             possibleDeadEnds[player].push(square);
           }
@@ -61,12 +61,12 @@ exports.findRoads = function(squares, player) {
   );
 
   // Remove dead ends not connected to edges
-  players.forEach(player =>
+  players.forEach((player) =>
     removeDeadEnds(deadEnds, possibleRoads[player], connections)
   );
 
   // Find roads that actually bridge opposite edges
-  players.forEach(player => {
+  players.forEach((player) => {
     while (!isEmpty(possibleRoads[player])) {
       // Follow any square to get all connected squares
       road = followRoad(
@@ -130,10 +130,10 @@ function followRoad(square, possibleRoads, connections) {
 
   if (square.isEdge) {
     // Note which edge(s) the road touches
-    square.edges.forEach(edge => (edges[edge] = true));
+    square.edges.forEach((edge) => (edges[edge] = true));
   }
 
-  connections[square.coord].forEach(neighbor => {
+  connections[square.coord].forEach((neighbor) => {
     if (neighbor.coord in possibleRoads[player]) {
       // Haven't gone this way yet; find out where it goes
       road = followRoad(neighbor, possibleRoads, connections);
@@ -145,7 +145,7 @@ function followRoad(square, possibleRoads, connections) {
 
   return {
     squares: squares,
-    edges: edges
+    edges: edges,
   };
 }
 
@@ -157,7 +157,7 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
       let isWinningEdge =
         (square.isEdge && !winningEdge) || square["is" + winningEdge];
       let nextNeighbors = [];
-      connections[square.coord].forEach(neighbor => {
+      connections[square.coord].forEach((neighbor) => {
         if (neighbor.coord in squares) {
           nextNeighbors.push(neighbor);
         }
@@ -182,7 +182,7 @@ function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
 function addRoad(roads, road, player) {
   roads[player].push({
     edges: road.edges,
-    squares: Object.keys(road.squares)
+    squares: Object.keys(road.squares),
   });
   Object.assign(roads.squares[player], road.squares);
   if (road.edges.NS) roads.edges[player].NS = true;
