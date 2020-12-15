@@ -254,7 +254,11 @@ exports.Board = class {
           this.unplayPiece(square);
         } else {
           // Do placement
-          const piece = this.playPiece(this.player, type, square);
+          const piece = this.playPiece(
+            this.linenum === 1 ? (this.player === 1 ? 2 : 1) : this.player,
+            type,
+            square
+          );
           if (!piece) {
             return false;
           }
