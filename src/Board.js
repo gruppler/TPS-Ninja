@@ -49,6 +49,10 @@ exports.Board = class {
       this.errors.push("Invalid TPS grid");
     }
 
+    if (!(String(this.size) in pieceCounts)) {
+      this.errors.push("Invalid board size");
+    }
+
     // Set up piece counts
     this.pieceCounts = {
       1: { ...pieceCounts[this.size] },
