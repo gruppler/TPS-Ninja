@@ -14,6 +14,7 @@ const squareSizes = {
 const defaults = {
   size: "md",
   axisLabels: true,
+  turnIndicator: true,
   flatCounts: true,
   pieceShadows: true,
   showRoads: true,
@@ -126,8 +127,10 @@ exports.TPStoCanvas = function (options = {}) {
   const fontSize = squareSize * 0.22;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
-  const flatCounterHeight = options.flatCounts ? Math.round(fontSize * 2) : 0;
-  const turnIndicatorHeight = options.flatCounts
+  const flatCounterHeight = options.turnIndicator
+    ? Math.round(fontSize * 2)
+    : 0;
+  const turnIndicatorHeight = options.turnIndicator
     ? Math.round(fontSize * 0.5)
     : 0;
   const headerHeight = turnIndicatorHeight + flatCounterHeight;
@@ -151,14 +154,16 @@ exports.TPStoCanvas = function (options = {}) {
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
-  if (options.flatCounts) {
+  if (options.turnIndicator) {
     const totalFlats = board.flats[0] + board.flats[1];
     const flats1Width = Math.round(
       Math.min(
         boardSize - squareSize,
         Math.max(
           squareSize,
-          (totalFlats ? board.flats[0] / totalFlats : 0.5) * boardSize
+          (options.flatCounts && totalFlats
+            ? board.flats[0] / totalFlats
+            : 0.5) * boardSize
         )
       )
     );
@@ -205,12 +210,14 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
     // Player 1 Flat Count
-    ctx.textAlign = "end";
-    ctx.fillText(
-      board.flats[0],
-      padding + axisSize + flats1Width - fontSize / 2,
-      padding + flatCounterHeight / 2
-    );
+    if (options.flatCounts) {
+      ctx.textAlign = "end";
+      ctx.fillText(
+        board.flats[0],
+        padding + axisSize + flats1Width - fontSize / 2,
+        padding + flatCounterHeight / 2
+      );
+    }
 
     ctx.fillStyle = colors.player[1].header;
     // Player 2 Name
@@ -229,12 +236,14 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
     // Player 2 Flat Count
-    ctx.textAlign = "start";
-    ctx.fillText(
-      board.flats[1],
-      padding + axisSize + flats1Width + fontSize / 2,
-      padding + flatCounterHeight / 2
-    );
+    if (options.flatCounts) {
+      ctx.textAlign = "start";
+      ctx.fillText(
+        board.flats[1],
+        padding + axisSize + flats1Width + fontSize / 2,
+        padding + flatCounterHeight / 2
+      );
+    }
 
     // Turn Indicator
     ctx.fillStyle = colors.turnIndicator;

@@ -7,7 +7,8 @@ if (process.argv.length <= 2) {
       "Options:\n" +
       "  size           [xs|sm|md|lg|xl] Image size\n" +
       "  axisLabels     [true|false] Show board coordinate labels\n" +
-      "  flatCounts     [true|false] Show flat count indicators\n" +
+      "  turnIndicator  [true|false] Show turn indicator and player names\n" +
+      "  flatCounts     [true|false] Show flat counts\n" +
       "  pieceShadows   [true|false] Show piece shadows or an outline\n" +
       "  showRoads      [true|false] Show road connections\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +

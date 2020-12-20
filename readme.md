@@ -11,7 +11,8 @@ Options:
 
     size           [xs|sm|md|lg|xl] Image size
     axisLabels     [true|false] Show board coordinate labels
-    flatCounts     [true|false] Show flat count indicators
+    turnIndicator  [true|false] Show turn indicator and player names
+    flatCounts     [true|false] Show flat counts
     pieceShadows   [true|false] Show piece shadows or an outline
     showRoads      [true|false] Show road connections
     unplayedPieces [true|false] Show unplayed pieces
