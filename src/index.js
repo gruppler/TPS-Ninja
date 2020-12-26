@@ -2,6 +2,7 @@ const { createCanvas } = require("canvas");
 const { Board } = require("./Board");
 const { Ply } = require("./Ply");
 const { itoa } = require("./Square");
+const { themes } = require("./themes");
 
 const squareSizes = {
   xs: 25,
@@ -23,42 +24,15 @@ const defaults = {
 };
 
 const colors = {
-  bg: "#607d8b",
-  unplayedBg: "#78909c",
-  squareDark: "#8ca1ab",
-  squareLight: "#90a4ae",
-  turnIndicator: "#8bc34a",
+  fgLight: "#fafafacd",
+  fgDark: "#212121cd",
   pieceShadow: "rgba(0, 0, 0, 0.15)",
-  currentSquare: "rgba(139, 195, 74, 0.4)",
-  primarySquare: "rgba(139, 195, 74, 0.75)",
-  player: {
-    1: {
-      header: "#cfd8dc",
-      flat: "#cfd8dc",
-      special: "#eceff1",
-      square: "rgba(207, 216, 220, 0.35)",
-      connection: "rgba(207, 216, 220, 0.2)",
-      road: "rgba(207, 216, 220, 0.8)",
-      stroke: "rgba(84, 110, 122, 0.5)",
-      border: "#546e7a",
-    },
-    2: {
-      header: "#263238",
-      flat: "#546e7a",
-      special: "#455a64",
-      square: "rgba(69, 90, 100, 0.35)",
-      connection: "rgba(69, 90, 100, 0.2)",
-      road: "rgba(69, 90, 100, 0.8)",
-      stroke: "rgba(38, 50, 56, 0.5)",
-      border: "#263238",
-    },
-  },
 };
 
 exports.TPStoPNG = function (args) {
   const options = { tps: args[0] };
   args.slice(1).forEach((arg) => {
-    let [key, value] = arg.split(":");
+    let [key, value] = arg.split("=");
     options[key] = value;
   });
   const canvas = exports.TPStoCanvas(options);
@@ -76,6 +50,8 @@ exports.TPStoPNG = function (args) {
 };
 
 exports.TPStoCanvas = function (options = {}) {
+  let theme;
+
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (typeof defaults[key] === "boolean") {
@@ -86,6 +62,19 @@ exports.TPStoCanvas = function (options = {}) {
     } else {
       options[key] = defaults[key];
     }
+  }
+  if (options.theme && typeof options.theme === "string") {
+    if (options.theme[0] === "{") {
+      theme = JSON.parse(options.theme);
+    } else {
+      theme = themes.find((theme) => theme.id === options.theme);
+      if (!theme) {
+        throw "Invalid theme ID: " + options.theme;
+      }
+    }
+  }
+  if (!theme) {
+    theme = themes[0];
   }
 
   const board = new Board(options);
@@ -122,7 +111,9 @@ exports.TPStoCanvas = function (options = {}) {
 
   const shadowBlur = Math.round(squareSize * 0.03);
   const shadowOffset = Math.round(squareSize * 0.02);
-  const strokeWidth = Math.round(squareSize * 0.02);
+  const strokeWidth = Math.round(
+    theme.vars["piece-border-width"] * squareSize * 0.02
+  );
 
   const fontSize = squareSize * 0.22;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
@@ -150,7 +141,7 @@ exports.TPStoCanvas = function (options = {}) {
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
   ctx.font = fontSize + "px sans";
-  ctx.fillStyle = colors.bg;
+  ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
@@ -170,7 +161,7 @@ exports.TPStoCanvas = function (options = {}) {
     const flats2Width = boardSize - flats1Width;
 
     // Flat Bars
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.colors.player1;
     roundRect(
       ctx,
       padding + axisSize,
@@ -180,7 +171,7 @@ exports.TPStoCanvas = function (options = {}) {
       { tl: boardRadius }
     );
     ctx.fill();
-    ctx.fillStyle = colors.player[2].header;
+    ctx.fillStyle = theme.colors.player2;
     roundRect(
       ctx,
       padding + axisSize + flats1Width,
@@ -192,7 +183,7 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.fill();
 
     // Flat Counts
-    ctx.fillStyle = colors.player[2].header;
+    ctx.fillStyle = theme.player1Dark ? colors.fgLight : colors.fgDark;
     ctx.textBaseline = "middle";
     // Player 1 Name
     if (options.player1) {
@@ -219,7 +210,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
 
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.player2Dark ? colors.fgLight : colors.fgDark;
     // Player 2 Name
     if (options.player2) {
       const flatCount2Width = ctx.measureText(board.flats[1]).width;
@@ -246,7 +237,7 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Turn Indicator
-    ctx.fillStyle = colors.turnIndicator;
+    ctx.fillStyle = theme.colors.primary;
     ctx.fillRect(
       padding + axisSize + (board.player === 1 ? 0 : flats1Width),
       padding + flatCounterHeight,
@@ -257,7 +248,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    ctx.fillStyle = colors.player[1].header;
+    ctx.fillStyle = theme.secondaryDark ? colors.fgLight : colors.fgDark;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < board.size; i++) {
@@ -279,48 +270,91 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   // Board
-  ctx.fillStyle = colors.squareDark;
-  ctx.fillRect(
-    axisSize + padding,
-    headerHeight + padding,
-    boardSize,
-    boardSize
-  );
+  let squareRadius = 0;
+  let squareMargin = 0;
+  switch (theme.boardStyle) {
+    case "diamonds1":
+      squareRadius = squareSize * 0.1;
+      break;
+    case "diamonds2":
+      squareRadius = squareSize * 0.3;
+      break;
+    case "diamonds3":
+      squareRadius = squareSize * 0.5;
+      break;
+    case "grid1":
+      squareMargin = squareSize * 0.01;
+      break;
+    case "grid2":
+      squareMargin = squareSize * 0.03;
+      squareRadius = squareSize * 0.05;
+      break;
+    case "grid3":
+      squareMargin = squareSize * 0.06;
+      squareRadius = squareSize * 0.15;
+  }
 
   // Square
+  const drawSquareHighlight = () => {
+    const half = squareSize / 2;
+    if (squareRadius >= half) {
+      ctx.beginPath();
+      ctx.arc(half, half, half, 0, 2 * Math.PI);
+      ctx.closePath();
+    } else {
+      roundRect(
+        ctx,
+        squareMargin,
+        squareMargin,
+        squareSize - squareMargin * 2,
+        squareSize - squareMargin * 2,
+        squareRadius
+      );
+    }
+    ctx.fill();
+  };
+
   const drawSquare = (square) => {
+    const isDark = theme.boardChecker && !square.isLight;
     ctx.save();
     ctx.translate(
       padding + axisSize + square.x * squareSize,
       padding + headerHeight + (board.size - square.y - 1) * squareSize
     );
 
-    if (square.isLight) {
-      ctx.fillStyle = colors.squareLight;
+    if (!theme.boardStyle || theme.boardStyle === "blank") {
+      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
       ctx.fillRect(0, 0, squareSize, squareSize);
+    } else {
+      ctx.fillStyle = theme.colors["board" + (isDark ? 1 : 2)];
+      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
+      drawSquareHighlight();
     }
 
     if (hlSquares.includes(square.coord)) {
-      if (hlSquares[0] === square.coord) {
-        ctx.fillStyle = colors.primarySquare;
-      } else {
-        ctx.fillStyle = colors.currentSquare;
-      }
-      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle = withAlpha(
+        theme.colors.primary,
+        square.coord === hlSquares[0] ? 0.75 : 0.4
+      );
+      drawSquareHighlight();
     }
 
     if (options.showRoads && square.connected.length) {
       square.connected.forEach((side) => {
         const coords = sideCoords[side];
-        ctx.fillStyle =
-          colors.player[square.color][
-            square.roads[side] ? "road" : "connection"
-          ];
+        ctx.fillStyle = withAlpha(
+          theme.colors[`player${square.color}road`],
+          square.roads[side] ? 0.8 : 0.2
+        );
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
     } else if (square.roads.length) {
-      ctx.fillStyle = colors.player[square.color].square;
-      ctx.fillRect(0, 0, squareSize, squareSize);
+      ctx.fillStyle = withAlpha(
+        theme.colors[`player${square.color}road`],
+        0.35
+      );
+      drawSquareHighlight();
     }
 
     if (square.piece) {
@@ -370,18 +404,16 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.shadowBlur = shadowBlur;
       ctx.shadowOffsetY = shadowOffset;
       ctx.shadowColor = colors.pieceShadow;
-      ctx.strokeStyle = colors.player[piece.color].stroke;
-    } else {
-      ctx.strokeStyle = colors.player[piece.color].border;
     }
+    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
     ctx.lineWidth = strokeWidth;
 
     if (piece.isCapstone) {
-      ctx.fillStyle = colors.player[piece.color].special;
+      ctx.fillStyle = theme.colors[`player${piece.color}special`];
       ctx.beginPath();
       ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
     } else if (piece.isStanding) {
-      ctx.fillStyle = colors.player[piece.color].special;
+      ctx.fillStyle = theme.colors[`player${piece.color}special`];
       ctx.translate(0, y);
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
       roundRect(
@@ -393,7 +425,7 @@ exports.TPStoCanvas = function (options = {}) {
         pieceRadius
       );
     } else {
-      ctx.fillStyle = colors.player[piece.color].flat;
+      ctx.fillStyle = theme.colors[`player${piece.color}flat`];
       if (isImmovable) {
         roundRect(
           ctx,
@@ -427,7 +459,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
-    ctx.fillStyle = colors.unplayedBg;
+    ctx.fillStyle = theme.colors.board3;
     roundRect(
       ctx,
       axisSize + padding + boardSize,
@@ -463,6 +495,10 @@ exports.TPStoCanvas = function (options = {}) {
   canvas.id = board.result || board.getTPS();
   return canvas;
 };
+
+function withAlpha(color, alpha) {
+  return color.substr(0, 7) + Math.round(256 * alpha).toString(16);
+}
 
 function limitText(ctx, text, width) {
   const originalLength = text.length;

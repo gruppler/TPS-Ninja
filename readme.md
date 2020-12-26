@@ -5,10 +5,11 @@ TPS to PNG - Tak Positional System to Portable Network Graphics
 
 Install: `npm i && npm link`
 
-Usage: `TPStoPNG TPS [OPTION:VALUE]...`
+Usage: `TPStoPNG TPS [OPTION=VALUE]...`
 
 Options:
 
+    theme          [ID|JSON] Theme
     size           [xs|sm|md|lg|xl] Image size
     axisLabels     [true|false] Show board coordinate labels
     turnIndicator  [true|false] Show turn indicator and player names
