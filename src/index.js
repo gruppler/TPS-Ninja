@@ -23,12 +23,6 @@ const defaults = {
   padding: true,
 };
 
-const colors = {
-  fgLight: "#fafafacd",
-  fgDark: "#212121cd",
-  pieceShadow: "rgba(0, 0, 0, 0.15)",
-};
-
 exports.TPStoPNG = function (args) {
   const options = { tps: args[0] };
   args.slice(1).forEach((arg) => {
@@ -183,7 +177,7 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.fill();
 
     // Flat Counts
-    ctx.fillStyle = theme.player1Dark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.player1Dark ? theme.colors.textLight : theme.colors.textDark;
     ctx.textBaseline = "middle";
     // Player 1 Name
     if (options.player1) {
@@ -210,7 +204,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
 
-    ctx.fillStyle = theme.player2Dark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.player2Dark ? theme.colors.textLight : theme.colors.textDark;
     // Player 2 Name
     if (options.player2) {
       const flatCount2Width = ctx.measureText(board.flats[1]).width;
@@ -248,7 +242,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    ctx.fillStyle = theme.secondaryDark ? colors.fgLight : colors.fgDark;
+    ctx.fillStyle = theme.secondaryDark ? theme.colors.textLight : theme.colors.textDark;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < board.size; i++) {
@@ -403,7 +397,7 @@ exports.TPStoCanvas = function (options = {}) {
     if (options.pieceShadows) {
       ctx.shadowBlur = shadowBlur;
       ctx.shadowOffsetY = shadowOffset;
-      ctx.shadowColor = colors.pieceShadow;
+      ctx.shadowColor = theme.colors.umbra;
     }
     ctx.strokeStyle = theme.colors[`player${piece.color}border`];
     ctx.lineWidth = strokeWidth;
