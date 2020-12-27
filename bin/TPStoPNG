@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const options = process.argv.slice(argv[0] === "TPStoPNG" ? 1 : 2);
-if (options.length <= 2) {
+const options = process.argv.slice(process.argv[0] === "TPStoPNG" ? 1 : 2);
+if (!options.length) {
   console.log(
     "Usage: TPStoPNG TPS [OPTION=VALUE]...\n" +
       "TPS to PNG - Tak Positional System to Portable Network Graphics\n\n" +
@@ -29,7 +29,7 @@ if (options.length <= 2) {
   );
 } else {
   try {
-    require("../src").TPStoPNG(options.slice(2));
+    require("../src").TPStoPNG(options);
   } catch (error) {
     console.error(error);
   }
