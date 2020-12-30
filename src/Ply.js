@@ -28,6 +28,8 @@ exports.Ply = class {
       this.distribution,
     ] = matchData;
 
+    this.specialPiece = this.specialPiece.toUpperCase();
+    this.column = this.column.toLowerCase();
     this.specialPiece = this.specialPiece === "F" ? "" : this.specialPiece;
     this.pieceType = this.specialPiece === "C" ? "cap" : "flat";
 
