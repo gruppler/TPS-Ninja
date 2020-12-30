@@ -235,7 +235,6 @@ exports.Board = class {
 
     if (moveset[0].errors) {
       throw new Error(...moveset[0].errors);
-      return false;
     }
 
     for (let i = 0; i < moveset.length; i++) {
@@ -246,6 +245,9 @@ exports.Board = class {
       const count = move.count || 1;
       let flatten = move.flatten;
       const type = move.type;
+      if (!this.squares[y] || !this.squares[y][x]) {
+        throw new Error("Invalid ply");
+      }
       const square = this.squares[y][x];
 
       if (type) {
@@ -254,18 +256,25 @@ exports.Board = class {
           this.unplayPiece(square);
         } else {
           // Do placement
-          const piece = this.playPiece(
-            this.linenum === 1 ? (this.player === 1 ? 2 : 1) : this.player,
-            type,
-            square
-          );
-          if (!piece) {
-            return false;
+          if (!square.piece) {
+            const piece = this.playPiece(
+              this.linenum === 1 ? (this.player === 1 ? 2 : 1) : this.player,
+              type,
+              square
+            );
+            if (!piece) {
+              throw new Error(`No ${type} stones remaining`);
+            }
+            piece.ply = ply;
+          } else {
+            throw new Error("Invalid ply");
           }
-          piece.ply = ply;
         }
       } else if (action === "pop") {
         // Undo movement
+        if (i === 0 && square.color !== this.player) {
+          throw new Error("Invalid ply");
+        }
         times(count, () => stack.push(square.popPiece()));
         if (flatten && square.pieces.length) {
           square.piece.isStanding = true;
@@ -273,13 +282,12 @@ exports.Board = class {
         }
       } else {
         // Do movement
-        if (square.pieces.length && square.piece.isStanding) {
-          if (stack[0].isCapstone) {
-            if (ply && !flatten) {
-            }
-          } else {
+        if (square.pieces.length) {
+          if (
+            square.piece.isCapstone ||
+            (square.piece.isStanding && !stack[0].isCapstone)
+          ) {
             throw new Error("Invalid ply");
-            return false;
           }
         }
         if (flatten && square.pieces.length) {
@@ -291,7 +299,6 @@ exports.Board = class {
           let piece = stack.pop();
           if (!piece) {
             throw new Error("Invalid ply");
-            return false;
           }
           square.pushPiece(piece);
         });

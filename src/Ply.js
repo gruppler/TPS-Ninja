@@ -20,7 +20,7 @@ exports.Ply = class {
     [
       this.ptn,
       this.pieceCount,
-      ,
+      this.specialPiece,
       this.column,
       this.row,
       this.movement,
