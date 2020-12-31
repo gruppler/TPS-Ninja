@@ -169,7 +169,7 @@ exports.Board = class {
     this.isGameEnd = false;
     this.result = "";
     const roads = findRoads(this.squares);
-    if (roads) {
+    if (roads.length != 0) {
       // Update road squares
       roads[1].concat(roads[2]).forEach((road) => {
         road.squares.forEach((coord) => {
@@ -285,12 +285,13 @@ exports.Board = class {
         if (square.pieces.length) {
           if (
             square.piece.isCapstone ||
-            (square.piece.isStanding && !stack[0].isCapstone)
+            (square.piece.isStanding && (!stack[0].isCapstone || count != 1 || i != moveset.length-1))
           ) {
             throw new Error("Invalid ply");
           }
         }
-        if (flatten && square.pieces.length) {
+        // for foward play, sometimes the flatten marker is left off, so don't use it here
+        if (square.pieces.length && stack[0].isCapstone && count == 1 && i == moveset.length-1) {
           square.piece.isStanding = false;
           square._setPiece(square.piece);
         }
@@ -305,10 +306,10 @@ exports.Board = class {
       }
     }
 
+    this.afterPly();
+
     this.player = this.player === 2 ? 1 : 2;
     this.linenum += Number(this.player === 1);
-
-    this.afterPly();
   }
 
   playPiece(color, type, square) {
