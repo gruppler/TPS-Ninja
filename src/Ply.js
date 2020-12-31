@@ -26,6 +26,7 @@ exports.Ply = class {
       this.movement,
       this.direction,
       this.distribution,
+      this.wallSmash
     ] = matchData;
 
     if (typeof this.specialPiece !== 'undefined') this.specialPiece = this.specialPiece.toUpperCase();
