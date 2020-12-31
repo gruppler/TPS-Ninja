@@ -10,7 +10,7 @@ const directionModifier = {
 exports.Ply = class {
   constructor(notation) {
     const matchData = notation.match(
-      /(\d)?([CcSs])?([a-hA-H])([1-8])(([<>+-])([1-8]+)?(\*)?)?/i
+      /(\d)?([CS])?([a-h])([1-8])(([<>+-])([1-8]+)?(\*)?)?/i
     );
 
     if (!matchData) {
@@ -26,10 +26,12 @@ exports.Ply = class {
       this.movement,
       this.direction,
       this.distribution,
-      this.wallSmash
+      this.wallSmash,
     ] = matchData;
 
-    if (typeof this.specialPiece !== 'undefined') this.specialPiece = this.specialPiece.toUpperCase();
+    if (this.specialPiece) {
+      this.specialPiece = this.specialPiece.toUpperCase();
+    }
     this.column = this.column.toLowerCase();
     this.specialPiece = this.specialPiece === "F" ? "" : this.specialPiece;
     this.pieceType = this.specialPiece === "C" ? "cap" : "flat";
