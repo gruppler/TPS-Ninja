@@ -3,7 +3,7 @@ const { Piece } = require("./Piece");
 const { findRoads } = require("./Roads");
 const { atoi } = require("./Square");
 
-const { times } = require("lodash");
+const { isNumber, isString, times } = require("lodash");
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -19,38 +19,49 @@ exports.Board = class {
     this.options = options;
     this.errors = [];
 
-    const matchData = options.tps.match(
-      /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
-    );
+    if (isString(options.tps)) {
+      const matchData = options.tps.match(
+        /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
+      );
 
-    if (!matchData) {
-      this.errors.push("Invalid TPS notation");
+      if (!matchData) {
+        this.errors.push("Invalid TPS notation");
+        return;
+      }
+
+      [, this.grid, , , this.player, this.linenum] = matchData;
+
+      this.grid = this.grid
+        .replace(/x(\d)/g, (x, count) => {
+          let spaces = ["x"];
+          while (spaces.length < count) {
+            spaces.push("x");
+          }
+          return spaces.join(",");
+        })
+        .split(/[\/-]/)
+        .reverse()
+        .map((row) => row.split(","));
+      this.size = this.grid.length;
+      this.player = Number(this.player);
+      this.linenum = Number(this.linenum);
+
+      if (this.grid.find((row) => row.length !== this.size)) {
+        this.errors.push("Invalid TPS grid");
+        return;
+      }
+    } else if (isNumber(options.tps)) {
+      this.size = options.tps;
+      this.player = 1;
+      this.linenum = 1;
+    } else {
+      this.errors.push("Missing TPS or board size");
       return;
-    }
-
-    [, this.grid, , , this.player, this.linenum] = matchData;
-
-    this.grid = this.grid
-      .replace(/x(\d)/g, (x, count) => {
-        let spaces = ["x"];
-        while (spaces.length < count) {
-          spaces.push("x");
-        }
-        return spaces.join(",");
-      })
-      .split(/[\/-]/)
-      .reverse()
-      .map((row) => row.split(","));
-    this.size = this.grid.length;
-    this.player = Number(this.player);
-    this.linenum = Number(this.linenum);
-
-    if (this.grid.find((row) => row.length !== this.size)) {
-      this.errors.push("Invalid TPS grid");
     }
 
     if (!(String(this.size) in pieceCounts)) {
       this.errors.push("Invalid board size");
+      return;
     }
 
     // Set up piece counts
@@ -133,23 +144,26 @@ exports.Board = class {
     });
 
     // Do TPS
-    let stack, square, piece, type;
-    this.grid.forEach((row, y) => {
-      row.forEach((col, x) => {
-        if (col[0] !== "x") {
-          stack = col.split("");
-          square = this.squares[y][x];
-          while ((piece = stack.shift())) {
-            if (/[SC]/.test(stack[0])) {
-              type = stack.shift();
-            } else {
-              type = "flat";
+    if (this.grid) {
+      console.log("grid", this.grid);
+      let stack, square, piece, type;
+      this.grid.forEach((row, y) => {
+        row.forEach((col, x) => {
+          if (col[0] !== "x") {
+            stack = col.split("");
+            square = this.squares[y][x];
+            while ((piece = stack.shift())) {
+              if (/[SC]/.test(stack[0])) {
+                type = stack.shift();
+              } else {
+                type = "flat";
+              }
+              this.playPiece(piece, type, square);
             }
-            this.playPiece(piece, type, square);
           }
-        }
+        });
       });
-    });
+    }
 
     this.afterPly();
   }

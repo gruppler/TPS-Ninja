@@ -57,13 +57,16 @@ exports.TPStoCanvas = function (options = {}) {
       options[key] = defaults[key];
     }
   }
+  if (options.tps.length === 1) {
+    options.tps = Number(options.tps);
+  }
   if (options.theme && typeof options.theme === "string") {
     if (options.theme[0] === "{") {
       theme = JSON.parse(options.theme);
     } else {
       theme = themes.find((theme) => theme.id === options.theme);
       if (!theme) {
-        throw "Invalid theme ID: " + options.theme;
+        throw new Error("Invalid theme ID: " + options.theme);
       }
     }
   }
@@ -73,7 +76,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   const board = new Board(options);
   if (!board || board.errors.length) {
-    throw board.errors[0];
+    throw new Error(board.errors[0]);
   }
 
   let hlSquares = [];
@@ -177,7 +180,9 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.fill();
 
     // Flat Counts
-    ctx.fillStyle = theme.player1Dark ? theme.colors.textLight : theme.colors.textDark;
+    ctx.fillStyle = theme.player1Dark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     ctx.textBaseline = "middle";
     // Player 1 Name
     if (options.player1) {
@@ -204,7 +209,9 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
 
-    ctx.fillStyle = theme.player2Dark ? theme.colors.textLight : theme.colors.textDark;
+    ctx.fillStyle = theme.player2Dark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     // Player 2 Name
     if (options.player2) {
       const flatCount2Width = ctx.measureText(board.flats[1]).width;
@@ -242,7 +249,9 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    ctx.fillStyle = theme.secondaryDark ? theme.colors.textLight : theme.colors.textDark;
+    ctx.fillStyle = theme.secondaryDark
+      ? theme.colors.textLight
+      : theme.colors.textDark;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 0; i < board.size; i++) {
