@@ -169,7 +169,7 @@ exports.Board = class {
     this.isGameEnd = false;
     this.result = "";
     const roads = findRoads(this.squares);
-    if (roads) {
+    if (roads.length != 0) {
       // Update road squares
       roads[1].concat(roads[2]).forEach((road) => {
         road.squares.forEach((coord) => {
@@ -306,10 +306,10 @@ exports.Board = class {
       }
     }
 
+    this.afterPly();
+
     this.player = this.player === 2 ? 1 : 2;
     this.linenum += Number(this.player === 1);
-
-    this.afterPly();
   }
 
   playPiece(color, type, square) {
