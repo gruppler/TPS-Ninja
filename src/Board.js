@@ -145,7 +145,6 @@ exports.Board = class {
 
     // Do TPS
     if (this.grid) {
-      console.log("grid", this.grid);
       let stack, square, piece, type;
       this.grid.forEach((row, y) => {
         row.forEach((col, x) => {
