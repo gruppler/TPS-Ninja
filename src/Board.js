@@ -285,12 +285,13 @@ exports.Board = class {
         if (square.pieces.length) {
           if (
             square.piece.isCapstone ||
-            (square.piece.isStanding && !stack[0].isCapstone)
+            (square.piece.isStanding && (!stack[0].isCapstone || count != 1 || i != moveset.length-1))
           ) {
             throw new Error("Invalid ply");
           }
         }
-        if (flatten && square.pieces.length) {
+        // for foward play, sometimes the flatten marker is left off, so don't use it here
+        if (square.pieces.length && stack[0].isCapstone && count == 1 && i == moveset.length-1) {
           square.piece.isStanding = false;
           square._setPiece(square.piece);
         }
