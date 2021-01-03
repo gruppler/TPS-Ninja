@@ -85,6 +85,9 @@ exports.TPStoCanvas = function (options = {}) {
       throw new Error(`The game has ended (${board.result})`);
     }
     const ply = new Ply(options.ply);
+    if (ply.pieceCount > board.size) {
+      throw new Error("Ply violates carry limit");
+    }
     hlSquares = ply.squares;
     board.doPly(ply);
   } else if (options.hl) {
