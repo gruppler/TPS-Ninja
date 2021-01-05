@@ -241,13 +241,15 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Turn Indicator
-    ctx.fillStyle = theme.colors.primary;
-    ctx.fillRect(
-      padding + axisSize + (board.player === 1 ? 0 : flats1Width),
-      padding + flatCounterHeight,
-      board.player === 1 ? flats1Width : flats2Width,
-      turnIndicatorHeight
-    );
+    if (!game.isGameEnd) {
+      ctx.fillStyle = theme.colors.primary;
+      ctx.fillRect(
+        padding + axisSize + (board.player === 1 ? 0 : flats1Width),
+        padding + flatCounterHeight,
+        board.player === 1 ? flats1Width : flats2Width,
+        turnIndicatorHeight
+      );
+    }
   }
 
   // Axis Labels
