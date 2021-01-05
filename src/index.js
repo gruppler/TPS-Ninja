@@ -241,7 +241,7 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Turn Indicator
-    if (!game.isGameEnd) {
+    if (!board.isGameEnd) {
       ctx.fillStyle = theme.colors.primary;
       ctx.fillRect(
         padding + axisSize + (board.player === 1 ? 0 : flats1Width),
