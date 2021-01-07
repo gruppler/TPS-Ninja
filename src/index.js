@@ -348,7 +348,7 @@ exports.TPStoCanvas = function (options = {}) {
     if (hlSquares.includes(square.coord)) {
       ctx.fillStyle = withAlpha(
         theme.colors.primary,
-        square.coord === hlSquares[0] ? 0.75 : 0.4
+        hlSquares.length > 1 && square.coord === hlSquares[0] ? 0.4 : 0.75
       );
       drawSquareHighlight();
     }
