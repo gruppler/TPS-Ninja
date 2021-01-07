@@ -37,7 +37,7 @@ exports.themes = [
     vars: { "piece-border-width": 1 },
     colors: {
       primary: "#43b581",
-      secondary: "#36393f",
+      secondary: "#36393f00",
       board1: "#727479",
       board2: "#6c6e73",
       board3: "#54575c",
