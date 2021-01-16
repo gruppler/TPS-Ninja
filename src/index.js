@@ -254,6 +254,13 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
+    ctx.save();
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = squareSize * 0.02;
+    ctx.shadowBlur = squareSize * 0.03;
+    ctx.shadowColor = theme.secondaryDark
+      ? theme.colors.textDark
+      : theme.colors.textLight;
     ctx.fillStyle = theme.secondaryDark
       ? theme.colors.textLight
       : theme.colors.textDark;
@@ -280,6 +287,7 @@ exports.TPStoCanvas = function (options = {}) {
           squareSize / 2
       );
     }
+    ctx.restore();
   }
 
   // Board
