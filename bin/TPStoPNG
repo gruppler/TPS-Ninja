@@ -3,11 +3,12 @@
 const options = process.argv.slice(process.argv[0] === "TPStoPNG" ? 1 : 2);
 if (!options.length) {
   console.log(
-    "Usage: TPStoPNG [TPS|size] [OPTION=VALUE]...\n" +
+    "Usage: TPStoPNG [TPS|board size] [OPTION=VALUE]...\n" +
       "TPS to PNG - Tak Positional System to Portable Network Graphics\n\n" +
       "Options:\n" +
       "  theme          [ID|JSON] Theme\n" +
-      "  size           [xs|sm|md|lg|xl] Image size\n" +
+      "  imageSize      [xs|sm|md|lg|xl] Image size\n" +
+      "  textSize       [xs|sm|md|lg|xl] Text size\n" +
       "  axisLabels     [true|false] Show board coordinate labels\n" +
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
       "  flatCounts     [true|false] Show flat counts\n" +
