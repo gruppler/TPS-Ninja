@@ -39,7 +39,7 @@ exports.Ply = class {
     [this.x, this.y] = atoi(this.column + this.row);
 
     if (this.movement && !this.pieceCount) {
-      this.pieceCount = String(this.distribution || 1);
+      this.pieceCount = String(1);
     }
 
     if (this.movement && !this.distribution) {
