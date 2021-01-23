@@ -137,6 +137,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
 
+  const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * board.size;
   const unplayedWidth = options.unplayedPieces
@@ -177,7 +178,7 @@ exports.TPStoCanvas = function (options = {}) {
       padding,
       flats1Width,
       flatCounterHeight,
-      { tl: boardRadius }
+      { tl: counterRadius }
     );
     ctx.fill();
     ctx.fillStyle = theme.colors.player2;
@@ -187,7 +188,7 @@ exports.TPStoCanvas = function (options = {}) {
       padding,
       flats2Width,
       flatCounterHeight,
-      { tr: boardRadius }
+      { tr: counterRadius }
     );
     ctx.fill();
 
