@@ -25,6 +25,7 @@ Options:
     player2        Name of Player 2
     hl             PTN of a ply whose affected squares will be highlighted
     ply            PTN of a ply to be executed
+    komi           Bonus points awarded to Player 2
     caps           Override number of cap stones for both players
     flats          Override number of flat stones for both players
     caps1          Override number of cap stones for player 1

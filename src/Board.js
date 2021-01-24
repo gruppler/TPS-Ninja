@@ -94,6 +94,10 @@ exports.Board = class {
     this.pieceCounts[2].total =
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
 
+    if (options.komi) {
+      this.komi = Number(options.komi);
+    }
+
     // Create pieces
     this.pieces = {
       all: {
@@ -177,6 +181,9 @@ exports.Board = class {
         }
       });
     });
+    if (this.komi) {
+      this.flats[1] += this.komi;
+    }
 
     // Check for game end
     this.isGameEnd = false;

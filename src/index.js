@@ -4,12 +4,12 @@ const { Ply } = require("./Ply");
 const { itoa } = require("./Square");
 const { themes } = require("./themes");
 
-const squareSizes = {
-  xs: 25,
-  sm: 50,
-  md: 100,
-  lg: 200,
-  xl: 400,
+const pieceSizes = {
+  xs: 12,
+  sm: 24,
+  md: 48,
+  lg: 96,
+  xl: 192,
 };
 
 const textSizes = {
@@ -104,12 +104,12 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   // Dimensions
-  const squareSize = Math.round(
-    (squareSizes[options.imageSize] * 5) / board.size
+  const pieceSize = Math.round(
+    (pieceSizes[options.imageSize] * 5) / board.size
   );
+  const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
-  const pieceSize = Math.round(squareSize * 0.5);
   const pieceSpacing = Math.round(squareSize * 0.07);
   const immovableSize = Math.round(squareSize * 0.15);
   const wallSize = Math.round(squareSize * 0.1875);
@@ -139,6 +139,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
 
+  const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * board.size;
   const unplayedWidth = options.unplayedPieces
@@ -179,7 +180,7 @@ exports.TPStoCanvas = function (options = {}) {
       padding,
       flats1Width,
       flatCounterHeight,
-      { tl: boardRadius }
+      { tl: counterRadius }
     );
     ctx.fill();
     ctx.fillStyle = theme.colors.player2;
@@ -189,7 +190,7 @@ exports.TPStoCanvas = function (options = {}) {
       padding,
       flats2Width,
       flatCounterHeight,
-      { tr: boardRadius }
+      { tr: counterRadius }
     );
     ctx.fill();
 
@@ -223,6 +224,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
 
+    board.flats[1] = board.flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
