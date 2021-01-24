@@ -104,7 +104,9 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   // Dimensions
-  const pieceSize = Math.round((pieceSizes[options.imageSize] * 5) / board.size);
+  const pieceSize = Math.round(
+    (pieceSizes[options.imageSize] * 5) / board.size
+  );
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.31);
   const pieceRadius = Math.round(squareSize * 0.05);
@@ -222,6 +224,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
 
+    board.flats[1] = board.flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
