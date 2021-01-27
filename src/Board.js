@@ -95,7 +95,10 @@ exports.Board = class {
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
 
     if (options.komi) {
-      this.komi = Number(options.komi);
+      this.komi = Math.min(this.size, Math.max(0, Number(options.komi)));
+      if (this.komi % 1) {
+        this.komi = Math.floor(this.komi) + 0.5;
+      }
     }
 
     // Create pieces
