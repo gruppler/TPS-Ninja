@@ -195,13 +195,17 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.fill();
 
     // Flat Counts
+    const flats1 = board.flats[0].toString().replace(".5", " ½");
+    const flats2 = board.flats[1].toString().replace(".5", " ½");
+
     ctx.fillStyle = theme.player1Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
     ctx.textBaseline = "middle";
+
     // Player 1 Name
     if (options.player1) {
-      const flatCount1Width = ctx.measureText(board.flats[0]).width;
+      const flatCount1Width = ctx.measureText(flats1).width;
       options.player1 = limitText(
         ctx,
         options.player1,
@@ -218,19 +222,19 @@ exports.TPStoCanvas = function (options = {}) {
     if (options.flatCounts) {
       ctx.textAlign = "end";
       ctx.fillText(
-        board.flats[0],
+        flats1,
         padding + axisSize + flats1Width - fontSize / 2,
         padding + flatCounterHeight / 2
       );
     }
 
-    board.flats[1] = board.flats[1].toString().replace(".5", " ½");
     ctx.fillStyle = theme.player2Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
+
     // Player 2 Name
     if (options.player2) {
-      const flatCount2Width = ctx.measureText(board.flats[1]).width;
+      const flatCount2Width = ctx.measureText(flats2).width;
       options.player2 = limitText(
         ctx,
         options.player2,
@@ -247,7 +251,7 @@ exports.TPStoCanvas = function (options = {}) {
     if (options.flatCounts) {
       ctx.textAlign = "start";
       ctx.fillText(
-        board.flats[1],
+        flats2,
         padding + axisSize + flats1Width + fontSize / 2,
         padding + flatCounterHeight / 2
       );
