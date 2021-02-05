@@ -97,6 +97,9 @@ exports.TPStoCanvas = function (options = {}) {
     if (ply.pieceCount > board.size) {
       throw new Error("Ply violates carry limit");
     }
+    if (board.linenum === 1 && (ply.specialPiece || ply.movement)) {
+      throw new Error("Invalid first move");
+    }
     hlSquares = ply.squares;
     board.doPly(ply);
   } else if (options.hl) {
