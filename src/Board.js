@@ -3,7 +3,7 @@ const { Piece } = require("./Piece");
 const { findRoads } = require("./Roads");
 const { atoi } = require("./Square");
 
-const { isNumber, isString, times } = require("lodash");
+const { isNumber, isString, times, isBoolean } = require("lodash");
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -150,6 +150,11 @@ exports.Board = class {
       });
     });
 
+    this.alternateOpeningPieces = true;
+    if (isBoolean(options.alternateOpeningPieces)) {
+      this.alternateOpeningPieces = options.alternateOpeningPieces;
+    }
+
     // Do TPS
     if (this.grid) {
       let stack, square, piece, type;
@@ -281,7 +286,7 @@ exports.Board = class {
           // Do placement
           if (!square.piece) {
             const piece = this.playPiece(
-              this.linenum === 1 ? (this.player === 1 ? 2 : 1) : this.player,
+              (this.linenum === 1 && this.alternateOpeningPieces) ? (this.player === 1 ? 2 : 1) : this.player,
               type,
               square
             );
