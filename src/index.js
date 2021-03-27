@@ -26,6 +26,8 @@ const defaults = {
   axisLabels: true,
   turnIndicator: true,
   flatCounts: true,
+  komi: 0,
+  opening: "swap",
   pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
