@@ -7,6 +7,16 @@ Install: `npm i && npm link`
 
 Usage: `TPStoPNG [TPS|board size] [OPTION=VALUE]...`
 
+Examples:
+
+`TPStoPNG "x5/x5/x5/x5/2,x4 2 1" komi=1 imageSize=sm`
+
+![Example 1](/x5-x5-x5-x5-2,x4%202%201.png)
+
+`TPStoPNG 6 opening="no-swap" ply="a1" imageSize="sm" theme="zen"`
+
+![Example 2](/x6-x6-x6-x6-x6-1,x5%202%201.png)
+
 Options:
 
     theme          [ID|JSON] Theme
