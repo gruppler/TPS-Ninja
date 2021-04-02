@@ -150,16 +150,9 @@ exports.Board = class {
       });
     });
 
-    // Swap opening pieces
-    if (options.opening === "swap") {
-      this.pieces.all[1].flat[0].color = 2;
-      this.pieces.all[2].flat[0].color = 1;
-    }
-
     // Do TPS
     if (this.grid) {
       let stack, square, piece, type;
-      let first = { 1: true, 2: true };
       this.grid.forEach((row, y) => {
         row.forEach((col, x) => {
           if (col[0] !== "x") {
@@ -171,10 +164,6 @@ exports.Board = class {
               } else {
                 type = "flat";
               }
-              if (first[piece] && options.opening === "swap") {
-                piece = piece === "1" ? "2" : "1";
-              }
-              first[piece] = false;
               this.playPiece(piece, type, square);
             }
           }
@@ -291,7 +280,15 @@ exports.Board = class {
         } else {
           // Do placement
           if (!square.piece) {
-            const piece = this.playPiece(this.player, type, square);
+            const piece = this.playPiece(
+              this.options.opening === "swap" && this.linenum === 1
+                ? this.player === 1
+                  ? 2
+                  : 1
+                : this.player,
+              type,
+              square
+            );
             if (!piece) {
               throw new Error(`No ${type} stones remaining`);
             }
