@@ -178,7 +178,11 @@ exports.TPStoCanvas = function (options = {}) {
     );
     const flats2Width = Math.round(boardSize - flats1Width);
     const komiWidth = options.flatCounts
-      ? Math.round((boardSize * Math.abs(komi)) / totalFlats)
+      ? Math.round(
+          komi < 0
+            ? flats1Width * (-komi / flats[0])
+            : flats2Width * (komi / flats[1])
+        )
       : 0;
     if (options.flatCounts) {
       if (komi < 0) {
@@ -225,7 +229,7 @@ exports.TPStoCanvas = function (options = {}) {
       const dark = komi < 0 ? theme.player1Dark : theme.player2Dark;
       ctx.fillStyle = dark ? "#fff" : "#000";
       ctx.globalAlpha = 0.13;
-      if (komiWidth > flatWidth) {
+      if (komiWidth >= flatWidth) {
         roundRect(
           ctx,
           padding + axisSize + (komi > 0) * flats1Width,
@@ -251,7 +255,6 @@ exports.TPStoCanvas = function (options = {}) {
       ? theme.colors.textLight
       : theme.colors.textDark;
     ctx.textBaseline = "middle";
-    const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
     if (options.player1) {
       const flatCount1Width = ctx.measureText(flats[0]).width;
@@ -264,7 +267,7 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         options.player1,
         padding + axisSize + fontSize / 2,
-        padding + flatCounterHeight / 2 + offset
+        padding + flatCounterHeight / 2
       );
     }
     // Player 1 Flat Count
@@ -274,7 +277,7 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         flats[0][0],
         padding + axisSize + flats1Width - fontSize / 2,
-        padding + flatCounterHeight / 2 + offset
+        padding + flatCounterHeight / 2
       );
       if (flats[0][1]) {
         // Komi
@@ -287,7 +290,7 @@ exports.TPStoCanvas = function (options = {}) {
             flats1Width -
             fontSize / 2 -
             ctx.measureText(flats[0][0] + " ").width,
-          padding + flatCounterHeight / 2 + offset
+          padding + flatCounterHeight / 2
         );
         ctx.globalAlpha = 1;
       }
@@ -309,7 +312,7 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         options.player2,
         padding + axisSize + boardSize - fontSize / 2,
-        padding + flatCounterHeight / 2 + offset
+        padding + flatCounterHeight / 2
       );
     }
     // Player 2 Flat Count
@@ -319,7 +322,7 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         flats[1][0],
         padding + axisSize + flats1Width + fontSize / 2,
-        padding + flatCounterHeight / 2 + offset
+        padding + flatCounterHeight / 2
       );
       if (flats[1][1]) {
         // Komi
@@ -331,7 +334,7 @@ exports.TPStoCanvas = function (options = {}) {
             flats1Width +
             fontSize / 2 +
             ctx.measureText(flats[1][0] + " ").width,
-          padding + flatCounterHeight / 2 + offset
+          padding + flatCounterHeight / 2
         );
         ctx.globalAlpha = 1;
       }
