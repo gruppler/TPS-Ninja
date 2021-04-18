@@ -162,20 +162,40 @@ exports.TPStoCanvas = function (options = {}) {
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Header
+  const flats = board.flats.concat();
+  const komi = options.komi;
   if (options.turnIndicator) {
-    const totalFlats = board.flats[0] + board.flats[1];
+    const totalFlats = flats[0] + flats[1];
     const flats1Width = Math.round(
       Math.min(
         boardSize - squareSize,
         Math.max(
           squareSize,
-          (options.flatCounts && totalFlats
-            ? board.flats[0] / totalFlats
-            : 0.5) * boardSize
+          (options.flatCounts && totalFlats ? flats[0] / totalFlats : 0.5) *
+            boardSize
         )
       )
     );
-    const flats2Width = boardSize - flats1Width;
+    const flats2Width = Math.round(boardSize - flats1Width);
+    const komiWidth = options.flatCounts
+      ? Math.round((boardSize * Math.abs(komi)) / totalFlats)
+      : 0;
+    if (options.flatCounts) {
+      if (komi < 0) {
+        flats[0] =
+          flats[0] + komi + " +" + (-komi).toString().replace(".5", "½");
+      } else if (komi > 0) {
+        flats[1] = flats[1] - komi + " +" + komi.toString().replace(".5", "½");
+      }
+    } else {
+      flats[0] = "";
+      flats[1] = "";
+      if (komi < 0) {
+        flats[0] = "+" + (-komi).toString().replace(".5", "½");
+      } else if (komi > 0) {
+        flats[1] = "+" + komi.toString().replace(".5", "½");
+      }
+    }
 
     // Flat Bars
     ctx.fillStyle = theme.colors.player1;
@@ -188,6 +208,7 @@ exports.TPStoCanvas = function (options = {}) {
       { tl: counterRadius }
     );
     ctx.fill();
+
     ctx.fillStyle = theme.colors.player2;
     roundRect(
       ctx,
@@ -199,18 +220,41 @@ exports.TPStoCanvas = function (options = {}) {
     );
     ctx.fill();
 
-    // Flat Counts
-    const flats1 = board.flats[0].toString().replace(".5", " ½");
-    const flats2 = board.flats[1].toString().replace(".5", " ½");
+    if (komiWidth) {
+      const flatWidth = komi < 0 ? flats1Width : flats2Width;
+      const dark = komi < 0 ? theme.player1Dark : theme.player2Dark;
+      ctx.fillStyle = dark ? "#fff" : "#000";
+      ctx.globalAlpha = 0.13;
+      if (komiWidth > flatWidth) {
+        roundRect(
+          ctx,
+          padding + axisSize + (komi > 0) * flats1Width,
+          padding,
+          flatWidth,
+          flatCounterHeight,
+          { [komi < 0 ? "tl" : "tr"]: counterRadius }
+        );
+        ctx.fill();
+      } else {
+        ctx.fillRect(
+          padding + axisSize + flats1Width - (komi < 0) * komiWidth,
+          padding,
+          komiWidth,
+          flatCounterHeight
+        );
+      }
+      ctx.globalAlpha = 1;
+    }
 
+    // Flat Counts
     ctx.fillStyle = theme.player1Dark
       ? theme.colors.textLight
       : theme.colors.textDark;
     ctx.textBaseline = "middle";
-
+    const offset = Math.round(fontSize * 0.1);
     // Player 1 Name
     if (options.player1) {
-      const flatCount1Width = ctx.measureText(flats1).width;
+      const flatCount1Width = ctx.measureText(flats[0]).width;
       options.player1 = limitText(
         ctx,
         options.player1,
@@ -220,17 +264,33 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         options.player1,
         padding + axisSize + fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
     }
     // Player 1 Flat Count
-    if (options.flatCounts) {
+    if (flats[0] !== "") {
       ctx.textAlign = "end";
+      flats[0] = String(flats[0]).split(" ");
       ctx.fillText(
-        flats1,
+        flats[0][0],
         padding + axisSize + flats1Width - fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
+      if (flats[0][1]) {
+        // Komi
+        flats[0][1] = flats[0][1].substr(1) + "+";
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(
+          flats[0][1],
+          padding +
+            axisSize +
+            flats1Width -
+            fontSize / 2 -
+            ctx.measureText(flats[0][0] + " ").width,
+          padding + flatCounterHeight / 2 + offset
+        );
+        ctx.globalAlpha = 1;
+      }
     }
 
     ctx.fillStyle = theme.player2Dark
@@ -239,7 +299,7 @@ exports.TPStoCanvas = function (options = {}) {
 
     // Player 2 Name
     if (options.player2) {
-      const flatCount2Width = ctx.measureText(flats2).width;
+      const flatCount2Width = ctx.measureText(flats[1]).width;
       options.player2 = limitText(
         ctx,
         options.player2,
@@ -249,26 +309,41 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         options.player2,
         padding + axisSize + boardSize - fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
     }
     // Player 2 Flat Count
     if (options.flatCounts) {
       ctx.textAlign = "start";
+      flats[1] = String(flats[1]).split(" ");
       ctx.fillText(
-        flats2,
+        flats[1][0],
         padding + axisSize + flats1Width + fontSize / 2,
-        padding + flatCounterHeight / 2
+        padding + flatCounterHeight / 2 + offset
       );
+      if (flats[1][1]) {
+        // Komi
+        ctx.globalAlpha = 0.5;
+        ctx.fillText(
+          flats[1][1],
+          padding +
+            axisSize +
+            flats1Width +
+            fontSize / 2 +
+            ctx.measureText(flats[1][0] + " ").width,
+          padding + flatCounterHeight / 2 + offset
+        );
+        ctx.globalAlpha = 1;
+      }
     }
 
     // Turn Indicator
     if (!board.isGameEnd) {
       ctx.fillStyle = theme.colors.primary;
       ctx.fillRect(
-        padding + axisSize + (board.player === 1 ? 0 : flats1Width),
+        padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),
         padding + flatCounterHeight,
-        board.player === 1 ? flats1Width : flats2Width,
+        boardSize / 2,
         turnIndicatorHeight
       );
     }
