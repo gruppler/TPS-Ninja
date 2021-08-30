@@ -35,7 +35,7 @@ const defaults = {
 };
 
 exports.TPStoPNG = function (args) {
-  const options = { tps: args[0] };
+  const options = { tps: args[0] || "" };
   args.slice(1).forEach((arg) => {
     let [key, value] = arg.split("=");
     options[key] = value;
