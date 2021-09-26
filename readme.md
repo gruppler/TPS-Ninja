@@ -22,6 +22,7 @@ Options:
     theme          [ID|JSON] Theme
     imageSize      [xs|sm|md|lg|xl] Image size
     textSize       [xs|sm|md|lg|xl] Text size
+    bgAlpha        [0, 1] Background opacity
     axisLabels     [true|false] Show board coordinate labels
     turnIndicator  [true|false] Show turn indicator and player names
     flatCounts     [true|false] Show flat counts

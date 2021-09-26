@@ -32,6 +32,7 @@ const defaults = {
   showRoads: true,
   unplayedPieces: true,
   padding: true,
+  bgAlpha: 1,
 };
 
 exports.TPStoPNG = function (args) {
@@ -158,8 +159,10 @@ exports.TPStoCanvas = function (options = {}) {
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
   ctx.font = fontSize + "px sans";
+  ctx.globalAlpha = options.bgAlpha;
   ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  ctx.globalAlpha = 1;
 
   // Header
   const flats = board.flats.concat();
