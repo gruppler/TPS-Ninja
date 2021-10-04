@@ -14,42 +14,55 @@ const pieceCounts = {
   8: { flat: 50, cap: 2 },
 };
 
+exports.parseTPS = function (tps) {
+  const matchData = tps.match(
+    /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
+  );
+  const result = {};
+
+  if (!matchData) {
+    result.error = "Invalid TPS notation";
+    return result;
+  }
+
+  [, result.grid, , , result.player, result.linenum] = matchData;
+
+  result.grid = result.grid
+    .replace(/x(\d)/g, (x, count) => {
+      let spaces = ["x"];
+      while (spaces.length < count) {
+        spaces.push("x");
+      }
+      return spaces.join(",");
+    })
+    .split(/[\/-]/)
+    .reverse()
+    .map((row) => row.split(","));
+  result.size = result.grid.length;
+  result.player = Number(result.player);
+  result.linenum = Number(result.linenum);
+
+  if (result.grid.find((row) => row.length !== result.size)) {
+    result.error = "Invalid TPS notation";
+  }
+  return result;
+};
+
 exports.Board = class {
   constructor(options) {
     this.options = options;
     this.errors = [];
 
     if (isString(options.tps)) {
-      const matchData = options.tps.match(
-        /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
-      );
-
-      if (!matchData) {
-        this.errors.push("Invalid TPS notation");
+      const tps = exports.parseTPS(options.tps);
+      if (tps.error) {
+        this.errors.push(tps.error);
         return;
       }
-
-      [, this.grid, , , this.player, this.linenum] = matchData;
-
-      this.grid = this.grid
-        .replace(/x(\d)/g, (x, count) => {
-          let spaces = ["x"];
-          while (spaces.length < count) {
-            spaces.push("x");
-          }
-          return spaces.join(",");
-        })
-        .split(/[\/-]/)
-        .reverse()
-        .map((row) => row.split(","));
-      this.size = this.grid.length;
-      this.player = Number(this.player);
-      this.linenum = Number(this.linenum);
-
-      if (this.grid.find((row) => row.length !== this.size)) {
-        this.errors.push("Invalid TPS grid");
-        return;
-      }
+      this.grid = tps.grid;
+      this.size = tps.size;
+      this.player = tps.player;
+      this.linenum = tps.linenum;
     } else if (isNumber(options.tps)) {
       this.size = options.tps;
       this.player = 1;
@@ -350,9 +363,8 @@ exports.Board = class {
     if (!(type in this.pieceCounts[1])) {
       type = type === "C" ? "cap" : "flat";
     }
-    const piece = this.pieces.all[color][type][
-      this.pieces.played[color][type].length
-    ];
+    const piece =
+      this.pieces.all[color][type][this.pieces.played[color][type].length];
     if (piece) {
       piece.isStanding = isStanding;
       this.pieces.played[color][type].push(piece);

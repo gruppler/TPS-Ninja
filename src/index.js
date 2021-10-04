@@ -1,5 +1,5 @@
 const { createCanvas } = require("canvas");
-const { Board } = require("./Board");
+const { Board, parseTPS } = require("./Board");
 const { Ply } = require("./Ply");
 const { itoa } = require("./Square");
 const { themes } = require("./themes");
@@ -55,9 +55,41 @@ exports.TPStoPNG = function (args) {
   });
 };
 
-exports.TPStoCanvas = function (options = {}) {
-  let theme;
+exports.parseTPS = parseTPS;
 
+exports.parseTheme = function (theme) {
+  if (!theme || typeof theme !== "string") {
+    return theme || themes[0];
+  }
+  if (theme[0] === "{") {
+    // Custom theme
+    try {
+      let parsedTheme = JSON.parse(theme);
+      if (!parsedTheme.colors) {
+        throw new Error("Missing theme colors");
+      }
+      let colors = Object.keys(parsedTheme.colors);
+      if (
+        Object.keys(themes[0].colors).some(color => !colors.includes(color))
+      ) {
+        throw new Error("Missing theme colors");
+      }
+      return parsedTheme;
+    } catch (err) {
+      console.log(err);
+      throw new Error("Invalid theme");
+    }
+  } else {
+    // Built-in theme
+    theme = themes.find((builtIn) => builtIn.id === theme);
+    if (!theme) {
+      throw new Error("Invalid theme ID");
+    }
+    return theme;
+  }
+};
+
+exports.TPStoCanvas = function (options = {}) {
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (typeof defaults[key] === "boolean") {
@@ -72,19 +104,7 @@ exports.TPStoCanvas = function (options = {}) {
   if (options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
-  if (options.theme && typeof options.theme === "string") {
-    if (options.theme[0] === "{") {
-      theme = JSON.parse(options.theme);
-    } else {
-      theme = themes.find((theme) => theme.id === options.theme);
-      if (!theme) {
-        throw new Error("Invalid theme ID: " + options.theme);
-      }
-    }
-  }
-  if (!theme) {
-    theme = themes[0];
-  }
+  const theme = exports.parseTheme(options.theme);
 
   const board = new Board(options);
   if (!board || board.errors.length) {
@@ -361,12 +381,14 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = fontSize * 0.05;
     ctx.shadowBlur = fontSize * 0.1;
-    ctx.shadowColor = theme.secondaryDark
-      ? theme.colors.textDark
-      : theme.colors.textLight;
-    ctx.fillStyle = theme.secondaryDark
-      ? theme.colors.textLight
-      : theme.colors.textDark;
+    ctx.shadowColor =
+      theme.secondaryDark || options.bgAlpha < 0.5
+        ? theme.colors.textDark
+        : theme.colors.textLight;
+    ctx.fillStyle =
+      theme.secondaryDark || options.bgAlpha < 0.5
+        ? theme.colors.textLight
+        : theme.colors.textDark;
     for (let i = 0; i < board.size; i++) {
       const coord = itoa(i, i);
       ctx.textBaseline = padding ? "middle" : "bottom";
