@@ -35,6 +35,24 @@ const defaults = {
   bgAlpha: 1,
 };
 
+function sanitizeOptions(options) {
+  for (let key in defaults) {
+    if (options.hasOwnProperty(key)) {
+      if (typeof defaults[key] === "boolean") {
+        options[key] = options[key] !== "false";
+      } else if (typeof defaults[key] === "number") {
+        options[key] = Number(options[key]);
+      }
+    } else {
+      options[key] = defaults[key];
+    }
+  }
+  if (options.tps.length === 1) {
+    options.tps = Number(options.tps);
+  }
+  return options;
+}
+
 exports.TPStoPNG = function (args) {
   const options = { tps: args[0] || "" };
   args.slice(1).forEach((arg) => {
@@ -55,6 +73,30 @@ exports.TPStoPNG = function (args) {
   });
 };
 
+exports.PTNtoTPS = function (args) {
+  const options = { tps: args[0] || "" };
+  const plies = [];
+  args.slice(1).forEach((arg) => {
+    let [key, value] = arg.split("=");
+    if (value) {
+      options[key] = value;
+    } else {
+      try {
+        let ply = new Ply(key);
+        if (ply) {
+          plies.push(ply);
+        }
+      } catch (error) {}
+    }
+  });
+  if (!plies.length) {
+    throw new Error("No valid PTN provided");
+  }
+  const board = new Board(sanitizeOptions(options));
+  plies.forEach((ply) => board.doPly(ply));
+  return board.getTPS();
+};
+
 exports.parseTPS = parseTPS;
 
 exports.parseTheme = function (theme) {
@@ -70,7 +112,7 @@ exports.parseTheme = function (theme) {
       }
       let colors = Object.keys(parsedTheme.colors);
       if (
-        Object.keys(themes[0].colors).some(color => !colors.includes(color))
+        Object.keys(themes[0].colors).some((color) => !colors.includes(color))
       ) {
         throw new Error("Missing theme colors");
       }
@@ -90,20 +132,7 @@ exports.parseTheme = function (theme) {
 };
 
 exports.TPStoCanvas = function (options = {}) {
-  for (let key in defaults) {
-    if (options.hasOwnProperty(key)) {
-      if (typeof defaults[key] === "boolean") {
-        options[key] = options[key] !== "false";
-      } else if (typeof defaults[key] === "number") {
-        options[key] = Number(options[key]);
-      }
-    } else {
-      options[key] = defaults[key];
-    }
-  }
-  if (options.tps.length === 1) {
-    options.tps = Number(options.tps);
-  }
+  sanitizeOptions(options);
   const theme = exports.parseTheme(options.theme);
 
   const board = new Board(options);

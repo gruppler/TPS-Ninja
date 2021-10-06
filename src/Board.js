@@ -1,7 +1,6 @@
-const { Square } = require("./Square");
+const { Square, atoi } = require("./Square");
 const { Piece } = require("./Piece");
 const { findRoads } = require("./Roads");
-const { atoi } = require("./Square");
 
 const { isNumber, isString, times } = require("lodash");
 

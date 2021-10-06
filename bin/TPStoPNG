@@ -3,7 +3,7 @@
 const options = process.argv.slice(process.argv[0] === "TPStoPNG" ? 1 : 2);
 if (!options.length) {
   console.log(
-    "Usage: TPStoPNG [TPS|board size] [OPTION=VALUE]...\n" +
+    "Usage: TPStoPNG <TPS|board size> [OPTION=VALUE ...]\n" +
       "TPS to PNG - Tak Positional System to Portable Network Graphics\n\n" +
       "Options:\n" +
       "  theme          [ID|JSON] Theme\n" +
