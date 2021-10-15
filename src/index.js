@@ -690,6 +690,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   canvas.isGameEnd = board.isGameEnd;
   canvas.linenum = board.linenum;
+  canvas.player = board.player;
   canvas.id = board.result || board.getTPS();
   return canvas;
 };
