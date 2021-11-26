@@ -126,8 +126,8 @@ exports.themes = [
     boardChecker: false,
     vars: { "piece-border-width": 1 },
     colors: {
-      primary: "#43b581",
-      secondary: "#36393f00",
+      primary: "#faa81a",
+      secondary: "#36393f",
       board1: "#727479",
       board2: "#6c6e73",
       board3: "#54575c",
