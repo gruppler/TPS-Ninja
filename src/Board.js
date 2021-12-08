@@ -14,9 +14,7 @@ const pieceCounts = {
 };
 
 exports.parseTPS = function (tps) {
-  const matchData = tps.match(
-    /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
-  );
+  const matchData = tps.match(/^([x1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
   const result = {};
 
   if (!matchData) {
@@ -24,10 +22,10 @@ exports.parseTPS = function (tps) {
     return result;
   }
 
-  [, result.grid, , , result.player, result.linenum] = matchData;
+  [, result.grid, result.player, result.linenum] = matchData;
 
   result.grid = result.grid
-    .replace(/x(\d)/g, (x, count) => {
+    .replace(/x(\d+)/g, (x, count) => {
       let spaces = ["x"];
       while (spaces.length < count) {
         spaces.push("x");
@@ -41,7 +39,13 @@ exports.parseTPS = function (tps) {
   result.player = Number(result.player);
   result.linenum = Number(result.linenum);
 
-  if (result.grid.find((row) => row.length !== result.size)) {
+  const validCell = /^(x|[12]+[SC]?)$/;
+  if (
+    result.grid.find(
+      (row) =>
+        row.length !== result.size || row.find((cell) => !validCell.test(cell))
+    )
+  ) {
     result.error = "Invalid TPS notation";
   }
   return result;
