@@ -25,7 +25,7 @@ exports.parseTPS = function (tps) {
   [, result.grid, result.player, result.linenum] = matchData;
 
   result.grid = result.grid
-    .replace(/x(\d)/g, (x, count) => {
+    .replace(/x(\d+)/g, (x, count) => {
       let spaces = ["x"];
       while (spaces.length < count) {
         spaces.push("x");
@@ -39,7 +39,13 @@ exports.parseTPS = function (tps) {
   result.player = Number(result.player);
   result.linenum = Number(result.linenum);
 
-  if (result.grid.find((row) => row.length !== result.size)) {
+  const validCell = /^(x|[12]+[SC]?)$/;
+  if (
+    result.grid.find(
+      (row) =>
+        row.length !== result.size || row.find((cell) => !validCell.test(cell))
+    )
+  ) {
     result.error = "Invalid TPS notation";
   }
   return result;
