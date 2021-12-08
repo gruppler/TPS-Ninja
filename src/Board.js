@@ -14,9 +14,7 @@ const pieceCounts = {
 };
 
 exports.parseTPS = function (tps) {
-  const matchData = tps.match(
-    /(((x[1-8]?|[12]+[SC]?|,)+[\/-]?)+)\s+([12])\s+(\d+)/
-  );
+  const matchData = tps.match(/^([x1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
   const result = {};
 
   if (!matchData) {
@@ -24,7 +22,7 @@ exports.parseTPS = function (tps) {
     return result;
   }
 
-  [, result.grid, , , result.player, result.linenum] = matchData;
+  [, result.grid, result.player, result.linenum] = matchData;
 
   result.grid = result.grid
     .replace(/x(\d)/g, (x, count) => {
