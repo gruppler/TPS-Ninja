@@ -285,7 +285,7 @@ exports.Board = class {
       let flatten = move.flatten;
       const type = move.type;
       if (!this.squares[y] || !this.squares[y][x]) {
-        throw new Error("Invalid ply");
+        throw new Error("Invalid move");
       }
       const square = this.squares[y][x];
 
@@ -295,60 +295,60 @@ exports.Board = class {
           this.unplayPiece(square);
         } else {
           // Do placement
-          if (!square.piece) {
-            const piece = this.playPiece(
-              this.options.opening === "swap" && this.linenum === 1
-                ? this.player === 1
-                  ? 2
-                  : 1
-                : this.player,
-              type,
-              square
-            );
-            if (!piece) {
-              throw new Error(`No ${type} stones remaining`);
-            }
-            piece.ply = ply;
-          } else {
-            throw new Error("Invalid ply");
+          if (square.piece) {
+            throw new Error("Invalid move");
           }
+          const piece = this.playPiece(
+            this.options.opening === "swap" && this.linenum === 1
+              ? this.player === 1
+                ? 2
+                : 1
+              : this.player,
+            type,
+            square
+          );
+          if (!piece) {
+            throw new Error("Invalid move");
+          }
+          piece.ply = ply;
         }
       } else if (action === "pop") {
-        // Undo movement
+        // Begin movement
         if (i === 0 && square.color !== this.player) {
-          throw new Error("Invalid ply");
+          throw new Error("Invalid move");
         }
-        times(count, () => stack.push(square.popPiece()));
-        if (flatten && square.pieces.length) {
-          square.piece.isStanding = true;
-          square._setPiece(square.piece);
-        }
-      } else {
-        // Do movement
-        if (square.pieces.length) {
-          if (
-            square.piece.isCapstone ||
-            (square.piece.isStanding &&
-              (!stack[0].isCapstone || count !== 1 || i !== moveset.length - 1))
-          ) {
-            throw new Error("Invalid ply");
+        times(count, () => {
+          const piece = square.popPiece();
+          if (!piece) {
+            throw new Error("Invalid move");
           }
-        }
-        // for foward play, sometimes the flatten marker is left off, so don't use it here
-        if (
-          square.pieces.length &&
-          stack[0].isCapstone &&
-          count === 1 &&
-          i === moveset.length - 1
-        ) {
-          square.piece.isStanding = false;
-          square._setPiece(square.piece);
+          stack.push(piece);
+        });
+      } else {
+        // Continue movement
+        if (square.pieces.length) {
+          // Check that we can move onto existing piece(s)
+          if (square.piece.isCapstone) {
+            throw new Error("Invalid move");
+          } else if (square.piece.isStanding) {
+            if (
+              stack[0].isCapstone &&
+              count === 1 &&
+              i === moveset.length - 1
+            ) {
+              // Smash
+              square.piece.isStanding = false;
+              square._setPiece(square.piece);
+            } else {
+              throw new Error("Invalid move");
+            }
+          }
         }
 
         times(count, () => {
-          let piece = stack.pop();
+          const piece = stack.pop();
           if (!piece) {
-            throw new Error("Invalid ply");
+            throw new Error("Invalid move");
           }
           square.pushPiece(piece);
         });
