@@ -14,7 +14,7 @@ exports.Ply = class {
     );
 
     if (!matchData) {
-      throw new Error("Invalid Ply");
+      throw new Error("Invalid move");
     }
 
     [
