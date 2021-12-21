@@ -1,6 +1,6 @@
 {
   "name": "tps-ninja",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "TPS to PNG - Tak Positional System to Portable Network Graphics",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -16,9 +16,9 @@
   "dependencies": {
     "canvas": "^2.6.1",
     "fs": "0.0.1-security",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "eslint": "^5.12.0"
+    "eslint": "^8.2.0"
   }
 }
