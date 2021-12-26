@@ -70,7 +70,7 @@ exports.themes = [
       secondary: "#000000",
       board1: "#ffffff44",
       board2: "#000000",
-      board3: "#000000",
+      board3: "#00000000",
       player1: "#ffffff",
       player1road: "#ffffff99",
       player1flat: "#f2f2f2",
@@ -157,7 +157,7 @@ exports.themes = [
     vars: { "piece-border-width": 2 },
     colors: {
       primary: "#ccba41",
-      secondary: "#e8e8e8",
+      secondary: "#15341d",
       board1: "#9e927a",
       board2: "#ccba41",
       board3: "#b8aa8e",
@@ -177,7 +177,7 @@ exports.themes = [
     },
     player1Dark: true,
     player2Dark: true,
-    secondaryDark: false,
+    secondaryDark: true,
   },
   {
     id: "fresh",
@@ -304,7 +304,7 @@ exports.themes = [
     isBuiltIn: true,
     boardStyle: "grid1",
     boardChecker: false,
-    vars: { "piece-border-width": 1 },
+    vars: { "piece-border-width": 2 },
     colors: {
       primary: "#a87419",
       secondary: "#4d4d4d",
