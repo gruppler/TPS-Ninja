@@ -63,6 +63,7 @@ bgAlpha        [0, 1] Background opacity
 axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
+moveNumber     [true|false|<number>] Show current move number
 komi           [-20.5, 20.5] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
 pieceShadows   [true|false] Show piece shadows or an outline

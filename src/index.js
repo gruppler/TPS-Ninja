@@ -27,6 +27,7 @@ const defaults = {
   turnIndicator: true,
   flatCounts: true,
   komi: 0,
+  moveNumber: true,
   opening: "swap",
   pieceShadows: true,
   showRoads: true,
@@ -38,7 +39,14 @@ const defaults = {
 function sanitizeOptions(options) {
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
-      if (typeof defaults[key] === "boolean") {
+      if (key === "moveNumber") {
+        let number = parseInt(options[key], 10);
+        if (isNaN(number)) {
+          options[key] !== "false";
+        } else {
+          options[key] = number;
+        }
+      } else if (typeof defaults[key] === "boolean") {
         options[key] = options[key] !== "false";
       } else if (typeof defaults[key] === "number") {
         options[key] = Number(options[key]);
@@ -401,6 +409,34 @@ exports.TPStoCanvas = function (options = {}) {
         boardSize / 2,
         turnIndicatorHeight
       );
+    }
+
+    // Move number
+    if (options.moveNumber && options.unplayedPieces) {
+      const moveNumber =
+        (typeof options.moveNumber === "number"
+          ? options.moveNumber
+          : board.linenum) + ".";
+      ctx.save();
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = fontSize * 0.05;
+      ctx.shadowBlur = fontSize * 0.1;
+      ctx.shadowColor =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textDark
+          : theme.colors.textLight;
+      ctx.fillStyle =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      ctx.fillText(
+        moveNumber,
+        padding + axisSize + boardSize + unplayedWidth / 2,
+        padding + flatCounterHeight / 2
+      );
+      ctx.restore();
     }
   }
 
