@@ -6,9 +6,11 @@
   "author": "Craig Laparo <gruppler+github@gmail.com>",
   "license": "AGPL-3.0-or-later",
   "bin": {
-    "@gruppler/create-project": "bin/TPStoPNG",
     "TPStoPNG": "bin/TPStoPNG",
     "PTNtoTPS": "bin/PTNtoTPS"
+  },
+  "scripts": {
+    "lint": "eslint --ext .js src"
   },
   "engines": {
     "node": "10"
@@ -19,6 +21,12 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "eslint": "^8.2.0"
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "prettier": "^2.5.1"
   }
 }
