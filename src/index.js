@@ -184,7 +184,7 @@ exports.TPStoCanvas = function (options = {}) {
   };
 
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.01
+    theme.vars["piece-border-width"] * squareSize * 0.013
   );
   const shadowOffset = strokeWidth / 2 + Math.round(squareSize * 0.02);
   const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
@@ -665,9 +665,11 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Stroke
-    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
-    ctx.lineWidth = strokeWidth;
-    ctx.stroke();
+    if (strokeWidth > 0) {
+      ctx.strokeStyle = theme.colors[`player${piece.color}border`];
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+    }
 
     ctx.restore();
   };
