@@ -42,11 +42,11 @@ flats2         Override number of flat stones for player
 
 ### Examples:
 
-`$ TPStoPNG "1,1,2,x2/x5/x5/x5/2,x4 1 3" komi=1 imageSize=sm`
+`$ TPStoPNG "1,1,12,x2/x5/x5/x5/2,x4 1 4" komi=1 imageSize=sm`
 
-![Example 1](/1,1,2,x2-x5-x5-x5-2,x4%201%203.png)
+![Example 1](/1,1,12,x2-x5-x5-x5-2,x4%201%204.png)
 
-*Output: 1,1,2,x2-x5-x5-x5-2,x4 1 3.png*
+*Output: 1,1,12,x2-x5-x5-x5-2,x4 1 4.png*
 
 `$ TPStoPNG 6 opening=no-swap ply=a6 imageSize=sm theme=zen bgAlpha=0`
 
@@ -63,10 +63,10 @@ bgAlpha        [0, 1] Background opacity
 axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
+stackCounts    [true|false] Show stack counts
 moveNumber     [true|false|<number>] Show current move number
 komi           [-20.5, 20.5] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
-pieceShadows   [true|false] Show piece shadows or an outline
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
