@@ -687,7 +687,7 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.restore();
 
     // Stroke
-    if (strokeWidth > 0) {
+    if (theme.vars["piece-border-width"] > 0) {
       ctx.strokeStyle = theme.colors[`player${piece.color}border`];
       ctx.lineWidth = strokeWidth;
       ctx.stroke();
