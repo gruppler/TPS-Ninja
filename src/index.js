@@ -26,10 +26,10 @@ const defaults = {
   axisLabels: true,
   turnIndicator: true,
   flatCounts: true,
+  stackCounts: true,
   komi: 0,
   moveNumber: true,
   opening: "swap",
-  pieceShadows: true,
   showRoads: true,
   unplayedPieces: true,
   padding: true,
@@ -184,12 +184,13 @@ exports.TPStoCanvas = function (options = {}) {
   };
 
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.01
+    theme.vars["piece-border-width"] * squareSize * 0.013
   );
   const shadowOffset = strokeWidth / 2 + Math.round(squareSize * 0.02);
   const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
+  const stackCountFontSize = Math.min(squareSize * 0.2, fontSize);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -573,6 +574,31 @@ exports.TPStoCanvas = function (options = {}) {
       drawPiece(square.piece);
     }
 
+    // Stack Count
+    if (options.stackCounts && square.pieces.length > 1) {
+      ctx.save();
+      ctx.font = stackCountFontSize + "px sans";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = stackCountFontSize * 0.05;
+      ctx.shadowBlur = stackCountFontSize * 0.1;
+      let isTextLight = theme.board1Dark;
+      if (hlSquares.includes(square.coord)) {
+        isTextLight = theme.primaryDark;
+      } else if (isDark) {
+        isTextLight = theme.board2Dark;
+      }
+      ctx.shadowColor = isTextLight
+        ? theme.colors.textDark
+        : theme.colors.textLight;
+      ctx.fillStyle = isTextLight
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+      ctx.textBaseline = "top";
+      ctx.textAlign = "right";
+      ctx.fillText(square.pieces.length, squareSize * 0.9, squareSize * 0.77);
+      ctx.restore();
+    }
+
     ctx.restore();
   };
 
@@ -653,21 +679,19 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Fill
-    if (options.pieceShadows) {
-      ctx.save();
-      ctx.shadowBlur = shadowBlur;
-      ctx.shadowOffsetY = shadowOffset;
-      ctx.shadowColor = theme.colors.umbra;
-    }
+    ctx.save();
+    ctx.shadowBlur = shadowBlur;
+    ctx.shadowOffsetY = shadowOffset;
+    ctx.shadowColor = theme.colors.umbra;
     ctx.fill();
-    if (options.pieceShadows) {
-      ctx.restore();
-    }
+    ctx.restore();
 
     // Stroke
-    ctx.strokeStyle = theme.colors[`player${piece.color}border`];
-    ctx.lineWidth = strokeWidth;
-    ctx.stroke();
+    if (strokeWidth > 0) {
+      ctx.strokeStyle = theme.colors[`player${piece.color}border`];
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+    }
 
     ctx.restore();
   };

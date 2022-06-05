@@ -13,10 +13,10 @@ if (!options.length) {
       "  axisLabels     [true|false] Show board coordinate labels\n" +
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
       "  flatCounts     [true|false] Show flat counts\n" +
+      "  stackCounts    [true|false] Show stack counts\n" +
       "  moveNumber     [true|false|<number>] Show current move number\n" +
       "  komi           [-20.5, 20.5] Bonus points awarded to Player 2\n" +
       "  opening        [swap|no-swap] Opening variations\n" +
-      "  pieceShadows   [true|false] Show piece shadows or an outline\n" +
       "  showRoads      [true|false] Show road connections\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
       "  padding        [true|false] Pad the image\n\n" +
