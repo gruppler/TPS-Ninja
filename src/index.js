@@ -624,6 +624,14 @@ exports.TPStoCanvas = function (options = {}) {
       if (piece.isStanding && pieces.length > 1) {
         y += pieceSpacing;
       }
+      const overflow = Math.max(0, pieces.length - 10 - board.size);
+      if (isImmovable) {
+        if (z < overflow) {
+          ctx.restore();
+          return;
+        }
+        y += pieceSpacing * overflow;
+      }
     } else {
       // Unplayed
       const caps = board.pieceCounts[piece.color].cap;
