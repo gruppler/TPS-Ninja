@@ -201,6 +201,7 @@ exports.themes = [
   {
     id: "bubbletron",
     isBuiltIn: true,
+    boardStyle: "diamonds3",
     boardChecker: false,
     vars: { "piece-border-width": 2 },
     colors: {
