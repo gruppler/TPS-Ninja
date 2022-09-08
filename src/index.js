@@ -144,24 +144,14 @@ exports.TPStoCanvas = function (options = {}) {
   const theme = exports.parseTheme(options.theme);
 
   const board = new Board(options);
-  if (!board || board.errors.length) {
+  if (!board || (board.errors && board.errors.length)) {
     throw new Error(board.errors[0]);
   }
 
   let hlSquares = [];
   if (options.ply) {
-    if (board.isGameEnd) {
-      throw new Error(`The game has ended (${board.result})`);
-    }
-    const ply = new Ply(options.ply);
-    if (ply.pieceCount > board.size) {
-      throw new Error("Ply violates carry limit");
-    }
-    if (board.linenum === 1 && (ply.specialPiece || ply.movement)) {
-      throw new Error("Invalid first move");
-    }
+    let ply = board.doPly(options.ply);
     hlSquares = ply.squares;
-    board.doPly(ply);
   } else if (options.hl) {
     hlSquares = new Ply(options.hl).squares;
   }
@@ -768,7 +758,6 @@ function withAlpha(color, alpha) {
 }
 
 function limitText(ctx, text, width) {
-  const originalLength = text.length;
   const suffix = "…";
   if (width <= 0) {
     return "";
