@@ -1,5 +1,6 @@
 const { Square, atoi } = require("./Square");
 const { Piece } = require("./Piece");
+const { Ply } = require("./Ply");
 const { findRoads } = require("./Roads");
 
 const { isNumber, isString, times } = require("lodash");
@@ -66,8 +67,8 @@ exports.Board = class {
       this.size = tps.size;
       this.player = tps.player;
       this.linenum = tps.linenum;
-    } else if (isNumber(options.tps)) {
-      this.size = options.tps;
+    } else if (isNumber(options.size || options.tps)) {
+      this.size = options.size || options.tps;
       this.player = 1;
       this.linenum = 1;
     } else {
@@ -269,6 +270,19 @@ exports.Board = class {
   }
 
   doPly(ply) {
+    if (!(ply instanceof Ply)) {
+      ply = new Ply(ply);
+    }
+    if (this.isGameEnd) {
+      throw new Error("The game has ended");
+    }
+    if (ply.pieceCount > this.size) {
+      throw new Error("Ply violates carry limit");
+    }
+    if (this.linenum === 1 && (ply.specialPiece || ply.movement)) {
+      throw new Error("Invalid first move");
+    }
+
     let stack = [];
     const moveset = ply.toMoveset();
 
@@ -359,6 +373,8 @@ exports.Board = class {
 
     this.player = this.player === 2 ? 1 : 2;
     this.linenum += Number(this.player === 1);
+
+    return ply;
   }
 
   playPiece(color, type, square) {
