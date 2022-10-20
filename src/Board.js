@@ -53,8 +53,8 @@ exports.parseTPS = function (tps) {
 };
 
 exports.Board = class {
-  constructor(options) {
-    this.options = options;
+  constructor(options = {}) {
+    this.options = { opening: "swap", ...options };
     this.errors = [];
 
     if (isString(options.tps)) {
@@ -210,6 +210,8 @@ exports.Board = class {
     this.result = "";
     const roads = findRoads(this.squares);
     if (roads.length) {
+      this.roads = roads;
+
       // Update road squares
       roads[1].concat(roads[2]).forEach((road) => {
         road.squares.forEach((coord) => {
@@ -235,6 +237,7 @@ exports.Board = class {
       !this.squares.find((row) => row.find((square) => !square.pieces.length))
     ) {
       // Last empty square or last piece
+      this.isGameEndFlats = true;
       if (this.flats[0] == this.flats[1]) {
         // Draw
         this.result = "1/2-1/2";
