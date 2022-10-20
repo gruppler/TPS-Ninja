@@ -53,8 +53,8 @@ exports.parseTPS = function (tps) {
 };
 
 exports.Board = class {
-  constructor(options) {
-    this.options = options;
+  constructor(options = {}) {
+    this.options = { opening: "swap", ...options };
     this.errors = [];
 
     if (isString(options.tps)) {
