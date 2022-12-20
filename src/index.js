@@ -563,7 +563,7 @@ exports.TPStoCanvas = function (options = {}) {
       if (board.isGameEndFlats && !square.piece.typeCode()) {
         ctx.fillStyle = withAlpha(
           theme.colors[`player${square.color}road`],
-          0.6
+          0.4
         );
         drawSquareHighlight();
       }
