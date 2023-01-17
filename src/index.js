@@ -161,7 +161,7 @@ exports.TPStoCanvas = function (options = {}) {
     (pieceSizes[options.imageSize] * 5) / board.size
   );
   const squareSize = pieceSize * 2;
-  const roadSize = Math.round(squareSize * 0.31);
+  const roadSize = Math.round(squareSize * 0.3333);
   const pieceRadius = Math.round(squareSize * 0.05);
   const pieceSpacing = Math.round(squareSize * 0.07);
   const immovableSize = Math.round(squareSize * 0.15);
@@ -180,7 +180,7 @@ exports.TPStoCanvas = function (options = {}) {
   const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
-  const stackCountFontSize = Math.min(squareSize * 0.175, fontSize);
+  const stackCountFontSize = Math.min(squareSize * 0.18, fontSize);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -551,6 +551,16 @@ exports.TPStoCanvas = function (options = {}) {
         );
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
+      ctx.fillStyle = withAlpha(
+        theme.colors[`player${square.color}road`],
+        square.roads.length ? 0.8 : 0.2
+      );
+      ctx.fillRect(
+        (squareSize - roadSize) / 2,
+        (squareSize - roadSize) / 2,
+        roadSize,
+        roadSize
+      );
     } else if (square.roads.length) {
       ctx.fillStyle = withAlpha(
         theme.colors[`player${square.color}road`],
@@ -572,14 +582,14 @@ exports.TPStoCanvas = function (options = {}) {
       if (options.stackCounts && square.pieces.length > 1) {
         ctx.save();
         ctx.font = stackCountFontSize + "px sans";
-        let isTextLight = theme.board1Dark;
-        ctx.fillStyle = theme.colors.board1;
+        let isTextLight = theme.board2Dark;
+        ctx.fillStyle = theme.colors.board2;
         if (hlSquares.includes(square.coord)) {
           isTextLight = theme.primaryDark;
           ctx.fillStyle = theme.colors.primary;
         } else if (isDark) {
-          isTextLight = theme.board2Dark;
-          ctx.fillStyle = theme.colors.board2;
+          isTextLight = theme.board1Dark;
+          ctx.fillStyle = theme.colors.board1;
         }
         let radius = (stackCountFontSize * 1.5) / 2;
         ctx.beginPath();
@@ -601,13 +611,12 @@ exports.TPStoCanvas = function (options = {}) {
         ctx.fillText(
           square.pieces.length,
           squareSize - radius,
-          squareSize - radius *0.9
+          squareSize - radius * 0.9
         );
         ctx.restore();
       }
 
       square.pieces.forEach(drawPiece);
-      drawPiece(square.piece);
     }
 
     ctx.restore();
@@ -645,8 +654,14 @@ exports.TPStoCanvas = function (options = {}) {
       }
     } else {
       // Unplayed
-      const caps = board.pieceCounts[piece.color].cap;
-      const total = board.pieceCounts[piece.color].total;
+      const stackColor =
+        options.opening === "swap" && piece.index === 0 && !piece.isCapstone
+          ? piece.color === 1
+            ? 2
+            : 1
+          : piece.color;
+      const caps = board.pieceCounts[stackColor].cap;
+      const total = board.pieceCounts[stackColor].total;
       y = board.size - 1;
       if (piece.isCapstone) {
         y *= total - piece.index - 1;
@@ -736,10 +751,7 @@ exports.TPStoCanvas = function (options = {}) {
     [1, 2].forEach((color) => {
       ctx.save();
       ctx.translate(
-        padding +
-          axisSize +
-          boardSize +
-          (color === 2) * (pieceSize + (squareSize - pieceSize) / 2),
+        padding + axisSize + boardSize + (color === 2) * squareSize * 0.75,
         padding + headerHeight + boardSize - squareSize
       );
       ["flat", "cap"].forEach((type) => {
@@ -758,7 +770,7 @@ exports.TPStoCanvas = function (options = {}) {
               }
             }
           } else if (!board.pieces.played[1][type].length) {
-            pieces.unshift(board.pieces.all[1][type][0]);
+            pieces[0] = board.pieces.all[1][type][0];
           }
         }
         pieces.reverse().forEach(drawPiece);
