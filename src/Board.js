@@ -112,7 +112,7 @@ exports.Board = class {
       this.pieceCounts[2].flat + this.pieceCounts[2].cap;
 
     if (options.komi) {
-      this.komi = Math.min(20.5, Math.max(-20.5, Number(options.komi)));
+      this.komi = Math.min(4.5, Math.max(-4.5, Number(options.komi)));
       if (this.komi % 1) {
         this.komi = Math.floor(this.komi) + 0.5;
       }

@@ -1,6 +1,6 @@
 {
   "name": "tps-ninja",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "TPS to PNG - Tak Positional System to Portable Network Graphics",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -16,17 +16,17 @@
     "node": "10"
   },
   "dependencies": {
-    "canvas": "^2.6.1",
+    "canvas": "^2.11.2",
     "fs": "0.0.1-security",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-import": "^2.25.3",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^5.2.0",
-    "prettier": "^2.5.1"
+    "prettier": "^2.8.8"
   }
 }

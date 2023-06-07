@@ -15,7 +15,7 @@ if (!options.length) {
       "  flatCounts     [true|false] Show flat counts\n" +
       "  stackCounts    [true|false] Show stack counts\n" +
       "  moveNumber     [true|false|<number>] Show current move number\n" +
-      "  komi           [-20.5, 20.5] Bonus points awarded to Player 2\n" +
+      "  komi           [-4.5, 4.5] Bonus points awarded to Player 2\n" +
       "  opening        [swap|no-swap] Opening variations\n" +
       "  showRoads      [true|false] Show road connections\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
