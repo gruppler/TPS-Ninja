@@ -15,7 +15,9 @@ const pieceCounts = {
 };
 
 exports.parseTPS = function (tps) {
-  const matchData = tps.match(/^([x1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
+  const matchData = tps
+    .toUpperCase()
+    .match(/^([X1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
   const result = {};
 
   if (!matchData) {
@@ -26,10 +28,10 @@ exports.parseTPS = function (tps) {
   [, result.grid, result.player, result.linenum] = matchData;
 
   result.grid = result.grid
-    .replace(/x(\d+)/g, (x, count) => {
-      let spaces = ["x"];
+    .replace(/X(\d+)/g, (x, count) => {
+      let spaces = ["X"];
       while (spaces.length < count) {
-        spaces.push("x");
+        spaces.push("X");
       }
       return spaces.join(",");
     })
@@ -40,7 +42,7 @@ exports.parseTPS = function (tps) {
   result.player = Number(result.player);
   result.linenum = Number(result.linenum);
 
-  const validCell = /^(x|[12]+[SC]?)$/;
+  const validCell = /^(X|[12]+[SC]?)$/;
   if (
     result.grid.find(
       (row) =>
@@ -172,7 +174,7 @@ exports.Board = class {
       let stack, square, piece, type;
       this.grid.forEach((row, y) => {
         row.forEach((col, x) => {
-          if (col[0] !== "x") {
+          if (col[0] !== "X") {
             stack = col.split("");
             square = this.squares[y][x];
             while ((piece = stack.shift())) {
