@@ -333,7 +333,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
       if (flats[0][1]) {
         // Komi
-        flats[0][1] = flats[0][1].substr(1) + "+";
+        flats[0][1] = flats[0][1].substring(1) + "+";
         ctx.globalAlpha = 0.5;
         ctx.fillText(
           flats[0][1],
@@ -788,7 +788,7 @@ exports.TPStoCanvas = function (options = {}) {
 };
 
 function withAlpha(color, alpha) {
-  return color.substr(0, 7) + Math.round(256 * alpha).toString(16);
+  return color.substring(0, 7) + Math.round(256 * alpha).toString(16);
 }
 
 function limitText(ctx, text, width) {
