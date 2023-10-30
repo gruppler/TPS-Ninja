@@ -47,7 +47,7 @@ function sanitizeOptions(options) {
           options[key] = number;
         }
       } else if (typeof defaults[key] === "boolean") {
-        options[key] = options[key] !== "false";
+        options[key] = options[key] !== false && options[key] !== "false";
       } else if (typeof defaults[key] === "number") {
         options[key] = Number(options[key]);
       }
@@ -149,7 +149,10 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   let hlSquares = [];
-  if (options.ply) {
+  if (options.plies && options.plies.length) {
+    options.plies.forEach((ply) => board.doPly(ply));
+    hlSquares = new Ply(options.plies[options.plies.length - 1]).squares;
+  } else if (options.ply) {
     let ply = board.doPly(options.ply);
     hlSquares = ply.squares;
   } else if (options.hl) {
