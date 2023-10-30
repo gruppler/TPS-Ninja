@@ -47,7 +47,7 @@ function sanitizeOptions(options) {
           options[key] = number;
         }
       } else if (typeof defaults[key] === "boolean") {
-        options[key] = options[key] !== "false";
+        options[key] = options[key] !== false && options[key] !== "false";
       } else if (typeof defaults[key] === "number") {
         options[key] = Number(options[key]);
       }
