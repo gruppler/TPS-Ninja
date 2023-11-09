@@ -35,6 +35,7 @@ const defaults = {
   padding: true,
   bgAlpha: 1,
   transform: [0, 0],
+  plyIsDone: true,
   font: "sans",
 };
 
@@ -170,9 +171,11 @@ exports.TPStoCanvas = function (options = {}) {
   if (options.plies && options.plies.length) {
     let plies = options.plies.map((ply) => board.doPly(ply));
     hlSquares = last(plies).squares;
+    options.plyIsDone = true;
   } else if (options.ply) {
     ply = board.doPly(options.ply);
     hlSquares = ply.squares;
+    options.plyIsDone = true;
   } else if (options.hl) {
     let ply = new Ply(options.hl);
     ply = ply.transform(board.size, options.transform);
@@ -580,9 +583,15 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     if (hlSquares.includes(square.coord)) {
+      let alphas = [0.4, 0.75];
+      if (!options.plyIsDone) {
+        alphas.reverse();
+      }
       ctx.fillStyle = withAlpha(
         theme.colors.primary,
-        hlSquares.length > 1 && square.coord === hlSquares[0] ? 0.4 : 0.75
+        hlSquares.length > 1 && square.coord === hlSquares[0]
+          ? alphas[0]
+          : alphas[1]
       );
       drawSquareHighlight();
     }
