@@ -3,7 +3,7 @@ const { Piece } = require("./Piece");
 const { Ply } = require("./Ply");
 const { findRoads } = require("./Roads");
 
-const { isNumber, isString, times } = require("lodash");
+const { cloneDeep, isNumber, isString, times, zip } = require("lodash");
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -54,6 +54,33 @@ exports.parseTPS = function (tps) {
   return result;
 };
 
+exports.transformTPS = function (tps, [rotate, flip]) {
+  if (isString(tps)) {
+    tps = exports.parseTPS(tps);
+    if (tps.error) {
+      throw tps.error;
+    }
+  }
+
+  rotate = rotate % 4;
+  flip = flip % 2;
+  let grid = cloneDeep(tps.grid);
+
+  if (rotate === 1) {
+    grid = zip(...grid.map((row) => row.reverse()));
+  } else if (rotate === 2) {
+    grid = grid.map((row) => row.reverse()).reverse();
+  } else if (rotate === 3) {
+    grid = zip(...grid).map((row) => row.reverse());
+  }
+
+  if (flip) {
+    grid = grid.map((row) => row.reverse());
+  }
+
+  tps.grid = grid;
+};
+
 exports.Board = class {
   constructor(options = {}) {
     this.options = { opening: "swap", ...options };
@@ -64,6 +91,10 @@ exports.Board = class {
       if (tps.error) {
         this.errors.push(tps.error);
         return;
+      }
+      if (options.transform) {
+        exports.transformTPS(tps, options.transform);
+        this.transform = options.transform;
       }
       this.grid = tps.grid;
       this.size = tps.size;
@@ -277,6 +308,9 @@ exports.Board = class {
   doPly(ply) {
     if (!(ply instanceof Ply)) {
       ply = new Ply(ply);
+      if (this.transform) {
+        ply = ply.transform(this.size, this.transform);
+      }
     }
     if (this.isGameEnd) {
       throw new Error("The game has ended");

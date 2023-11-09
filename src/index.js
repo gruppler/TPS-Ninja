@@ -1,8 +1,8 @@
 const { createCanvas } = require("canvas");
 const { Board, parseTPS } = require("./Board");
 const { Ply } = require("./Ply");
-const { itoa } = require("./Square");
 const { themes } = require("./themes");
+const { isArray, isBoolean, isNumber, isString, last } = require("lodash");
 
 const pieceSizes = {
   xs: 12,
@@ -34,6 +34,8 @@ const defaults = {
   unplayedPieces: true,
   padding: true,
   bgAlpha: 1,
+  transform: [0, 0],
+  font: "sans",
 };
 
 function sanitizeOptions(options) {
@@ -46,9 +48,25 @@ function sanitizeOptions(options) {
         } else {
           options[key] = number;
         }
-      } else if (typeof defaults[key] === "boolean") {
+      } else if (key === "transform") {
+        if (isString(options[key])) {
+          try {
+            options[key] = eval(options[key]);
+          } catch (error) {
+            options[key] = defaults[key];
+          }
+        }
+        if (isArray(options[key])) {
+          options[key] = options[key].slice(0, 2).map((n) => parseInt(n, 10));
+          if (options[key].some((n) => isNaN(n))) {
+            options[key] = defaults[key];
+          }
+        } else {
+          options[key] = defaults[key];
+        }
+      } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";
-      } else if (typeof defaults[key] === "number") {
+      } else if (isNumber(defaults[key])) {
         options[key] = Number(options[key]);
       }
     } else {
@@ -150,13 +168,15 @@ exports.TPStoCanvas = function (options = {}) {
 
   let hlSquares = [];
   if (options.plies && options.plies.length) {
-    options.plies.forEach((ply) => board.doPly(ply));
-    hlSquares = new Ply(options.plies[options.plies.length - 1]).squares;
+    let plies = options.plies.map((ply) => board.doPly(ply));
+    hlSquares = last(plies).squares;
   } else if (options.ply) {
-    let ply = board.doPly(options.ply);
+    ply = board.doPly(options.ply);
     hlSquares = ply.squares;
   } else if (options.hl) {
-    hlSquares = new Ply(options.hl).squares;
+    let ply = new Ply(options.hl);
+    ply = ply.transform(board.size, options.transform);
+    hlSquares = ply.squares;
   }
 
   // Dimensions
@@ -209,7 +229,7 @@ exports.TPStoCanvas = function (options = {}) {
   // Start Drawing
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
-  ctx.font = fontSize + "px sans";
+  ctx.font = fontSize + "px " + options.font;
   ctx.globalAlpha = options.bgAlpha;
   ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -443,6 +463,21 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
+    let cols = "abcdefgh".substring(0, board.size).split("");
+    let rows = "12345678".substring(0, board.size).split("");
+    let yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
+    if (board.transform[0] === 1 || board.transform[0] === 2) {
+      yAxis.reverse();
+    }
+    let xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
+    if (
+      board.transform[1]
+        ? board.transform[0] === 0 || board.transform[0] === 1
+        : board.transform[0] === 2 || board.transform[0] === 3
+    ) {
+      xAxis.reverse();
+    }
+
     ctx.save();
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = fontSize * 0.05;
@@ -456,7 +491,7 @@ exports.TPStoCanvas = function (options = {}) {
         ? theme.colors.textLight
         : theme.colors.textDark;
     for (let i = 0; i < board.size; i++) {
-      const coord = itoa(i, i);
+      const coord = [xAxis[i], yAxis[i]];
       ctx.textBaseline = padding ? "middle" : "bottom";
       ctx.textAlign = "center";
       ctx.fillText(
