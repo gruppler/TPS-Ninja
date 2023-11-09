@@ -408,10 +408,16 @@ exports.TPStoCanvas = function (options = {}) {
 
     // Move number
     if (options.moveNumber && options.unplayedPieces) {
-      const moveNumber =
-        (typeof options.moveNumber === "number"
-          ? options.moveNumber
-          : board.linenum) + ".";
+      let moveNumber;
+      if (typeof options.moveNumber === "number") {
+        moveNumber = options.moveNumber;
+      } else {
+        moveNumber = board.linenum;
+        if (moveNumber > 1 && board.player === 1) {
+          moveNumber -= 1;
+        }
+      }
+      moveNumber += ".";
       ctx.save();
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
