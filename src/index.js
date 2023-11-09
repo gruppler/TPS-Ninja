@@ -229,7 +229,7 @@ exports.TPStoCanvas = function (options = {}) {
   // Start Drawing
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
-  ctx.font = fontSize + "px " + options.font;
+  ctx.font = `${fontSize}px ${options.font}`;
   ctx.globalAlpha = options.bgAlpha;
   ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -626,7 +626,7 @@ exports.TPStoCanvas = function (options = {}) {
       // Stack Count
       if (options.stackCounts && square.pieces.length > 1) {
         ctx.save();
-        ctx.font = stackCountFontSize + "px sans";
+        ctx.font = `${stackCountFontSize}px ${options.font}`;
         let isTextLight = theme.board2Dark;
         ctx.fillStyle = theme.colors.board2;
         if (hlSquares.includes(square.coord)) {
