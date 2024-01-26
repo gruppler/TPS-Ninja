@@ -116,7 +116,7 @@ exports.Ply = class {
 
     const [xOffset, yOffset] = directionModifier[this.direction];
 
-    let moveSet = this.stackDistribution.map((n, i) => {
+    const moveSet = this.stackDistribution.map((n, i) => {
       return {
         action: reverse ? "pop" : "push",
         count: n,

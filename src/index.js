@@ -40,12 +40,12 @@ const defaults = {
 };
 
 function sanitizeOptions(options) {
-  for (let key in defaults) {
+  for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (key === "moveNumber") {
-        let number = parseInt(options[key], 10);
+        const number = parseInt(options[key], 10);
         if (isNaN(number)) {
-          options[key] !== "false";
+          options[key] = options[key] !== "false";
         } else {
           options[key] = number;
         }
@@ -83,7 +83,7 @@ function sanitizeOptions(options) {
 exports.TPStoPNG = function (args) {
   const options = { tps: args[0] || "" };
   args.slice(1).forEach((arg) => {
-    let [key, value] = arg.split("=");
+    const [key, value] = arg.split("=");
     options[key] = value;
   });
   const canvas = exports.TPStoCanvas(options);
@@ -104,12 +104,12 @@ exports.PTNtoTPS = function (args) {
   const options = { tps: args[0] || "" };
   const plies = [];
   args.slice(1).forEach((arg) => {
-    let [key, value] = arg.split("=");
+    const [key, value] = arg.split("=");
     if (value) {
       options[key] = value;
     } else {
       try {
-        let ply = new Ply(key);
+        const ply = new Ply(key);
         if (ply) {
           plies.push(ply);
         }
@@ -133,11 +133,11 @@ exports.parseTheme = function (theme) {
   if (theme[0] === "{") {
     // Custom theme
     try {
-      let parsedTheme = JSON.parse(theme);
+      const parsedTheme = JSON.parse(theme);
       if (!parsedTheme.colors) {
         throw new Error("Missing theme colors");
       }
-      let colors = Object.keys(parsedTheme.colors);
+      const colors = Object.keys(parsedTheme.colors);
       if (
         Object.keys(themes[0].colors).some((color) => !colors.includes(color))
       ) {
@@ -169,11 +169,11 @@ exports.TPStoCanvas = function (options = {}) {
 
   let hlSquares = [];
   if (options.plies && options.plies.length) {
-    let plies = options.plies.map((ply) => board.doPly(ply));
+    const plies = options.plies.map((ply) => board.doPly(ply));
     hlSquares = last(plies).squares;
     options.plyIsDone = true;
   } else if (options.ply) {
-    ply = board.doPly(options.ply);
+    const ply = board.doPly(options.ply);
     hlSquares = ply.squares;
     options.plyIsDone = true;
   } else if (options.hl) {
@@ -466,13 +466,13 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    let cols = "abcdefgh".substring(0, board.size).split("");
-    let rows = "12345678".substring(0, board.size).split("");
-    let yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
+    const cols = "abcdefgh".substring(0, board.size).split("");
+    const rows = "12345678".substring(0, board.size).split("");
+    const yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
     if (board.transform[0] === 1 || board.transform[0] === 2) {
       yAxis.reverse();
     }
-    let xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
+    const xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
     if (
       board.transform[1]
         ? board.transform[0] === 0 || board.transform[0] === 1
@@ -583,7 +583,7 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     if (hlSquares.includes(square.coord)) {
-      let alphas = [0.4, 0.75];
+      const alphas = [0.4, 0.75];
       if (!options.plyIsDone) {
         alphas.reverse();
       }
@@ -645,7 +645,7 @@ exports.TPStoCanvas = function (options = {}) {
           isTextLight = theme.board1Dark;
           ctx.fillStyle = theme.colors.board1;
         }
-        let radius = (stackCountFontSize * 1.5) / 2;
+        const radius = (stackCountFontSize * 1.5) / 2;
         ctx.beginPath();
         ctx.arc(
           squareSize - radius,
@@ -859,18 +859,18 @@ function limitText(ctx, text, width) {
 }
 
 function roundRect(ctx, x, y, width, height, radius) {
-  let radii = {
+  const radii = {
     tl: 0,
     tr: 0,
     bl: 0,
     br: 0,
   };
   if (typeof radius === "object") {
-    for (let side in radius) {
+    for (const side in radius) {
       radii[side] = radius[side];
     }
   } else {
-    for (let side in radii) {
+    for (const side in radii) {
       radii[side] = radius;
     }
   }
