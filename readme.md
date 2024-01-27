@@ -76,6 +76,7 @@ player1        Name of Player 1
 player2        Name of Player 2
 hl             PTN of a ply whose affected squares will be highlighted
 ply            PTN of a ply to be executed
+plies          Space- or comma-separated string of plies to be executed
 caps           Override number of cap stones for both players
 flats          Override number of flat stones for both players
 caps1          Override number of cap stones for player 1

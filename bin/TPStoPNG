@@ -25,6 +25,7 @@ if (!options.length) {
       "  player2        Name of Player 2\n" +
       "  hl             PTN of a ply whose affected squares will be highlighted\n" +
       "  ply            PTN of a ply to be executed\n" +
+      "  plies          Space- or comma-separated string of plies to be executed\n" +
       "  caps           Override number of cap stones for both players\n" +
       "  flats          Override number of flat stones for both players\n" +
       "  caps1          Override number of cap stones for player 1\n" +
