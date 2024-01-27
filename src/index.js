@@ -824,13 +824,15 @@ exports.TPStoCanvas = function (options = {}) {
           if (color === 1) {
             if (!board.pieces.played[2][type].length) {
               pieces[0] = board.pieces.all[2][type][0];
-            } else {
-              if (!played) {
-                pieces.shift();
-              }
+            } else if (!played) {
+              pieces.shift();
             }
           } else if (!board.pieces.played[1][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
           }
         }
         pieces.reverse().forEach(drawPiece);
