@@ -71,7 +71,7 @@ showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
 
-name           Filename of exported PNG, defaults to TPS or game result
+name           Filename of exported PNG, defaults to 'takboard.png'
 player1        Name of Player 1
 player2        Name of Player 2
 hl             PTN of a ply whose affected squares will be highlighted
@@ -85,8 +85,8 @@ caps2          Override number of cap stones for player 2
 flats2         Override number of flat stones for player 2
 ```
 
-## PTN to GIF
-*Portable Tak Notation to Graphics Interchange Format*
+## TPS to GIF
+*Tak Positional System to Graphics Interchange Format*
 
 **Usage:** `TPStoGIF <TPS|board size> [OPTION=VALUE ...]`
 
@@ -100,7 +100,7 @@ flats2         Override number of flat stones for player 2
 
 ### Options:
 ```
-delay          [integer] Milliseconds between frames
+delay          [integer] Milliseconds between frames (default 1000)
 theme          [ID|JSON] Theme
 imageSize      [xs|sm|md|lg|xl] Image size
 textSize       [xs|sm|md|lg|xl] Text size
@@ -116,7 +116,7 @@ showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
 
-name           Filename of exported PNG, defaults to TPS or game result
+name           Filename of exported PNG, defaults to 'takboard.gif'
 player1        Name of Player 1
 player2        Name of Player 2
 hl             PTN of a ply whose affected squares will be highlighted
