@@ -1,8 +1,16 @@
 const { createCanvas } = require("canvas");
+const GIFEncoder = require("gif-encoder-2");
 const { Board, parseTPS } = require("./Board");
 const { Ply } = require("./Ply");
 const { themes } = require("./themes");
-const { isArray, isBoolean, isNumber, isString, last } = require("lodash");
+const {
+  isArray,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isString,
+  last,
+} = require("lodash");
 
 const pieceSizes = {
   xs: 12,
@@ -21,6 +29,7 @@ const textSizes = {
 };
 
 const defaults = {
+  delay: 1000,
   imageSize: "md",
   textSize: "md",
   axisLabels: true,
@@ -86,24 +95,86 @@ function sanitizeOptions(options) {
   return options;
 }
 
-exports.TPStoPNG = function (args) {
+exports.TPStoPNG = function (args, streamTo = null) {
   const options = { tps: args[0] || "" };
   args.slice(1).forEach((arg) => {
     const [key, value] = arg.split("=");
     options[key] = value;
   });
-  const canvas = exports.TPStoCanvas(options);
 
-  let name = options.name || canvas.id.replace(/\//g, "-");
-  if (!name.endsWith(".png")) {
-    name += ".png";
-  }
+  const canvas = exports.TPStoCanvas(options);
   const fs = require("fs");
-  const out = fs.createWriteStream("./" + name);
   const stream = canvas.pngStream();
-  stream.on("data", (chunk) => {
-    out.write(chunk);
+
+  if (streamTo) {
+    stream.pipe(streamTo);
+  } else {
+    let name = options.name || "takboard.png";
+    if (!name.endsWith(".png")) {
+      name += ".png";
+    }
+    const out = fs.createWriteStream("./" + name);
+    stream.on("data", (chunk) => out.write(chunk));
+  }
+};
+
+exports.TPStoGIF = async function (args, streamTo = null) {
+  const options = { tps: args[0] || "" };
+  args.slice(1).forEach((arg) => {
+    const [key, value] = arg.split("=");
+    options[key] = value;
   });
+  sanitizeOptions(options);
+
+  const plies = options.plies;
+  if (plies && plies.length) {
+    delete options.plies;
+    delete options.ply;
+    delete options.hl;
+  }
+
+  const fs = require("fs");
+  let canvas = exports.TPStoCanvas(options);
+  let tps = canvas.tps;
+  const encoder = new GIFEncoder(
+    canvas.width,
+    canvas.height,
+    "neuquant",
+    true,
+    plies.length + 1
+  );
+  const stream = encoder.createReadStream();
+  if (streamTo) {
+    stream.pipe(streamTo);
+  } else {
+    let name = options.name || "takboard.gif";
+    if (!name.endsWith(".gif")) {
+      name += ".gif";
+    }
+    const out = fs.createWriteStream("./" + name);
+    stream.pipe(out);
+  }
+
+  if (isFunction(args.onProgress)) {
+    encoder.on("progress", args.onProgress);
+  }
+
+  encoder.setRepeat(0);
+  encoder.setTransparent(true);
+  encoder.setQuality(1);
+  encoder.setThreshold(100);
+  encoder.start();
+  encoder.setDelay(options.delay);
+  encoder.addFrame(canvas.ctx);
+  while (plies.length) {
+    options.tps = tps;
+    options.ply = plies.shift();
+    canvas = exports.TPStoCanvas(options);
+    tps = canvas.tps;
+    encoder.setDelay(options.delay + options.delay * !plies.length);
+    encoder.addFrame(canvas.ctx);
+  }
+  encoder.finish();
 };
 
 exports.PTNtoTPS = function (args) {
@@ -841,10 +912,12 @@ exports.TPStoCanvas = function (options = {}) {
     });
   }
 
+  canvas.ctx = ctx;
   canvas.isGameEnd = board.isGameEnd;
   canvas.linenum = board.linenum;
   canvas.player = board.player;
-  canvas.id = board.result || board.getTPS();
+  canvas.tps = board.getTPS();
+  canvas.id = board.result || canvas.tps;
   return canvas;
 };
 
