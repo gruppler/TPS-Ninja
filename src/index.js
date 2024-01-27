@@ -468,15 +468,15 @@ exports.TPStoCanvas = function (options = {}) {
   if (options.axisLabels) {
     const cols = "abcdefgh".substring(0, board.size).split("");
     const rows = "12345678".substring(0, board.size).split("");
-    const yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
-    if (board.transform[0] === 1 || board.transform[0] === 2) {
+    const yAxis = options.transform[0] % 2 ? cols.concat() : rows.concat();
+    if (options.transform[0] === 1 || options.transform[0] === 2) {
       yAxis.reverse();
     }
-    const xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
+    const xAxis = options.transform[0] % 2 ? rows.concat() : cols.concat();
     if (
-      board.transform[1]
-        ? board.transform[0] === 0 || board.transform[0] === 1
-        : board.transform[0] === 2 || board.transform[0] === 3
+      options.transform[1]
+        ? options.transform[0] === 0 || options.transform[0] === 1
+        : options.transform[0] === 2 || options.transform[0] === 3
     ) {
       xAxis.reverse();
     }
