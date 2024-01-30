@@ -13,9 +13,6 @@
   "scripts": {
     "lint": "eslint --ext .js src"
   },
-  "engines": {
-    "node": "16"
-  },
   "dependencies": {
     "canvas": "^2.11.2",
     "fs": "0.0.1-security",

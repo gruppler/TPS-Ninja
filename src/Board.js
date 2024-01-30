@@ -86,7 +86,7 @@ exports.Board = class {
     this.options = { opening: "swap", ...options };
     this.errors = [];
 
-    if (isString(options.tps)) {
+    if (isString(options.tps) && options.tps.length) {
       const tps = exports.parseTPS(options.tps);
       if (tps.error) {
         this.errors.push(tps.error);

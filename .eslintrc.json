@@ -1,7 +1,7 @@
 {
-  "parserOptions": {
-    // Required for certain syntax usages
-    "ecmaVersion": 2017
+  "env": {
+    "browser": true,
+    "node": true
   },
   "plugins": [],
   "extends": ["standard", "prettier"],

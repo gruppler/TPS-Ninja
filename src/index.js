@@ -40,11 +40,14 @@ const defaults = {
   moveNumber: true,
   opening: "swap",
   ply: "",
+  tps: "",
   plies: [],
   showRoads: true,
   unplayedPieces: true,
   padding: true,
   bgAlpha: 1,
+  transparent: false,
+  hlSquares: true,
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
@@ -96,11 +99,17 @@ function sanitizeOptions(options) {
 }
 
 exports.TPStoPNG = function (args, streamTo = null) {
-  const options = { tps: args[0] || "" };
-  args.slice(1).forEach((arg) => {
-    const [key, value] = arg.split("=");
-    options[key] = value;
-  });
+  let options;
+  if (isArray(args)) {
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      options[key] = value;
+    });
+  } else {
+    options = args;
+  }
+  sanitizeOptions(options);
 
   const canvas = exports.TPStoCanvas(options);
   const fs = require("fs");
@@ -108,7 +117,7 @@ exports.TPStoPNG = function (args, streamTo = null) {
 
   if (streamTo) {
     stream.pipe(streamTo);
-  } else {
+  } else if (isFunction(fs.createWriteStream)) {
     let name = options.name || "takboard.png";
     if (!name.endsWith(".png")) {
       name += ".png";
@@ -116,14 +125,20 @@ exports.TPStoPNG = function (args, streamTo = null) {
     const out = fs.createWriteStream("./" + name);
     stream.on("data", (chunk) => out.write(chunk));
   }
+  return canvas;
 };
 
-exports.TPStoGIF = async function (args, streamTo = null) {
-  const options = { tps: args[0] || "" };
-  args.slice(1).forEach((arg) => {
-    const [key, value] = arg.split("=");
-    options[key] = value;
-  });
+exports.TPStoGIF = function (args, streamTo = null) {
+  let options;
+  if (isArray(args)) {
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      options[key] = value;
+    });
+  } else {
+    options = args;
+  }
   sanitizeOptions(options);
 
   const plies = options.plies;
@@ -140,13 +155,13 @@ exports.TPStoGIF = async function (args, streamTo = null) {
     canvas.width,
     canvas.height,
     "neuquant",
-    true,
+    false,
     plies.length + 1
   );
   const stream = encoder.createReadStream();
   if (streamTo) {
     stream.pipe(streamTo);
-  } else {
+  } else if (isFunction(fs.createWriteStream)) {
     let name = options.name || "takboard.gif";
     if (!name.endsWith(".gif")) {
       name += ".gif";
@@ -155,14 +170,13 @@ exports.TPStoGIF = async function (args, streamTo = null) {
     stream.pipe(out);
   }
 
-  if (isFunction(args.onProgress)) {
-    encoder.on("progress", args.onProgress);
+  if (isFunction(options.onProgress)) {
+    encoder.on("progress", options.onProgress);
   }
 
   encoder.setRepeat(0);
   encoder.setTransparent(true);
   encoder.setQuality(1);
-  encoder.setThreshold(100);
   encoder.start();
   encoder.setDelay(options.delay);
   encoder.addFrame(canvas.ctx);
@@ -175,28 +189,37 @@ exports.TPStoGIF = async function (args, streamTo = null) {
     encoder.addFrame(canvas.ctx);
   }
   encoder.finish();
+  return stream;
 };
 
 exports.PTNtoTPS = function (args) {
-  const options = { tps: args[0] || "" };
-  const plies = [];
-  args.slice(1).forEach((arg) => {
-    const [key, value] = arg.split("=");
-    if (value) {
-      options[key] = value;
-    } else {
-      try {
-        const ply = new Ply(key);
-        if (ply) {
-          plies.push(ply);
-        }
-      } catch (error) {}
-    }
-  });
+  let options;
+  let plies;
+  if (isArray(args)) {
+    plies = [];
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      if (value) {
+        options[key] = value;
+      } else {
+        try {
+          const ply = new Ply(key);
+          if (ply) {
+            plies.push(ply);
+          }
+        } catch (error) {}
+      }
+    });
+  } else {
+    options = args;
+    plies = options.plies;
+  }
+  sanitizeOptions(options);
   if (!plies.length) {
     throw new Error("No valid PTN provided");
   }
-  const board = new Board(sanitizeOptions(options));
+  const board = new Board(options);
   plies.forEach((ply) => board.doPly(ply));
   return board.getTPS();
 };
@@ -305,6 +328,10 @@ exports.TPStoCanvas = function (options = {}) {
 
   const canvasWidth = unplayedWidth + axisSize + boardSize + padding * 2;
   const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
+
+  if (options.transparent) {
+    options.bgAlpha = 0;
+  }
 
   // Start Drawing
   const canvas = createCanvas(canvasWidth, canvasHeight);
@@ -659,7 +686,7 @@ exports.TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
-    if (hlSquares.includes(square.coord)) {
+    if (options.hlSquares && hlSquares.includes(square.coord)) {
       const alphas = [0.4, 0.75];
       if (!options.plyIsDone) {
         alphas.reverse();
