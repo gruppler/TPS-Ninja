@@ -1,32 +1,45 @@
 {
   "name": "tps-ninja",
-  "version": "1.0.24",
-  "description": "TPS to PNG - Tak Positional System to Portable Network Graphics",
+  "version": "1.1.0",
+  "description": "Generate images from Tak Positional System (TPS) strings",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
   "license": "AGPL-3.0-or-later",
+  "main": "src/index.js",
+  "keywords": [
+    "tak",
+    "tps",
+    "ptn",
+    "png",
+    "gif",
+    "image",
+    "images"
+  ],
+  "homepage": "https://github.com/gruppler/TPS-Ninja",
+  "repository": "git://github.com/gruppler/TPS-Ninja.git",
   "bin": {
     "TPStoPNG": "bin/TPStoPNG",
+    "TPStoGIF": "bin/TPStoGIF",
     "PTNtoTPS": "bin/PTNtoTPS"
   },
   "scripts": {
     "lint": "eslint --ext .js src"
   },
-  "engines": {
-    "node": "10"
-  },
   "dependencies": {
     "canvas": "^2.11.2",
     "fs": "0.0.1-security",
+    "gif-encoder-2": "^1.0.5",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-promise": "^5.2.0",
-    "prettier": "^2.8.8"
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=10"
   }
 }

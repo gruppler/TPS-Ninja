@@ -1,8 +1,16 @@
 const { createCanvas } = require("canvas");
+const GIFEncoder = require("gif-encoder-2");
 const { Board, parseTPS } = require("./Board");
 const { Ply } = require("./Ply");
 const { themes } = require("./themes");
-const { isArray, isBoolean, isNumber, isString, last } = require("lodash");
+const {
+  isArray,
+  isBoolean,
+  isFunction,
+  isNumber,
+  isString,
+  last,
+} = require("lodash");
 
 const pieceSizes = {
   xs: 12,
@@ -21,6 +29,7 @@ const textSizes = {
 };
 
 const defaults = {
+  delay: 1000,
   imageSize: "md",
   textSize: "md",
   axisLabels: true,
@@ -30,22 +39,27 @@ const defaults = {
   komi: 0,
   moveNumber: true,
   opening: "swap",
+  ply: "",
+  tps: "",
+  plies: [],
   showRoads: true,
   unplayedPieces: true,
   padding: true,
   bgAlpha: 1,
+  transparent: false,
+  hlSquares: true,
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
 };
 
 function sanitizeOptions(options) {
-  for (let key in defaults) {
+  for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (key === "moveNumber") {
-        let number = parseInt(options[key], 10);
+        const number = parseInt(options[key], 10);
         if (isNaN(number)) {
-          options[key] !== "false";
+          options[key] = options[key] !== "false";
         } else {
           options[key] = number;
         }
@@ -65,6 +79,10 @@ function sanitizeOptions(options) {
         } else {
           options[key] = defaults[key];
         }
+      } else if (key === "plies") {
+        if (isString(options[key])) {
+          options[key] = options[key].split(/[\s,]+/);
+        }
       } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";
       } else if (isNumber(defaults[key])) {
@@ -80,46 +98,128 @@ function sanitizeOptions(options) {
   return options;
 }
 
-exports.TPStoPNG = function (args) {
-  const options = { tps: args[0] || "" };
-  args.slice(1).forEach((arg) => {
-    let [key, value] = arg.split("=");
-    options[key] = value;
-  });
-  const canvas = exports.TPStoCanvas(options);
-
-  let name = options.name || canvas.id.replace(/\//g, "-");
-  if (!name.endsWith(".png")) {
-    name += ".png";
+exports.TPStoPNG = function (args, streamTo = null) {
+  let options;
+  if (isArray(args)) {
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      options[key] = value;
+    });
+  } else {
+    options = args;
   }
+  sanitizeOptions(options);
+
+  const canvas = exports.TPStoCanvas(options);
   const fs = require("fs");
-  const out = fs.createWriteStream("./" + name);
   const stream = canvas.pngStream();
-  stream.on("data", (chunk) => {
-    out.write(chunk);
-  });
+
+  if (streamTo) {
+    stream.pipe(streamTo);
+  } else if (isFunction(fs.createWriteStream)) {
+    let name = options.name || "takboard.png";
+    if (!name.endsWith(".png")) {
+      name += ".png";
+    }
+    const out = fs.createWriteStream("./" + name);
+    stream.on("data", (chunk) => out.write(chunk));
+  }
+  return canvas;
+};
+
+exports.TPStoGIF = function (args, streamTo = null) {
+  let options;
+  if (isArray(args)) {
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      options[key] = value;
+    });
+  } else {
+    options = args;
+  }
+  sanitizeOptions(options);
+
+  const plies = options.plies;
+  if (plies && plies.length) {
+    delete options.plies;
+    delete options.ply;
+    delete options.hl;
+  }
+
+  const fs = require("fs");
+  let canvas = exports.TPStoCanvas(options);
+  let tps = canvas.tps;
+  const encoder = new GIFEncoder(
+    canvas.width,
+    canvas.height,
+    "neuquant",
+    false,
+    plies.length + 1
+  );
+  const stream = encoder.createReadStream();
+  if (streamTo) {
+    stream.pipe(streamTo);
+  } else if (isFunction(fs.createWriteStream)) {
+    let name = options.name || "takboard.gif";
+    if (!name.endsWith(".gif")) {
+      name += ".gif";
+    }
+    const out = fs.createWriteStream("./" + name);
+    stream.pipe(out);
+  }
+
+  if (isFunction(options.onProgress)) {
+    encoder.on("progress", options.onProgress);
+  }
+
+  encoder.setRepeat(0);
+  encoder.setTransparent(true);
+  encoder.setQuality(1);
+  encoder.start();
+  encoder.setDelay(options.delay);
+  encoder.addFrame(canvas.ctx);
+  while (plies.length) {
+    options.tps = tps;
+    options.ply = plies.shift();
+    canvas = exports.TPStoCanvas(options);
+    tps = canvas.tps;
+    encoder.setDelay(options.delay + options.delay * !plies.length);
+    encoder.addFrame(canvas.ctx);
+  }
+  encoder.finish();
+  return stream;
 };
 
 exports.PTNtoTPS = function (args) {
-  const options = { tps: args[0] || "" };
-  const plies = [];
-  args.slice(1).forEach((arg) => {
-    let [key, value] = arg.split("=");
-    if (value) {
-      options[key] = value;
-    } else {
-      try {
-        let ply = new Ply(key);
-        if (ply) {
-          plies.push(ply);
-        }
-      } catch (error) {}
-    }
-  });
+  let options;
+  let plies;
+  if (isArray(args)) {
+    plies = [];
+    options = { tps: args[0] || "" };
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      if (value) {
+        options[key] = value;
+      } else {
+        try {
+          const ply = new Ply(key);
+          if (ply) {
+            plies.push(ply);
+          }
+        } catch (error) {}
+      }
+    });
+  } else {
+    options = args;
+    plies = options.plies;
+  }
+  sanitizeOptions(options);
   if (!plies.length) {
     throw new Error("No valid PTN provided");
   }
-  const board = new Board(sanitizeOptions(options));
+  const board = new Board(options);
   plies.forEach((ply) => board.doPly(ply));
   return board.getTPS();
 };
@@ -133,11 +233,11 @@ exports.parseTheme = function (theme) {
   if (theme[0] === "{") {
     // Custom theme
     try {
-      let parsedTheme = JSON.parse(theme);
+      const parsedTheme = JSON.parse(theme);
       if (!parsedTheme.colors) {
         throw new Error("Missing theme colors");
       }
-      let colors = Object.keys(parsedTheme.colors);
+      const colors = Object.keys(parsedTheme.colors);
       if (
         Object.keys(themes[0].colors).some((color) => !colors.includes(color))
       ) {
@@ -169,11 +269,11 @@ exports.TPStoCanvas = function (options = {}) {
 
   let hlSquares = [];
   if (options.plies && options.plies.length) {
-    let plies = options.plies.map((ply) => board.doPly(ply));
+    const plies = options.plies.map((ply) => board.doPly(ply));
     hlSquares = last(plies).squares;
     options.plyIsDone = true;
   } else if (options.ply) {
-    ply = board.doPly(options.ply);
+    const ply = board.doPly(options.ply);
     hlSquares = ply.squares;
     options.plyIsDone = true;
   } else if (options.hl) {
@@ -228,6 +328,10 @@ exports.TPStoCanvas = function (options = {}) {
 
   const canvasWidth = unplayedWidth + axisSize + boardSize + padding * 2;
   const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
+
+  if (options.transparent) {
+    options.bgAlpha = 0;
+  }
 
   // Start Drawing
   const canvas = createCanvas(canvasWidth, canvasHeight);
@@ -466,17 +570,17 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    let cols = "abcdefgh".substring(0, board.size).split("");
-    let rows = "12345678".substring(0, board.size).split("");
-    let yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
-    if (board.transform[0] === 1 || board.transform[0] === 2) {
+    const cols = "abcdefgh".substring(0, board.size).split("");
+    const rows = "12345678".substring(0, board.size).split("");
+    const yAxis = options.transform[0] % 2 ? cols.concat() : rows.concat();
+    if (options.transform[0] === 1 || options.transform[0] === 2) {
       yAxis.reverse();
     }
-    let xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
+    const xAxis = options.transform[0] % 2 ? rows.concat() : cols.concat();
     if (
-      board.transform[1]
-        ? board.transform[0] === 0 || board.transform[0] === 1
-        : board.transform[0] === 2 || board.transform[0] === 3
+      options.transform[1]
+        ? options.transform[0] === 0 || options.transform[0] === 1
+        : options.transform[0] === 2 || options.transform[0] === 3
     ) {
       xAxis.reverse();
     }
@@ -582,8 +686,8 @@ exports.TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
-    if (hlSquares.includes(square.coord)) {
-      let alphas = [0.4, 0.75];
+    if (options.hlSquares && hlSquares.includes(square.coord)) {
+      const alphas = [0.4, 0.75];
       if (!options.plyIsDone) {
         alphas.reverse();
       }
@@ -645,7 +749,7 @@ exports.TPStoCanvas = function (options = {}) {
           isTextLight = theme.board1Dark;
           ctx.fillStyle = theme.colors.board1;
         }
-        let radius = (stackCountFontSize * 1.5) / 2;
+        const radius = (stackCountFontSize * 1.5) / 2;
         ctx.beginPath();
         ctx.arc(
           squareSize - radius,
@@ -818,13 +922,15 @@ exports.TPStoCanvas = function (options = {}) {
           if (color === 1) {
             if (!board.pieces.played[2][type].length) {
               pieces[0] = board.pieces.all[2][type][0];
-            } else {
-              if (!played) {
-                pieces.shift();
-              }
+            } else if (!played) {
+              pieces.shift();
             }
           } else if (!board.pieces.played[1][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
           }
         }
         pieces.reverse().forEach(drawPiece);
@@ -833,10 +939,12 @@ exports.TPStoCanvas = function (options = {}) {
     });
   }
 
+  canvas.ctx = ctx;
   canvas.isGameEnd = board.isGameEnd;
   canvas.linenum = board.linenum;
   canvas.player = board.player;
-  canvas.id = board.result || board.getTPS();
+  canvas.tps = board.getTPS();
+  canvas.id = board.result || canvas.tps;
   return canvas;
 };
 
@@ -859,18 +967,18 @@ function limitText(ctx, text, width) {
 }
 
 function roundRect(ctx, x, y, width, height, radius) {
-  let radii = {
+  const radii = {
     tl: 0,
     tr: 0,
     bl: 0,
     br: 0,
   };
   if (typeof radius === "object") {
-    for (let side in radius) {
+    for (const side in radius) {
       radii[side] = radius[side];
     }
   } else {
-    for (let side in radii) {
+    for (const side in radii) {
       radii[side] = radius;
     }
   }

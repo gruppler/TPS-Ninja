@@ -40,7 +40,7 @@ exports.Square = class {
       enable: (side) => {
         this.isEdge = true;
         this["is" + EDGE[side]] = true;
-        this.isCorner = this.edges.length == 2;
+        this.isCorner = this.edges.length === 2;
       },
     });
     this.isLight = x % 2 !== y % 2;
@@ -50,10 +50,10 @@ exports.Square = class {
     this.isEW = false;
     this.neighbors = new Sides();
     this.edges.setSides({
-      N: y == size - 1,
-      S: y == 0,
-      E: x == size - 1,
-      W: x == 0,
+      N: y === size - 1,
+      S: y === 0,
+      E: x === size - 1,
+      W: x === 0,
     });
   }
 
@@ -164,7 +164,9 @@ class Sides {
     Object.keys(this._index).forEach((side) => {
       Object.defineProperty(this, side, {
         get: () => this.get(side),
-        set: (value) => this.set(side, value),
+        set: (value) => {
+          this.set(side, value);
+        },
       });
     });
 
@@ -188,7 +190,7 @@ class Sides {
 
   setSides(values) {
     if (values) {
-      for (let side in values) {
+      for (const side in values) {
         this.set(side, values[side]);
       }
     }

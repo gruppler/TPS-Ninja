@@ -2,11 +2,11 @@ const { cloneDeep, compact, isEmpty } = require("lodash");
 
 exports.findRoads = function (squares, player) {
   const players = player ? [player] : [1, 2];
-  let possibleRoads = { 1: {}, 2: {} };
-  let connections = {};
-  let possibleDeadEnds = { 1: [], 2: [] };
-  let deadEnds = [];
-  let roads = {
+  const possibleRoads = { 1: {}, 2: {} };
+  const connections = {};
+  const possibleDeadEnds = { 1: [], 2: [] };
+  const deadEnds = [];
+  const roads = {
     1: [],
     2: [],
     squares: {
@@ -24,14 +24,14 @@ exports.findRoads = function (squares, player) {
   // Gather player-controlled squares and dead ends
   squares.forEach((row) =>
     row.forEach((square) => {
-      let piece = square.piece;
+      const piece = square.piece;
       if (piece && !piece.isStanding) {
-        let player = piece.color;
+        const player = piece.color;
         connections[square.coord] = square.connected
           .map((side) => square.neighbors[side])
           .filter((square) => square);
 
-        let neighbors = connections[square.coord];
+        const neighbors = connections[square.coord];
 
         if (neighbors.length === 1) {
           if (square.isEdge) {
@@ -91,7 +91,7 @@ exports.findRoads = function (squares, player) {
           addRoad(roads, road, player);
         } else {
           // Double road; split into two separate roads
-          let road2 = cloneDeep(road);
+          const road2 = cloneDeep(road);
           road.edges.EW = false;
           road2.edges.NS = false;
           removeDeadEnds(
@@ -120,10 +120,10 @@ exports.findRoads = function (squares, player) {
 
 // Recursively follow a square and return all connected squares and edges
 function followRoad(square, possibleRoads, connections) {
-  let squares = {};
-  let edges = {};
+  const squares = {};
+  const edges = {};
   let road;
-  let player = square.piece.color;
+  const player = square.piece.color;
 
   squares[square.coord] = square;
   delete possibleRoads[player][square.coord];
@@ -151,29 +151,32 @@ function followRoad(square, possibleRoads, connections) {
 
 // Remove all deadEnds and their non-junction neighbors from squares
 function removeDeadEnds(deadEnds, squares, connections, winningEdge = "") {
-  deadEnds = deadEnds.concat();
-  while (deadEnds.length) {
-    deadEnds.forEach((square, i) => {
-      let isWinningEdge =
-        (square.isEdge && !winningEdge) || square["is" + winningEdge];
-      let nextNeighbors = [];
-      connections[square.coord].forEach((neighbor) => {
-        if (neighbor.coord in squares) {
-          nextNeighbors.push(neighbor);
-        }
-      });
-
-      if (
-        nextNeighbors.length < 2 &&
-        (!isWinningEdge ||
-          (nextNeighbors[0] && nextNeighbors[0]["is" + winningEdge]))
-      ) {
-        delete squares[square.coord];
-        deadEnds[i] = nextNeighbors[0];
-      } else {
-        deadEnds[i] = undefined;
+  const _removeDeadEnds = (square, i) => {
+    const isWinningEdge =
+      (square.isEdge && !winningEdge) || square["is" + winningEdge];
+    const nextNeighbors = [];
+    connections[square.coord].forEach((neighbor) => {
+      if (neighbor.coord in squares) {
+        nextNeighbors.push(neighbor);
       }
     });
+
+    if (
+      nextNeighbors.length < 2 &&
+      (!isWinningEdge ||
+        (nextNeighbors[0] && nextNeighbors[0]["is" + winningEdge]))
+    ) {
+      delete squares[square.coord];
+      deadEnds[i] = nextNeighbors[0];
+    } else {
+      deadEnds[i] = undefined;
+    }
+  };
+
+  deadEnds = deadEnds.concat();
+
+  while (deadEnds.length) {
+    deadEnds.forEach(_removeDeadEnds);
     deadEnds = compact(deadEnds);
   }
 }

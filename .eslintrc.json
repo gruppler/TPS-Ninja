@@ -1,16 +1,13 @@
 {
-    "env": {
-        "browser": true,
-        "commonjs": true,
-        "es2021": true
-    },
-    "extends": [
-        "standard",
-        "prettier"
-    ],
-    "parserOptions": {
-        "ecmaVersion": 13
-    },
-    "rules": {
-    }
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "plugins": [],
+  "extends": ["standard", "prettier"],
+  "rules": {
+    "no-console": "off",
+    "no-eval": "off",
+    "no-prototype-builtins": "off"
+  }
 }

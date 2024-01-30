@@ -17,7 +17,7 @@ const pieceCounts = {
 exports.parseTPS = function (tps) {
   const matchData = tps
     .toUpperCase()
-    .match(/^([X1-8SC,\/-]+)\s+([12])\s+(\d+)$/);
+    .match(/^([X1-8SC,/-]+)\s+([12])\s+(\d+)$/);
   const result = {};
 
   if (!matchData) {
@@ -29,13 +29,13 @@ exports.parseTPS = function (tps) {
 
   result.grid = result.grid
     .replace(/X(\d+)/g, (x, count) => {
-      let spaces = ["X"];
+      const spaces = ["X"];
       while (spaces.length < count) {
         spaces.push("X");
       }
       return spaces.join(",");
     })
-    .split(/[\/-]/)
+    .split(/[/-]/)
     .reverse()
     .map((row) => row.split(","));
   result.size = result.grid.length;
@@ -86,7 +86,7 @@ exports.Board = class {
     this.options = { opening: "swap", ...options };
     this.errors = [];
 
-    if (isString(options.tps)) {
+    if (isString(options.tps) && options.tps.length) {
       const tps = exports.parseTPS(options.tps);
       if (tps.error) {
         this.errors.push(tps.error);
@@ -255,10 +255,10 @@ exports.Board = class {
 
       // Check current player first
       if (roads[this.player].length) {
-        this.result = this.player == 1 ? "R-0" : "0-R";
-      } else if (roads[this.player == 1 ? 2 : 1].length) {
+        this.result = this.player === 1 ? "R-0" : "0-R";
+      } else if (roads[this.player === 1 ? 2 : 1].length) {
         // Completed opponent's road
-        this.result = this.player == 1 ? "0-R" : "R-0";
+        this.result = this.player === 1 ? "0-R" : "R-0";
       }
       if (this.result) {
         this.isGameEnd = true;
@@ -271,7 +271,7 @@ exports.Board = class {
     ) {
       // Last empty square or last piece
       this.isGameEndFlats = true;
-      if (this.flats[0] == this.flats[1]) {
+      if (this.flats[0] === this.flats[1]) {
         // Draw
         this.result = "1/2-1/2";
       } else if (this.flats[0] > this.flats[1]) {
@@ -322,7 +322,7 @@ exports.Board = class {
       throw new Error("Invalid first move");
     }
 
-    let stack = [];
+    const stack = [];
     const moveset = ply.toMoveset();
 
     if (moveset[0].errors) {
@@ -335,7 +335,6 @@ exports.Board = class {
       const x = move.x;
       const y = move.y;
       const count = move.count || 1;
-      let flatten = move.flatten;
       const type = move.type;
       if (!this.squares[y] || !this.squares[y][x]) {
         throw new Error("Invalid move");

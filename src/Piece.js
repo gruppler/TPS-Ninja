@@ -25,9 +25,11 @@ exports.Piece = class {
   x() {
     return this.square ? this.square.x : null;
   }
+
   y() {
     return this.square ? this.square.y : null;
   }
+
   z() {
     return this.square ? this.square.pieces.indexOf(this) : null;
   }
