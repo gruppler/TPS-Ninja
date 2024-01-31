@@ -113,17 +113,19 @@ exports.TPStoPNG = function (args, streamTo = null) {
 
   const canvas = exports.TPStoCanvas(options);
   const fs = require("fs");
-  const stream = canvas.pngStream();
 
-  if (streamTo) {
-    stream.pipe(streamTo);
-  } else if (isFunction(fs.createWriteStream)) {
-    let name = options.name || "takboard.png";
-    if (!name.endsWith(".png")) {
-      name += ".png";
+  if (isFunction(canvas.pngStream)) {
+    const stream = canvas.pngStream();
+    if (streamTo) {
+      stream.pipe(streamTo);
+    } else if (isFunction(fs.createWriteStream)) {
+      let name = options.name || "takboard.png";
+      if (!name.endsWith(".png")) {
+        name += ".png";
+      }
+      const out = fs.createWriteStream("./" + name);
+      stream.on("data", (chunk) => out.write(chunk));
     }
-    const out = fs.createWriteStream("./" + name);
-    stream.on("data", (chunk) => out.write(chunk));
   }
   return canvas;
 };
@@ -141,8 +143,8 @@ exports.TPStoGIF = function (args, streamTo = null) {
   }
   sanitizeOptions(options);
 
-  const plies = options.plies;
-  if (plies && plies.length) {
+  const plies = options.plies || [];
+  if (plies.length) {
     delete options.plies;
     delete options.ply;
     delete options.hl;
