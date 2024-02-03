@@ -1,9 +1,9 @@
-const { Square, atoi } = require("./Square");
-const { Piece } = require("./Piece");
-const { Ply } = require("./Ply");
-const { findRoads } = require("./Roads");
+import { Square, atoi } from "./Square.js";
+import { Piece } from "./Piece.js";
+import { Ply } from "./Ply.js";
+import { findRoads } from "./Roads.js";
 
-const { cloneDeep, isNumber, isString, times, zip } = require("lodash");
+import { cloneDeep, isNumber, isString, times, zip } from "lodash-es";
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -14,7 +14,7 @@ const pieceCounts = {
   8: { flat: 50, cap: 2 },
 };
 
-exports.parseTPS = function (tps) {
+export const parseTPS = function (tps) {
   const matchData = tps
     .toUpperCase()
     .match(/^([X1-8SC,/-]+)\s+([12])\s+(\d+)$/);
@@ -54,9 +54,9 @@ exports.parseTPS = function (tps) {
   return result;
 };
 
-exports.transformTPS = function (tps, [rotate, flip]) {
+export const transformTPS = function (tps, [rotate, flip]) {
   if (isString(tps)) {
-    tps = exports.parseTPS(tps);
+    tps = parseTPS(tps);
     if (tps.error) {
       throw tps.error;
     }
@@ -81,19 +81,19 @@ exports.transformTPS = function (tps, [rotate, flip]) {
   tps.grid = grid;
 };
 
-exports.Board = class {
+export const Board = class {
   constructor(options = {}) {
     this.options = { opening: "swap", ...options };
     this.errors = [];
 
     if (isString(options.tps) && options.tps.length) {
-      const tps = exports.parseTPS(options.tps);
+      const tps = parseTPS(options.tps);
       if (tps.error) {
         this.errors.push(tps.error);
         return;
       }
       if (options.transform) {
-        exports.transformTPS(tps, options.transform);
+        transformTPS(tps, options.transform);
         this.transform = options.transform;
       }
       this.grid = tps.grid;

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { TPStoGIF } from "../src/index.js";
+
 const options = process.argv.slice(process.argv[0] === "TPStoGIF" ? 1 : 2);
 if (!options.length) {
   console.log(
@@ -37,7 +39,7 @@ if (!options.length) {
   );
 } else {
   try {
-    require("../src").TPStoGIF(options);
+    TPStoGIF(options);
   } catch (error) {
     console.error(error);
   }

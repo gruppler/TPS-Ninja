@@ -1,4 +1,4 @@
-exports.Piece = class {
+export const Piece = class {
   constructor(params) {
     this.index = params.index;
     this.color = params.color;

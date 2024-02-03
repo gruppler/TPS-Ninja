@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { PTNtoTPS } from "../src/index.js";
+
 const options = process.argv.slice(process.argv[0] === "PTNtoTPS" ? 1 : 2);
 if (options.length < 2) {
   console.log(
@@ -16,7 +18,7 @@ if (options.length < 2) {
   );
 } else {
   try {
-    console.log(require("../src").PTNtoTPS(options));
+    console.log(PTNtoTPS(options));
   } catch (error) {
     console.error(error);
   }

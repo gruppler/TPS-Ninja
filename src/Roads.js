@@ -1,6 +1,6 @@
-const { cloneDeep, compact, isEmpty } = require("lodash");
+import { cloneDeep, compact, isEmpty } from "lodash-es";
 
-exports.findRoads = function (squares, player) {
+export const findRoads = function (squares, player) {
   const players = player ? [player] : [1, 2];
   const possibleRoads = { 1: {}, 2: {} };
   const connections = {};

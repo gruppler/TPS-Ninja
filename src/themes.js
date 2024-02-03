@@ -1,4 +1,4 @@
-exports.themes = [
+export default [
   {
     id: "classic",
     isBuiltIn: true,
