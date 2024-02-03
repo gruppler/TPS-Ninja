@@ -1,4 +1,4 @@
-const { atoi, itoa } = require("./Square");
+import { atoi, itoa } from "./Square.js";
 
 const directionModifier = {
   "+": [0, 1],
@@ -7,7 +7,7 @@ const directionModifier = {
   "<": [-1, 0],
 };
 
-exports.Ply = class {
+export const Ply = class {
   constructor(notation) {
     const matchData = notation.match(
       /(\d)?([CS])?([a-h])([1-8])(([<>+-])([1-8]+)?(\*)?)?/i
@@ -175,6 +175,6 @@ exports.Ply = class {
       ptn = ptn.replace(this.direction, direction);
     }
 
-    return new exports.Ply(ptn);
+    return new Ply(ptn);
   }
 };

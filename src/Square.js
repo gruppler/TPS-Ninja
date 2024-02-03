@@ -1,11 +1,9 @@
-const atoi = (coord) => [
+export const atoi = (coord) => [
   "abcdefgh".indexOf(coord[0]),
   parseInt(coord[1], 10) - 1,
 ];
-exports.atoi = atoi;
 
-const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
-exports.itoa = itoa;
+export const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
 
 const OPPOSITE = {
   N: "S",
@@ -21,7 +19,7 @@ const EDGE = {
   W: "EW",
 };
 
-exports.Square = class {
+export const Square = class {
   constructor(x, y, size) {
     this.piece = null;
     this.color = null;

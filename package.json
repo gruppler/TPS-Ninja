@@ -6,6 +6,7 @@
   "author": "Craig Laparo <gruppler+github@gmail.com>",
   "license": "AGPL-3.0-or-later",
   "main": "src/index.js",
+  "type": "module",
   "keywords": [
     "tak",
     "tps",
@@ -18,9 +19,9 @@
   "homepage": "https://github.com/gruppler/TPS-Ninja",
   "repository": "git://github.com/gruppler/TPS-Ninja.git",
   "bin": {
-    "TPStoPNG": "bin/TPStoPNG",
-    "TPStoGIF": "bin/TPStoGIF",
-    "PTNtoTPS": "bin/PTNtoTPS"
+    "TPStoPNG": "bin/TPStoPNG.js",
+    "TPStoGIF": "bin/TPStoGIF.js",
+    "PTNtoTPS": "bin/PTNtoTPS.js"
   },
   "scripts": {
     "lint": "eslint --ext .js src"
@@ -29,7 +30,7 @@
     "canvas": "^2.11.2",
     "fs": "0.0.1-security",
     "gif-encoder-2": "^1.0.5",
-    "lodash": "^4.17.21"
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

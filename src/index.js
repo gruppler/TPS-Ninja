@@ -1,16 +1,18 @@
-const { createCanvas } = require("canvas");
-const GIFEncoder = require("gif-encoder-2");
-const { Board, parseTPS } = require("./Board");
-const { Ply } = require("./Ply");
-const { themes } = require("./themes");
-const {
+import fs from "fs";
+import { createCanvas } from "canvas";
+import GIFEncoder from "gif-encoder-2";
+import { Board } from "./Board.js";
+export { parseTPS } from "./Board.js";
+import { Ply } from "./Ply.js";
+import themes from "./themes.js";
+import {
   isArray,
   isBoolean,
   isFunction,
   isNumber,
   isString,
   last,
-} = require("lodash");
+} from "lodash-es";
 
 const pieceSizes = {
   xs: 12,
@@ -98,7 +100,7 @@ function sanitizeOptions(options) {
   return options;
 }
 
-exports.TPStoPNG = function (args, streamTo = null) {
+export const TPStoPNG = function (args, streamTo = null) {
   let options;
   if (isArray(args)) {
     options = { tps: args[0] || "" };
@@ -111,8 +113,7 @@ exports.TPStoPNG = function (args, streamTo = null) {
   }
   sanitizeOptions(options);
 
-  const canvas = exports.TPStoCanvas(options);
-  const fs = require("fs");
+  const canvas = TPStoCanvas(options);
 
   if (isFunction(canvas.pngStream)) {
     const stream = canvas.pngStream();
@@ -130,7 +131,7 @@ exports.TPStoPNG = function (args, streamTo = null) {
   return canvas;
 };
 
-exports.TPStoGIF = function (args, streamTo = null) {
+export const TPStoGIF = function (args, streamTo = null) {
   let options;
   if (isArray(args)) {
     options = { tps: args[0] || "" };
@@ -150,8 +151,7 @@ exports.TPStoGIF = function (args, streamTo = null) {
     delete options.hl;
   }
 
-  const fs = require("fs");
-  let canvas = exports.TPStoCanvas(options);
+  let canvas = TPStoCanvas(options);
   let tps = canvas.tps;
   const encoder = new GIFEncoder(
     canvas.width,
@@ -185,7 +185,7 @@ exports.TPStoGIF = function (args, streamTo = null) {
   while (plies.length) {
     options.tps = tps;
     options.ply = plies.shift();
-    canvas = exports.TPStoCanvas(options);
+    canvas = TPStoCanvas(options);
     tps = canvas.tps;
     encoder.setDelay(options.delay + options.delay * !plies.length);
     encoder.addFrame(canvas.ctx);
@@ -194,7 +194,7 @@ exports.TPStoGIF = function (args, streamTo = null) {
   return stream;
 };
 
-exports.PTNtoTPS = function (args) {
+export const PTNtoTPS = function (args) {
   let options;
   let plies;
   if (isArray(args)) {
@@ -226,9 +226,7 @@ exports.PTNtoTPS = function (args) {
   return board.getTPS();
 };
 
-exports.parseTPS = parseTPS;
-
-exports.parseTheme = function (theme) {
+export const parseTheme = function (theme) {
   if (!theme || typeof theme !== "string") {
     return theme || themes[0];
   }
@@ -260,9 +258,9 @@ exports.parseTheme = function (theme) {
   }
 };
 
-exports.TPStoCanvas = function (options = {}) {
+export const TPStoCanvas = function (options = {}) {
   sanitizeOptions(options);
-  const theme = exports.parseTheme(options.theme);
+  const theme = parseTheme(options.theme);
 
   const board = new Board(options);
   if (!board || (board.errors && board.errors.length)) {

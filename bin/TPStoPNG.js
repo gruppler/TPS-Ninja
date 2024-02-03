@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { TPStoPNG } from "../src/index.js";
+
 const options = process.argv.slice(process.argv[0] === "TPStoPNG" ? 1 : 2);
 if (!options.length) {
   console.log(
@@ -35,7 +37,7 @@ if (!options.length) {
   );
 } else {
   try {
-    require("../src").TPStoPNG(options);
+    TPStoPNG(options);
   } catch (error) {
     console.error(error);
   }
