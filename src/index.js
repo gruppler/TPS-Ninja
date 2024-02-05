@@ -94,7 +94,10 @@ function sanitizeOptions(options) {
       options[key] = defaults[key];
     }
   }
-  if (options.tps.length === 1) {
+  if (options.size) {
+    options.size = Number(options.size);
+  }
+  if (options.tps && options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
   return options;
@@ -440,14 +443,14 @@ export const TPStoCanvas = function (options = {}) {
     // Player 1 Name
     if (options.player1) {
       const flatCount1Width = ctx.measureText(flats[0]).width;
-      options.player1 = limitText(
+      const player1 = limitText(
         ctx,
         options.player1,
         flats1Width - flatCount1Width - fontSize * 1.2
       );
       ctx.textAlign = "start";
       ctx.fillText(
-        options.player1,
+        player1,
         padding + axisSize + fontSize / 2,
         padding + flatCounterHeight / 2
       );
@@ -485,14 +488,14 @@ export const TPStoCanvas = function (options = {}) {
     // Player 2 Name
     if (options.player2) {
       const flatCount2Width = ctx.measureText(flats[1]).width;
-      options.player2 = limitText(
+      const player2 = limitText(
         ctx,
         options.player2,
         flats2Width - flatCount2Width - fontSize * 1.2
       );
       ctx.textAlign = "end";
       ctx.fillText(
-        options.player2,
+        player2,
         padding + axisSize + boardSize - fontSize / 2,
         padding + flatCounterHeight / 2
       );
