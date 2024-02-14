@@ -180,7 +180,9 @@ export const TPStoGIF = function (args, streamTo = null) {
   }
 
   encoder.setRepeat(0);
-  encoder.setTransparent(true);
+  if (options.transparent) {
+    encoder.setTransparent();
+  }
   encoder.setQuality(1);
   encoder.start();
   encoder.setDelay(options.delay);

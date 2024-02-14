@@ -182,7 +182,7 @@ turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
 moveNumber     [true|false|<number>] Show current move number
-komi           [-4.5, 4.5] Bonus points awarded to Player 2
+komi           [half-integer] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
@@ -258,7 +258,7 @@ turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
 moveNumber     [true|false|<number>] Show current move number
-komi           [-4.5, 4.5] Bonus points awarded to Player 2
+komi           [half-integer] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
