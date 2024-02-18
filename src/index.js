@@ -466,17 +466,17 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Axis Labels
   if (options.axisLabels) {
-    let cols = "abcdefgh".substring(0, board.size).split("");
-    let rows = "12345678".substring(0, board.size).split("");
-    let yAxis = board.transform[0] % 2 ? cols.concat() : rows.concat();
-    if (board.transform[0] === 1 || board.transform[0] === 2) {
+    const cols = "abcdefgh".substring(0, board.size).split("");
+    const rows = "12345678".substring(0, board.size).split("");
+    const yAxis = options.transform[0] % 2 ? cols.concat() : rows.concat();
+    if (options.transform[0] === 1 || options.transform[0] === 2) {
       yAxis.reverse();
     }
-    let xAxis = board.transform[0] % 2 ? rows.concat() : cols.concat();
+    const xAxis = options.transform[0] % 2 ? rows.concat() : cols.concat();
     if (
-      board.transform[1]
-        ? board.transform[0] === 0 || board.transform[0] === 1
-        : board.transform[0] === 2 || board.transform[0] === 3
+      options.transform[1]
+        ? options.transform[0] === 0 || options.transform[0] === 1
+        : options.transform[0] === 2 || options.transform[0] === 3
     ) {
       xAxis.reverse();
     }
@@ -818,13 +818,15 @@ exports.TPStoCanvas = function (options = {}) {
           if (color === 1) {
             if (!board.pieces.played[2][type].length) {
               pieces[0] = board.pieces.all[2][type][0];
-            } else {
-              if (!played) {
-                pieces.shift();
-              }
+            } else if (!played) {
+              pieces.shift();
             }
           } else if (!board.pieces.played[1][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
           }
         }
         pieces.reverse().forEach(drawPiece);
