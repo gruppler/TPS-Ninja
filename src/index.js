@@ -249,6 +249,16 @@ export const parseTheme = function (theme) {
       ) {
         throw new Error("Missing theme colors");
       }
+      if(theme.rings > 0) {
+        if(theme.rings > 4) {
+          throw new Error("Rings must not exceed 4");
+        }
+        for(let ring = 1; ring <= theme.rings; ring++) {
+          if(!theme.colors[`ring${ring}`]) {
+            throw new Error(`Expected ${theme.rings} ring(s) but found ${ring - 1}`);
+          }
+        }
+      }
       return parsedTheme;
     } catch (err) {
       console.log(err);
@@ -690,6 +700,19 @@ export const TPStoCanvas = function (options = {}) {
       ctx.fillRect(0, 0, squareSize, squareSize);
       ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
       drawSquareHighlight();
+    }
+
+    if (theme.rings) {
+      let ring = square.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(board.size / 2) - ring + 1;
+      }
+      if (ring <= theme.rings) {
+        ctx.fillStyle = theme.colors["ring" + ring];
+        ctx.globalAlpha = theme.vars['rings-opacity'];
+        drawSquareHighlight();
+        ctx.globalAlpha = 1;
+      }
     }
 
     if (options.hlSquares && hlSquares.includes(square.coord)) {

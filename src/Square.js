@@ -53,6 +53,13 @@ export const Square = class {
       E: x === size - 1,
       W: x === 0,
     });
+    if (this.isEdge) {
+      this.ring = 1;
+    } else {
+      const offset = (size - 1) / 2;
+      const getRing = (x) => 1 + Math.round(offset - Math.abs(x - offset));
+      this.ring = Math.min(getRing(x), getRing(y));
+    }
   }
 
   _getPiece() {
