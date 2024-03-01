@@ -2,7 +2,6 @@ import fs from "fs";
 import { createCanvas } from "canvas";
 import GIFEncoder from "gif-encoder-2";
 import { Board } from "./Board.js";
-export { parseTPS } from "./Board.js";
 import { Ply } from "./Ply.js";
 import themes from "./themes.js";
 import {
@@ -13,6 +12,8 @@ import {
   isString,
   last,
 } from "lodash-es";
+
+export { parseTPS } from "./Board.js";
 
 const pieceSizes = {
   xs: 12,
