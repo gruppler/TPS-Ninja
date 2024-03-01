@@ -2,7 +2,6 @@ import fs from "fs";
 import { createCanvas } from "canvas";
 import GIFEncoder from "gif-encoder-2";
 import { Board } from "./Board.js";
-export { parseTPS } from "./Board.js";
 import { Ply } from "./Ply.js";
 import themes from "./themes.js";
 import {
@@ -13,6 +12,8 @@ import {
   isString,
   last,
 } from "lodash-es";
+
+export { parseTPS } from "./Board.js";
 
 const pieceSizes = {
   xs: 12,
@@ -247,6 +248,16 @@ export const parseTheme = function (theme) {
         Object.keys(themes[0].colors).some((color) => !colors.includes(color))
       ) {
         throw new Error("Missing theme colors");
+      }
+      if(theme.rings > 0) {
+        if(theme.rings > 4) {
+          throw new Error("Rings must not exceed 4");
+        }
+        for(let ring = 1; ring <= theme.rings; ring++) {
+          if(!theme.colors[`ring${ring}`]) {
+            throw new Error(`Expected ${theme.rings} ring(s) but found ${ring - 1}`);
+          }
+        }
       }
       return parsedTheme;
     } catch (err) {
@@ -689,6 +700,19 @@ export const TPStoCanvas = function (options = {}) {
       ctx.fillRect(0, 0, squareSize, squareSize);
       ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
       drawSquareHighlight();
+    }
+
+    if (theme.rings) {
+      let ring = square.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(board.size / 2) - ring + 1;
+      }
+      if (ring <= theme.rings) {
+        ctx.fillStyle = theme.colors["ring" + ring];
+        ctx.globalAlpha = theme.vars['rings-opacity'];
+        drawSquareHighlight();
+        ctx.globalAlpha = 1;
+      }
     }
 
     if (options.hlSquares && hlSquares.includes(square.coord)) {
