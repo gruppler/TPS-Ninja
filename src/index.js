@@ -59,7 +59,7 @@ const defaults = {
 function sanitizeOptions(options) {
   for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
-      if (key === "moveNumber") {
+      if (key === "moveNumber" && !isBoolean(options[key])) {
         const number = parseInt(options[key], 10);
         if (isNaN(number)) {
           options[key] = options[key] !== "false";
