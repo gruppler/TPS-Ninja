@@ -52,6 +52,7 @@ const defaults = {
   bgAlpha: 1,
   transparent: false,
   hlSquares: true,
+  highlighter: null,
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
@@ -60,7 +61,14 @@ const defaults = {
 function sanitizeOptions(options) {
   for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
-      if (key === "moveNumber" && !isBoolean(options[key])) {
+      if (key === "highlighter" && isString(options[key])) {
+        try {
+          options[key] = JSON.parse(options[key]);
+        } catch (err) {
+          console.log(err);
+          throw new Error("Invalid highlighter");
+        }
+      } else if (key === "moveNumber" && !isBoolean(options[key])) {
         const number = parseInt(options[key], 10);
         if (isNaN(number)) {
           options[key] = options[key] !== "false";
@@ -234,7 +242,7 @@ export const PTNtoTPS = function (args) {
 };
 
 export const parseTheme = function (theme) {
-  if (!theme || typeof theme !== "string") {
+  if (!theme || !isString(theme)) {
     return theme || themes[0];
   }
   if (theme[0] === "{") {
@@ -753,7 +761,10 @@ export const TPStoCanvas = function (options = {}) {
       }
     }
 
-    if (options.hlSquares && hlSquares.includes(square.coord)) {
+    if (options.highlighter && square.coord in options.highlighter) {
+      ctx.fillStyle = withAlpha(options.highlighter[square.coord], 0.75);
+      drawSquareHighlight();
+    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
       const alphas = [0.4, 0.75];
       if (!options.plyIsDone) {
         alphas.reverse();

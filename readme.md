@@ -177,6 +177,7 @@ theme          [ID|JSON] Theme
 imageSize      [xs|sm|md|lg|xl] Image size
 textSize       [xs|sm|md|lg|xl] Text size
 bgAlpha        [0, 1] Background opacity
+hlSquares      [true|false] Highlight last ply's squares
 axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
@@ -188,6 +189,7 @@ opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
+highlighter    [JSON] Square coordinates mapped to color, overrides highlight
 
 name           Filename of exported PNG, defaults to 'takboard.png'
 player1        Name of Player 1
@@ -265,6 +267,7 @@ opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
+highlighter    [JSON] Square coordinates mapped to color, overrides highlight
 
 name           Filename of exported GIF, defaults to 'takboard.gif'
 player1        Name of Player 1
