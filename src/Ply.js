@@ -10,7 +10,7 @@ const directionModifier = {
 exports.Ply = class {
   constructor(notation) {
     const matchData = notation.match(
-      /(\d)?([CS])?([a-h])([1-8])(([<>+-])([1-8]+)?(\*)?)?/i
+      /(\d)?([CS])?([a-h])([1-8])(([<>+-])([1-8]+)?(\*)?)?([?!'"]+)?/i
     );
 
     if (!matchData) {
@@ -27,6 +27,7 @@ exports.Ply = class {
       this.direction,
       this.distribution,
       this.wallSmash,
+      this.evalText,
     ] = matchData;
 
     if (this.specialPiece) {
