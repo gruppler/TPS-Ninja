@@ -182,6 +182,7 @@ turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
 moveNumber     [true|false|<number>] Show current move number
+evalText       [true|false] Show current ply eval notation
 komi           [half-integer] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
@@ -258,6 +259,7 @@ turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
 moveNumber     [true|false|<number>] Show current move number
+evalText       [true|false] Show current ply eval notation
 komi           [half-integer] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
