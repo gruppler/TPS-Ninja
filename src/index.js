@@ -29,11 +29,14 @@ const defaults = {
   stackCounts: true,
   komi: 0,
   moveNumber: true,
+  evalText: true,
   opening: "swap",
   showRoads: true,
   unplayedPieces: true,
   padding: true,
   bgAlpha: 1,
+  hlSquares: true,
+  highlighter: null,
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
@@ -42,8 +45,15 @@ const defaults = {
 function sanitizeOptions(options) {
   for (let key in defaults) {
     if (options.hasOwnProperty(key)) {
-      if (key === "moveNumber") {
-        let number = parseInt(options[key], 10);
+      if (key === "highlighter" && isString(options[key])) {
+        try {
+          options[key] = JSON.parse(options[key]);
+        } catch (err) {
+          console.log(err);
+          throw new Error("Invalid highlighter");
+        }
+      } else if (key === "moveNumber" && !isBoolean(options[key])) {
+        const number = parseInt(options[key], 10);
         if (isNaN(number)) {
           options[key] !== "false";
         } else {
@@ -127,7 +137,7 @@ exports.PTNtoTPS = function (args) {
 exports.parseTPS = parseTPS;
 
 exports.parseTheme = function (theme) {
-  if (!theme || typeof theme !== "string") {
+  if (!theme || !isString(theme)) {
     return theme || themes[0];
   }
   if (theme[0] === "{") {
@@ -143,13 +153,15 @@ exports.parseTheme = function (theme) {
       ) {
         throw new Error("Missing theme colors");
       }
-      if(theme.rings > 0) {
-        if(theme.rings > 4) {
+      if (theme.rings > 0) {
+        if (theme.rings > 4) {
           throw new Error("Rings must not exceed 4");
         }
-        for(let ring = 1; ring <= theme.rings; ring++) {
-          if(!theme.colors[`ring${ring}`]) {
-            throw new Error(`Expected ${theme.rings} ring(s) but found ${ring - 1}`);
+        for (let ring = 1; ring <= theme.rings; ring++) {
+          if (!theme.colors[`ring${ring}`]) {
+            throw new Error(
+              `Expected ${theme.rings} ring(s) but found ${ring - 1}`
+            );
           }
         }
       }
@@ -178,13 +190,17 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   let hlSquares = [];
+  let evalText = "";
   if (options.plies && options.plies.length) {
-    let plies = options.plies.map((ply) => board.doPly(ply));
-    hlSquares = last(plies).squares;
+    const plies = options.plies.map((ply) => board.doPly(ply));
+    let ply = last(plies);
+    hlSquares = ply.squares;
+    evalText = ply.evalText || "";
     options.plyIsDone = true;
   } else if (options.ply) {
     ply = board.doPly(options.ply);
     hlSquares = ply.squares;
+    evalText = ply.evalText || "";
     options.plyIsDone = true;
   } else if (options.hl) {
     let ply = new Ply(options.hl);
@@ -440,6 +456,7 @@ exports.TPStoCanvas = function (options = {}) {
     }
 
     // Move number
+    let moveNumberWidth = 0;
     if (options.moveNumber && options.unplayedPieces) {
       let moveNumber;
       if (typeof options.moveNumber === "number") {
@@ -468,6 +485,36 @@ exports.TPStoCanvas = function (options = {}) {
       ctx.fillText(
         moveNumber,
         padding + axisSize + boardSize + unplayedWidth / 2,
+        padding + flatCounterHeight / 2
+      );
+      let { width } = ctx.measureText(moveNumber);
+      moveNumberWidth = width;
+      ctx.restore();
+    }
+
+    if (options.evalText && options.unplayedPieces && evalText) {
+      if (moveNumberWidth) {
+        evalText = " " + evalText;
+      }
+      ctx.save();
+      ctx.textBaseline = "middle";
+      ctx.textAlign = options.moveNumber ? "left" : "center";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = fontSize * 0.05;
+      ctx.shadowBlur = fontSize * 0.1;
+      ctx.shadowColor =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textDark
+          : theme.colors.textLight;
+      ctx.fillStyle = theme.colors.primary;
+      ctx.font = `bold ${fontSize}px ${options.font}`;
+      ctx.fillText(
+        evalText,
+        padding +
+          axisSize +
+          boardSize +
+          unplayedWidth / 2 +
+          moveNumberWidth / 2,
         padding + flatCounterHeight / 2
       );
       ctx.restore();
@@ -599,14 +646,17 @@ exports.TPStoCanvas = function (options = {}) {
       }
       if (ring <= theme.rings) {
         ctx.fillStyle = theme.colors["ring" + ring];
-        ctx.globalAlpha = theme.vars['rings-opacity'];
+        ctx.globalAlpha = theme.vars["rings-opacity"];
         drawSquareHighlight();
         ctx.globalAlpha = 1;
       }
     }
 
-    if (hlSquares.includes(square.coord)) {
-      let alphas = [0.4, 0.75];
+    if (options.highlighter && square.coord in options.highlighter) {
+      ctx.fillStyle = withAlpha(options.highlighter[square.coord], 0.75);
+      drawSquareHighlight();
+    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
+      const alphas = [0.4, 0.75];
       if (!options.plyIsDone) {
         alphas.reverse();
       }
