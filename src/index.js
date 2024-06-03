@@ -84,7 +84,7 @@ function sanitizeOptions(options) {
       options[key] = defaults[key];
     }
   }
-  if (options.tps.length === 1) {
+  if (isString(options.tps) && options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
   return options;
