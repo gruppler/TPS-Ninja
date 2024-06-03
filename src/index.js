@@ -107,7 +107,7 @@ function sanitizeOptions(options) {
   if (options.size) {
     options.size = Number(options.size);
   }
-  if (options.tps && options.tps.length === 1) {
+  if (isString(options.tps) && options.tps && options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
   return options;
