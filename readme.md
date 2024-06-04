@@ -84,10 +84,10 @@ $ PTNtoTPS 6 opening=no-swap a6 b6 c6
 opening        [swap|no-swap] Opening variations
 caps           Override number of cap stones for both players
 flats          Override number of flat stones for both players
-caps1          Override number of cap stones for player 1
-flats1         Override number of flat stones for player 1
-caps2          Override number of cap stones for player 2
-flats2         Override number of flat stones for player
+caps1          Override number of cap stones for Player 1
+flats1         Override number of flat stones for Player 1
+caps2          Override number of cap stones for Player 2
+flats2         Override number of flat stones for Player 2
 ```
 
 ---
@@ -199,10 +199,10 @@ ply            PTN of a ply to be executed
 plies          Space- or comma-separated string of plies to be executed
 caps           Override number of cap stones for both players
 flats          Override number of flat stones for both players
-caps1          Override number of cap stones for player 1
-flats1         Override number of flat stones for player 1
-caps2          Override number of cap stones for player 2
-flats2         Override number of flat stones for player 2
+caps1          Override number of cap stones for Player 1
+flats1         Override number of flat stones for Player 1
+caps2          Override number of cap stones for Player 2
+flats2         Override number of flat stones for Player 2
 ```
 
 ## TPS to GIF
@@ -277,8 +277,8 @@ ply            PTN of a ply to be executed
 plies          Space- or comma-separated string of plies to be executed
 caps           Override number of cap stones for both players
 flats          Override number of flat stones for both players
-caps1          Override number of cap stones for player 1
-flats1         Override number of flat stones for player 1
-caps2          Override number of cap stones for player 2
-flats2         Override number of flat stones for player 2
+caps1          Override number of cap stones for Player 1
+flats1         Override number of flat stones for Player 1
+caps2          Override number of cap stones for Player 2
+flats2         Override number of flat stones for Player 2
 ```
