@@ -32,10 +32,10 @@ if (!options.length) {
       "  plies          Space- or comma-separated string of plies to be executed\n" +
       "  caps           Override number of cap stones for both players\n" +
       "  flats          Override number of flat stones for both players\n" +
-      "  caps1          Override number of cap stones for player 1\n" +
-      "  flats1         Override number of flat stones for player 1\n" +
-      "  caps2          Override number of cap stones for player 2\n" +
-      "  flats2         Override number of flat stones for player 2\n"
+      "  caps1          Override number of cap stones for Player 1\n" +
+      "  flats1         Override number of flat stones for Player 1\n" +
+      "  caps2          Override number of cap stones for Player 2\n" +
+      "  flats2         Override number of flat stones for Player 2\n"
   );
 } else {
   try {
