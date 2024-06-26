@@ -84,7 +84,7 @@ function sanitizeOptions(options) {
       options[key] = defaults[key];
     }
   }
-  if (options.tps.length === 1) {
+  if (isString(options.tps) && options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
   return options;
@@ -420,7 +420,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
     // Player 2 Flat Count
-    if (options.flatCounts) {
+    if (flats[1] !== "") {
       ctx.textAlign = "start";
       flats[1] = String(flats[1]).split(" ");
       ctx.fillText(

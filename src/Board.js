@@ -119,24 +119,24 @@ exports.Board = class {
       1: { ...pieceCounts[this.size] },
       2: { ...pieceCounts[this.size] },
     };
-    if (options.flats) {
+    if (options.flats > 2) {
       this.pieceCounts[1].flat = Number(options.flats);
       this.pieceCounts[2].flat = Number(options.flats);
     }
-    if (options.caps) {
+    if ("caps" in options && options.caps >= 0) {
       this.pieceCounts[1].cap = Number(options.caps);
       this.pieceCounts[2].cap = Number(options.caps);
     }
-    if (options.flats1) {
+    if (options.flats1 > 2) {
       this.pieceCounts[1].flat = Number(options.flats1);
     }
-    if (options.caps1) {
+    if ("caps1" in options && options.caps1 >= 0) {
       this.pieceCounts[1].cap = Number(options.caps1);
     }
-    if (options.flats2) {
+    if (options.flats2 > 2) {
       this.pieceCounts[2].flat = Number(options.flats2);
     }
-    if (options.caps2) {
+    if ("caps2" in options && options.caps2 >= 0) {
       this.pieceCounts[2].cap = Number(options.caps2);
     }
     this.pieceCounts[1].total =
