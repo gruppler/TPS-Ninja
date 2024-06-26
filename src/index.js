@@ -420,7 +420,7 @@ exports.TPStoCanvas = function (options = {}) {
       );
     }
     // Player 2 Flat Count
-    if (options.flatCounts) {
+    if (flats[1] !== "") {
       ctx.textAlign = "start";
       flats[1] = String(flats[1]).split(" ");
       ctx.fillText(
