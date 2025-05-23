@@ -263,7 +263,7 @@ export default [
     boardChecker: false,
     vars: { "piece-border-width": 2 },
     colors: {
-      primary: "#f0b132",
+      primary: "#d1a362",
       secondary: "#313338",
       board1: "#65676b",
       board2: "#5b5e63",
