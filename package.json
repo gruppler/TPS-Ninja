@@ -1,6 +1,6 @@
 {
   "name": "tps-ninja",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "description": "Generate images from Tak Positional System (TPS) strings",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
