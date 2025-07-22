@@ -778,7 +778,7 @@ export const TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
-    if (options.showRoads && square.connected.length) {
+    if (options.showRoads && square.connected.length && !board.isGameEndFlats) {
       square.connected.forEach((side) => {
         const coords = sideCoords[side];
         ctx.fillStyle = withAlpha(
