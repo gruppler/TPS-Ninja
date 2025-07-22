@@ -368,6 +368,7 @@ export const TPStoCanvas = function (options = {}) {
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
   ctx.font = `${fontSize}px ${options.font}`;
+  ctx.textDrawingMode = "path";
   ctx.globalAlpha = options.bgAlpha;
   ctx.fillStyle = theme.colors.secondary;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
@@ -470,6 +471,7 @@ export const TPStoCanvas = function (options = {}) {
     ctx.textBaseline = "middle";
     // Player 1 Name
     if (options.player1) {
+      ctx.textDrawingMode = "glyph";
       const flatCount1Width = ctx.measureText(flats[0]).width;
       const player1 = limitText(
         ctx,
@@ -482,6 +484,7 @@ export const TPStoCanvas = function (options = {}) {
         padding + axisSize + fontSize / 2,
         padding + flatCounterHeight / 2
       );
+      ctx.textDrawingMode = "path";
     }
     // Player 1 Flat Count
     if (flats[0] !== "") {
@@ -515,6 +518,7 @@ export const TPStoCanvas = function (options = {}) {
 
     // Player 2 Name
     if (options.player2) {
+      ctx.textDrawingMode = "glyph";
       const flatCount2Width = ctx.measureText(flats[1]).width;
       const player2 = limitText(
         ctx,
@@ -527,6 +531,7 @@ export const TPStoCanvas = function (options = {}) {
         padding + axisSize + boardSize - fontSize / 2,
         padding + flatCounterHeight / 2
       );
+      ctx.textDrawingMode = "path";
     }
     // Player 2 Flat Count
     if (flats[1] !== "") {
@@ -778,7 +783,7 @@ export const TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
-    if (options.showRoads && square.connected.length) {
+    if (options.showRoads && square.connected.length && !board.isGameEndFlats) {
       square.connected.forEach((side) => {
         const coords = sideCoords[side];
         ctx.fillStyle = withAlpha(
