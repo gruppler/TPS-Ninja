@@ -32,6 +32,8 @@ const defaults = {
   moveNumber: true,
   evalText: true,
   opening: "swap",
+  ply: "",
+  plies: [],
   showRoads: true,
   unplayedPieces: true,
   padding: true,
@@ -75,6 +77,10 @@ function sanitizeOptions(options) {
           }
         } else {
           options[key] = defaults[key];
+        }
+      } else if (key === "plies") {
+        if (isString(options[key])) {
+          options[key] = options[key].split(/[\s,]+/);
         }
       } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";

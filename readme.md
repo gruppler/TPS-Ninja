@@ -75,15 +75,16 @@ unplayedPieces  [true|false] Show unplayed pieces
 padding         [true|false] Pad the image
 highlighter     [JSON] Square coordinates mapped to color, overrides highlight
 
-name            Filename of exported PNG, defaults to TPS or game result
-player1         Name of Player 1
-player2         Name of Player 2
-hl              PTN of a ply whose affected squares will be highlighted
-ply             PTN of a ply to be executed
-caps            Override number of cap stones for both players
-flats           Override number of flat stones for both players
-caps1           Override number of cap stones for Player 1
-flats1          Override number of flat stones for Player 1
-caps2           Override number of cap stones for Player 2
-flats2          Override number of flat stones for Player 2
+name           Filename of exported PNG, defaults to TPS or game result
+player1        Name of Player 1
+player2        Name of Player 2
+hl             PTN of a ply whose affected squares will be highlighted
+ply            PTN of a ply to be executed
+plies          Space- or comma-separated string of plies to be executed
+caps           Override number of cap stones for both players
+flats          Override number of flat stones for both players
+caps1          Override number of cap stones for player 1
+flats1         Override number of flat stones for player 1
+caps2          Override number of cap stones for player 2
+flats2         Override number of flat stones for player 2
 ```
