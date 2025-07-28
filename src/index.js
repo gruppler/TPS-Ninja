@@ -24,6 +24,7 @@ const defaults = {
   imageSize: "md",
   textSize: "md",
   axisLabels: true,
+  axisLabelsSmall: false,
   turnIndicator: true,
   flatCounts: true,
   stackCounts: true,
@@ -31,6 +32,8 @@ const defaults = {
   moveNumber: true,
   evalText: true,
   opening: "swap",
+  ply: "",
+  plies: [],
   showRoads: true,
   unplayedPieces: true,
   padding: true,
@@ -74,6 +77,10 @@ function sanitizeOptions(options) {
           }
         } else {
           options[key] = defaults[key];
+        }
+      } else if (key === "plies") {
+        if (isString(options[key])) {
+          options[key] = options[key].split(/[\s,]+/);
         }
       } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";
@@ -243,7 +250,10 @@ exports.TPStoCanvas = function (options = {}) {
     : 0;
   const headerHeight = turnIndicatorHeight + flatCounterHeight;
 
-  const axisSize = options.axisLabels ? Math.round(fontSize * 1.5) : 0;
+  const axisSize =
+    options.axisLabels && !options.axisLabelsSmall
+      ? Math.round(fontSize * 1.5)
+      : 0;
 
   const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
@@ -527,7 +537,7 @@ exports.TPStoCanvas = function (options = {}) {
   }
 
   // Axis Labels
-  if (options.axisLabels) {
+  if (options.axisLabels && !options.axisLabelsSmall) {
     const cols = "abcdefgh".substring(0, board.size).split("");
     const rows = "12345678".substring(0, board.size).split("");
     const yAxis = options.transform[0] % 2 ? cols.concat() : rows.concat();
@@ -626,6 +636,44 @@ exports.TPStoCanvas = function (options = {}) {
     ctx.fill();
   };
 
+  const drawSquareNumber = (square, text, corner = "br") => {
+    const isDark = theme.boardChecker && !square.isLight;
+    ctx.save();
+    ctx.font = `${stackCountFontSize}px ${options.font}`;
+    let isTextLight = theme.board2Dark;
+    ctx.fillStyle = theme.colors.board2;
+    if (hlSquares.includes(square.coord)) {
+      isTextLight = theme.primaryDark;
+      ctx.fillStyle = theme.colors.primary;
+    } else if (isDark) {
+      isTextLight = theme.board1Dark;
+      ctx.fillStyle = theme.colors.board1;
+    }
+    let radius = (stackCountFontSize * 1.5) / 2;
+    ctx.beginPath();
+    ctx.arc(
+      corner[1] === "r" ? squareSize - radius : radius,
+      corner[0] === "b" ? squareSize - radius : radius,
+      radius,
+      0,
+      2 * Math.PI
+    );
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = isTextLight
+      ? theme.colors.textLight
+      : theme.colors.textDark;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      text,
+      corner[1] === "r" ? squareSize - radius : radius,
+      corner[0] === "b" ? squareSize - radius * 0.95 : radius * 0.95
+    );
+    ctx.restore();
+  };
+
   const drawSquare = (square) => {
     const isDark = theme.boardChecker && !square.isLight;
     ctx.save();
@@ -701,6 +749,15 @@ exports.TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
+    // Small Axis Label
+    if (
+      options.axisLabels &&
+      options.axisLabelsSmall &&
+      (square.edges.W || square.edges.S)
+    ) {
+      drawSquareNumber(square, square.coord, "bl");
+    }
+
     if (square.piece) {
       if (board.isGameEndFlats && !square.piece.typeCode()) {
         ctx.fillStyle = withAlpha(
@@ -712,40 +769,7 @@ exports.TPStoCanvas = function (options = {}) {
 
       // Stack Count
       if (options.stackCounts && square.pieces.length > 1) {
-        ctx.save();
-        ctx.font = `${stackCountFontSize}px ${options.font}`;
-        let isTextLight = theme.board2Dark;
-        ctx.fillStyle = theme.colors.board2;
-        if (hlSquares.includes(square.coord)) {
-          isTextLight = theme.primaryDark;
-          ctx.fillStyle = theme.colors.primary;
-        } else if (isDark) {
-          isTextLight = theme.board1Dark;
-          ctx.fillStyle = theme.colors.board1;
-        }
-        let radius = (stackCountFontSize * 1.5) / 2;
-        ctx.beginPath();
-        ctx.arc(
-          squareSize - radius,
-          squareSize - radius,
-          radius,
-          0,
-          2 * Math.PI
-        );
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = isTextLight
-          ? theme.colors.textLight
-          : theme.colors.textDark;
-        ctx.textBaseline = "middle";
-        ctx.textAlign = "center";
-        ctx.fillText(
-          square.pieces.length,
-          squareSize - radius,
-          squareSize - radius * 0.9
-        );
-        ctx.restore();
+        drawSquareNumber(square, square.pieces.length, "br");
       }
 
       square.pieces.forEach(drawPiece);
