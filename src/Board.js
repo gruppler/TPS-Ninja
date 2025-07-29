@@ -264,9 +264,12 @@ exports.Board = class {
         this.isGameEnd = true;
       }
     } else if (
-      this.pieces.played[this.player].flat.length +
-        this.pieces.played[this.player].cap.length ===
-        this.pieceCounts[this.player].total ||
+      Object.keys(this.pieces.played).some(
+        (player) =>
+          this.pieces.played[player].flat.length +
+            this.pieces.played[player].cap.length ===
+          this.pieceCounts[player].total
+      ) ||
       !this.squares.find((row) => row.find((square) => !square.pieces.length))
     ) {
       // Last empty square or last piece
