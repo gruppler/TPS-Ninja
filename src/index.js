@@ -640,14 +640,15 @@ export const TPStoCanvas = function (options = {}) {
   }
 
   // Axis Labels
-  if (options.axisLabels && !options.axisLabelsSmall) {
-    const cols = "abcdefgh".substring(0, board.size).split("");
-    const rows = "12345678".substring(0, board.size).split("");
-    const yAxis = options.transform[0] % 2 ? cols.concat() : rows.concat();
+  let xAxis, yAxis;
+  if (options.axisLabels) {
+    let cols = "abcdefgh".substring(0, board.size).split("");
+    let rows = "12345678".substring(0, board.size).split("");
+    yAxis = options.transform[0] % 2 ? cols : rows;
     if (options.transform[0] === 1 || options.transform[0] === 2) {
       yAxis.reverse();
     }
-    const xAxis = options.transform[0] % 2 ? rows.concat() : cols.concat();
+    xAxis = options.transform[0] % 2 ? rows : cols;
     if (
       options.transform[1]
         ? options.transform[0] === 0 || options.transform[0] === 1
@@ -656,42 +657,45 @@ export const TPStoCanvas = function (options = {}) {
       xAxis.reverse();
     }
 
-    ctx.save();
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = fontSize * 0.05;
-    ctx.shadowBlur = fontSize * 0.1;
-    ctx.shadowColor =
-      theme.secondaryDark || options.bgAlpha < 0.5
-        ? theme.colors.textDark
-        : theme.colors.textLight;
-    ctx.fillStyle =
-      theme.secondaryDark || options.bgAlpha < 0.5
-        ? theme.colors.textLight
-        : theme.colors.textDark;
-    for (let i = 0; i < board.size; i++) {
-      const coord = [xAxis[i], yAxis[i]];
-      ctx.textBaseline = padding ? "middle" : "bottom";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        coord[0],
-        padding + axisSize + squareSize * i + squareSize / 2,
-        padding +
-          headerHeight +
-          boardSize +
-          (padding ? (axisSize + padding) / 2 : axisSize)
-      );
-      ctx.textBaseline = "middle";
-      ctx.textAlign = padding ? "center" : "left";
-      ctx.fillText(
-        coord[1],
-        padding ? (axisSize + padding) / 2 : 0,
-        padding +
-          headerHeight +
-          squareSize * (board.size - i - 1) +
-          squareSize / 2
-      );
+    // Draw large axis labels
+    if (!options.axisLabelsSmall) {
+      ctx.save();
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = fontSize * 0.05;
+      ctx.shadowBlur = fontSize * 0.1;
+      ctx.shadowColor =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textDark
+          : theme.colors.textLight;
+      ctx.fillStyle =
+        theme.secondaryDark || options.bgAlpha < 0.5
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      for (let i = 0; i < board.size; i++) {
+        const coord = [xAxis[i], yAxis[i]];
+        ctx.textBaseline = padding ? "middle" : "bottom";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          coord[0],
+          padding + axisSize + squareSize * i + squareSize / 2,
+          padding +
+            headerHeight +
+            boardSize +
+            (padding ? (axisSize + padding) / 2 : axisSize)
+        );
+        ctx.textBaseline = "middle";
+        ctx.textAlign = padding ? "center" : "left";
+        ctx.fillText(
+          coord[1],
+          padding ? (axisSize + padding) / 2 : 0,
+          padding +
+            headerHeight +
+            squareSize * (board.size - i - 1) +
+            squareSize / 2
+        );
+      }
+      ctx.restore();
     }
-    ctx.restore();
   }
 
   // Board
@@ -858,7 +862,11 @@ export const TPStoCanvas = function (options = {}) {
       options.axisLabelsSmall &&
       (square.edges.W || square.edges.S)
     ) {
-      drawSquareNumber(square, square.coord, "bl");
+      let coord = [xAxis[square.x], yAxis[square.y]];
+      if (options.transform[0] % 2) {
+        coord.reverse();
+      }
+      drawSquareNumber(square, coord.join(""), "bl");
     }
 
     if (square.piece) {
