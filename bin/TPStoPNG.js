@@ -22,7 +22,8 @@ if (!options.length) {
       "  opening         [swap|no-swap] Opening variations\n" +
       "  showRoads       [true|false] Show road connections\n" +
       "  unplayedPieces  [true|false] Show unplayed pieces\n" +
-      "  padding         [true|false] Pad the image\n\n" +
+      "  padding         [true|false] Pad the image\n" +
+      "  suggestions     [JSON] Array of analysis suggestions to overlay\n\n" +
       "  name            Filename of exported PNG, defaults to 'takboard.png'\n" +
       "  player1         Name of Player 1\n" +
       "  player2         Name of Player 2\n" +

@@ -191,6 +191,17 @@ showRoads       [true|false] Show road connections
 unplayedPieces  [true|false] Show unplayed pieces
 padding         [true|false] Pad the image
 highlighter     [JSON] Square coordinates mapped to color, overrides highlight
+suggestions     [JSON] Array of analysis suggestions to overlay on the board
+                Each element can be a PTN string or an object with:
+                  ptn|ply       PTN string of the suggested move
+                  evaluation    Engine evaluation score
+                  depth         Search depth
+                  nodes         Number of nodes searched
+                  totalGames    Total games (for opening book suggestions)
+                  wins1         Player 1 wins (for opening book suggestions)
+                  wins2         Player 2 wins (for opening book suggestions)
+                  draws         Draws (for opening book suggestions)
+                Placements render as ghost pieces; movements render as arrows
 
 name           Filename of exported PNG, defaults to 'takboard.png'
 player1        Name of Player 1
@@ -269,6 +280,17 @@ showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
 highlighter    [JSON] Square coordinates mapped to color, overrides highlight
+suggestions    [JSON] Array of analysis suggestions to overlay on the board
+               Each element can be a PTN string or an object with:
+                 ptn|ply       PTN string of the suggested move
+                 evaluation    Engine evaluation score
+                 depth         Search depth
+                 nodes         Number of nodes searched
+                 totalGames    Total games (for opening book suggestions)
+                 wins1         Player 1 wins (for opening book suggestions)
+                 wins2         Player 2 wins (for opening book suggestions)
+                 draws         Draws (for opening book suggestions)
+               Placements render as ghost pieces; movements render as arrows
 
 name           Filename of exported GIF, defaults to 'takboard.gif'
 player1        Name of Player 1
