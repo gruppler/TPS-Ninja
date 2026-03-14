@@ -1,12 +1,13 @@
 {
   "name": "tps-ninja",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "description": "TPS to PNG - Tak Positional System to Portable Network Graphics",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
   "license": "AGPL-3.0-or-later",
   "bin": {
     "TPStoPNG": "bin/TPStoPNG",
+    "TPStoSVG": "bin/TPStoSVG",
     "PTNtoTPS": "bin/PTNtoTPS"
   },
   "scripts": {
