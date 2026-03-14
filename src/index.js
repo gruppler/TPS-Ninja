@@ -9,22 +9,9 @@ const {
   isString,
   last,
 } = require("lodash");
-
-const pieceSizes = {
-  xs: 12,
-  sm: 24,
-  md: 48,
-  lg: 96,
-  xl: 192,
-};
-
-const textSizes = {
-  xs: 0.1875,
-  sm: 0.21875,
-  md: 0.25,
-  lg: 0.3,
-  xl: 0.4,
-};
+const { pieceSizes, textSizes } = require("./drawUtils");
+const { drawHeader } = require("./drawHeader");
+const { drawAxisLabels, createSquareDrawer, drawUnplayedPieces } = require("./drawBoard");
 
 const defaults = {
   imageSize: "md",
@@ -271,6 +258,37 @@ exports.TPStoCanvas = function (options = {}) {
   const canvasWidth = unplayedWidth + axisSize + boardSize + padding * 2;
   const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
 
+  const dims = {
+    squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize,
+    roadSize, sideCoords, strokeWidth, shadowOffset, shadowBlur, fontSize,
+    stackCountFontSize, padding, flatCounterHeight, turnIndicatorHeight,
+    headerHeight, axisSize, counterRadius, boardRadius, boardSize,
+    unplayedWidth, squareRadius: 0, squareMargin: 0,
+  };
+
+  // Board style
+  switch (theme.boardStyle) {
+    case "diamonds1":
+      dims.squareRadius = squareSize * 0.1;
+      break;
+    case "diamonds2":
+      dims.squareRadius = squareSize * 0.3;
+      break;
+    case "diamonds3":
+      dims.squareRadius = squareSize * 0.5;
+      break;
+    case "grid1":
+      dims.squareMargin = squareSize * 0.01;
+      break;
+    case "grid2":
+      dims.squareMargin = squareSize * 0.03;
+      dims.squareRadius = squareSize * 0.05;
+      break;
+    case "grid3":
+      dims.squareMargin = squareSize * 0.06;
+      dims.squareRadius = squareSize * 0.15;
+  }
+
   // Start Drawing
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
@@ -282,623 +300,21 @@ exports.TPStoCanvas = function (options = {}) {
   ctx.globalAlpha = 1;
 
   // Header
-  const flats = board.flats.concat();
-  const komi = options.komi;
   if (options.turnIndicator) {
-    const totalFlats = flats[0] + flats[1];
-    const flats1Width = Math.round(
-      Math.min(
-        boardSize - squareSize,
-        Math.max(
-          squareSize,
-          (options.flatCounts && totalFlats ? flats[0] / totalFlats : 0.5) *
-            boardSize
-        )
-      )
-    );
-    const flats2Width = Math.round(boardSize - flats1Width);
-    const komiWidth = options.flatCounts
-      ? Math.round(
-          komi < 0
-            ? flats1Width * (-komi / flats[0])
-            : flats2Width * (komi / flats[1])
-        )
-      : 0;
-    if (options.flatCounts) {
-      if (komi < 0) {
-        flats[0] =
-          flats[0] + komi + " +" + (-komi).toString().replace(/0?\.5/, "½");
-      } else if (komi > 0) {
-        flats[1] =
-          flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
-      }
-    } else {
-      flats[0] = "";
-      flats[1] = "";
-      if (komi < 0) {
-        flats[0] = "+" + (-komi).toString().replace(/0?\.5/, "½");
-      } else if (komi > 0) {
-        flats[1] = "+" + komi.toString().replace(/0?\.5/, "½");
-      }
-    }
-
-    // Flat Bars
-    ctx.fillStyle = theme.colors.player1;
-    roundRect(
-      ctx,
-      padding + axisSize,
-      padding,
-      flats1Width,
-      flatCounterHeight,
-      { tl: counterRadius }
-    );
-    ctx.fill();
-
-    ctx.fillStyle = theme.colors.player2;
-    roundRect(
-      ctx,
-      padding + axisSize + flats1Width,
-      padding,
-      flats2Width,
-      flatCounterHeight,
-      { tr: counterRadius }
-    );
-    ctx.fill();
-
-    if (komiWidth) {
-      const flatWidth = komi < 0 ? flats1Width : flats2Width;
-      const dark = komi < 0 ? theme.player1Dark : theme.player2Dark;
-      ctx.fillStyle = dark ? "#fff" : "#000";
-      ctx.globalAlpha = 0.13;
-      if (komiWidth >= flatWidth) {
-        roundRect(
-          ctx,
-          padding + axisSize + (komi > 0) * flats1Width,
-          padding,
-          flatWidth,
-          flatCounterHeight,
-          { [komi < 0 ? "tl" : "tr"]: counterRadius }
-        );
-        ctx.fill();
-      } else {
-        ctx.fillRect(
-          padding + axisSize + flats1Width - (komi < 0) * komiWidth,
-          padding,
-          komiWidth,
-          flatCounterHeight
-        );
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    // Flat Counts
-    ctx.fillStyle = theme.player1Dark
-      ? theme.colors.textLight
-      : theme.colors.textDark;
-    ctx.textBaseline = "middle";
-    // Player 1 Name
-    if (options.player1) {
-      ctx.textDrawingMode = "glyph";
-      const flatCount1Width = ctx.measureText(flats[0]).width;
-      options.player1 = limitText(
-        ctx,
-        options.player1,
-        flats1Width - flatCount1Width - fontSize * 1.2
-      );
-      ctx.textAlign = "start";
-      ctx.fillText(
-        options.player1,
-        padding + axisSize + fontSize / 2,
-        padding + flatCounterHeight / 2
-      );
-      ctx.textDrawingMode = "path";
-    }
-    // Player 1 Flat Count
-    if (flats[0] !== "") {
-      ctx.textAlign = "end";
-      flats[0] = String(flats[0]).split(" ");
-      ctx.fillText(
-        flats[0][0],
-        padding + axisSize + flats1Width - fontSize / 2,
-        padding + flatCounterHeight / 2
-      );
-      if (flats[0][1]) {
-        // Komi
-        flats[0][1] = flats[0][1].substring(1) + "+";
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(
-          flats[0][1],
-          padding +
-            axisSize +
-            flats1Width -
-            fontSize / 2 -
-            ctx.measureText(flats[0][0] + " ").width,
-          padding + flatCounterHeight / 2
-        );
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    ctx.fillStyle = theme.player2Dark
-      ? theme.colors.textLight
-      : theme.colors.textDark;
-
-    // Player 2 Name
-    if (options.player2) {
-      ctx.textDrawingMode = "glyph";
-      const flatCount2Width = ctx.measureText(flats[1]).width;
-      options.player2 = limitText(
-        ctx,
-        options.player2,
-        flats2Width - flatCount2Width - fontSize * 1.2
-      );
-      ctx.textAlign = "end";
-      ctx.fillText(
-        options.player2,
-        padding + axisSize + boardSize - fontSize / 2,
-        padding + flatCounterHeight / 2
-      );
-      ctx.textDrawingMode = "path";
-    }
-    // Player 2 Flat Count
-    if (flats[1] !== "") {
-      ctx.textAlign = "start";
-      flats[1] = String(flats[1]).split(" ");
-      ctx.fillText(
-        flats[1][0],
-        padding + axisSize + flats1Width + fontSize / 2,
-        padding + flatCounterHeight / 2
-      );
-      if (flats[1][1]) {
-        // Komi
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(
-          flats[1][1],
-          padding +
-            axisSize +
-            flats1Width +
-            fontSize / 2 +
-            ctx.measureText(flats[1][0] + " ").width,
-          padding + flatCounterHeight / 2
-        );
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // Turn Indicator
-    if (!board.isGameEnd) {
-      ctx.fillStyle = theme.colors.primary;
-      ctx.fillRect(
-        padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),
-        padding + flatCounterHeight,
-        boardSize / 2,
-        turnIndicatorHeight
-      );
-    }
-
-    // Move number
-    let moveNumberWidth = 0;
-    if (options.moveNumber && options.unplayedPieces) {
-      let moveNumber;
-      if (typeof options.moveNumber === "number") {
-        moveNumber = options.moveNumber;
-      } else {
-        moveNumber = board.linenum;
-        if (moveNumber > 1 && board.player === 1) {
-          moveNumber -= 1;
-        }
-      }
-      moveNumber += ".";
-      ctx.save();
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "center";
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = fontSize * 0.05;
-      ctx.shadowBlur = fontSize * 0.1;
-      ctx.shadowColor =
-        theme.secondaryDark || options.bgAlpha < 0.5
-          ? theme.colors.textDark
-          : theme.colors.textLight;
-      ctx.fillStyle =
-        theme.secondaryDark || options.bgAlpha < 0.5
-          ? theme.colors.textLight
-          : theme.colors.textDark;
-      ctx.fillText(
-        moveNumber,
-        padding + axisSize + boardSize + unplayedWidth / 2,
-        padding + flatCounterHeight / 2
-      );
-      let { width } = ctx.measureText(moveNumber);
-      moveNumberWidth = width;
-      ctx.restore();
-    }
-
-    if (options.evalText && options.unplayedPieces && evalText) {
-      if (moveNumberWidth) {
-        evalText = " " + evalText;
-      }
-      ctx.save();
-      ctx.textBaseline = "middle";
-      ctx.textAlign = options.moveNumber ? "left" : "center";
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = fontSize * 0.05;
-      ctx.shadowBlur = fontSize * 0.1;
-      ctx.shadowColor =
-        theme.secondaryDark || options.bgAlpha < 0.5
-          ? theme.colors.textDark
-          : theme.colors.textLight;
-      ctx.fillStyle = theme.colors.primary;
-      ctx.font = `bold ${fontSize}px ${options.font}`;
-      ctx.fillText(
-        evalText,
-        padding +
-          axisSize +
-          boardSize +
-          unplayedWidth / 2 +
-          moveNumberWidth / 2,
-        padding + flatCounterHeight / 2
-      );
-      ctx.restore();
-    }
+    options._evalText = evalText;
+    drawHeader(ctx, options, board, theme, dims);
   }
 
   // Axis Labels
-  let xAxis, yAxis;
+  let xAxis = [], yAxis = [];
   if (options.axisLabels) {
-    let cols = "abcdefgh".substring(0, board.size).split("");
-    let rows = "12345678".substring(0, board.size).split("");
-    yAxis = options.transform[0] % 2 ? cols : rows;
-    if (options.transform[0] === 1 || options.transform[0] === 2) {
-      yAxis.reverse();
-    }
-    xAxis = options.transform[0] % 2 ? rows : cols;
-    if (
-      options.transform[1]
-        ? options.transform[0] === 0 || options.transform[0] === 1
-        : options.transform[0] === 2 || options.transform[0] === 3
-    ) {
-      xAxis.reverse();
-    }
-
-    // Draw large axis labels
-    if (!options.axisLabelsSmall) {
-      ctx.save();
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = fontSize * 0.05;
-      ctx.shadowBlur = fontSize * 0.1;
-      ctx.shadowColor =
-        theme.secondaryDark || options.bgAlpha < 0.5
-          ? theme.colors.textDark
-          : theme.colors.textLight;
-      ctx.fillStyle =
-        theme.secondaryDark || options.bgAlpha < 0.5
-          ? theme.colors.textLight
-          : theme.colors.textDark;
-      for (let i = 0; i < board.size; i++) {
-        const coord = [xAxis[i], yAxis[i]];
-        ctx.textBaseline = padding ? "middle" : "bottom";
-        ctx.textAlign = "center";
-        ctx.fillText(
-          coord[0],
-          padding + axisSize + squareSize * i + squareSize / 2,
-          padding +
-            headerHeight +
-            boardSize +
-            (padding ? (axisSize + padding) / 2 : axisSize)
-        );
-        ctx.textBaseline = "middle";
-        ctx.textAlign = padding ? "center" : "left";
-        ctx.fillText(
-          coord[1],
-          padding ? (axisSize + padding) / 2 : 0,
-          padding +
-            headerHeight +
-            squareSize * (board.size - i - 1) +
-            squareSize / 2
-        );
-      }
-      ctx.restore();
-    }
+    ({ xAxis, yAxis } = drawAxisLabels(ctx, options, board, theme, dims));
   }
 
-  // Board
-  let squareRadius = 0;
-  let squareMargin = 0;
-  switch (theme.boardStyle) {
-    case "diamonds1":
-      squareRadius = squareSize * 0.1;
-      break;
-    case "diamonds2":
-      squareRadius = squareSize * 0.3;
-      break;
-    case "diamonds3":
-      squareRadius = squareSize * 0.5;
-      break;
-    case "grid1":
-      squareMargin = squareSize * 0.01;
-      break;
-    case "grid2":
-      squareMargin = squareSize * 0.03;
-      squareRadius = squareSize * 0.05;
-      break;
-    case "grid3":
-      squareMargin = squareSize * 0.06;
-      squareRadius = squareSize * 0.15;
-  }
-
-  // Square
-  const drawSquareHighlight = () => {
-    const half = squareSize / 2;
-    if (squareRadius >= half) {
-      ctx.beginPath();
-      ctx.arc(half, half, half, 0, 2 * Math.PI);
-      ctx.closePath();
-    } else {
-      roundRect(
-        ctx,
-        squareMargin,
-        squareMargin,
-        squareSize - squareMargin * 2,
-        squareSize - squareMargin * 2,
-        squareRadius
-      );
-    }
-    ctx.fill();
-  };
-
-  const drawSquareNumber = (square, text, corner = "br") => {
-    const isDark = theme.boardChecker && !square.isLight;
-    ctx.save();
-    ctx.font = `${stackCountFontSize}px ${options.font}`;
-    let isTextLight = theme.board2Dark;
-    ctx.fillStyle = theme.colors.board2;
-    if (hlSquares.includes(square.coord)) {
-      isTextLight = theme.primaryDark;
-      ctx.fillStyle = theme.colors.primary;
-    } else if (isDark) {
-      isTextLight = theme.board1Dark;
-      ctx.fillStyle = theme.colors.board1;
-    }
-    let radius = (stackCountFontSize * 1.5) / 2;
-    ctx.beginPath();
-    ctx.arc(
-      corner[1] === "r" ? squareSize - radius : radius,
-      corner[0] === "b" ? squareSize - radius : radius,
-      radius,
-      0,
-      2 * Math.PI
-    );
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = isTextLight
-      ? theme.colors.textLight
-      : theme.colors.textDark;
-    ctx.textBaseline = "middle";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      text,
-      corner[1] === "r" ? squareSize - radius : radius,
-      corner[0] === "b" ? squareSize - radius * 0.95 : radius * 0.95
-    );
-    ctx.restore();
-  };
-
-  const drawSquare = (square) => {
-    const isDark = theme.boardChecker && !square.isLight;
-    ctx.save();
-    ctx.translate(
-      padding + axisSize + square.x * squareSize,
-      padding + headerHeight + (board.size - square.y - 1) * squareSize
-    );
-
-    if (!theme.boardStyle || theme.boardStyle === "blank") {
-      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
-      ctx.fillRect(0, 0, squareSize, squareSize);
-    } else {
-      ctx.fillStyle = theme.colors["board" + (isDark ? 1 : 2)];
-      ctx.fillRect(0, 0, squareSize, squareSize);
-      ctx.fillStyle = theme.colors["board" + (isDark ? 2 : 1)];
-      drawSquareHighlight();
-    }
-
-    if (theme.rings) {
-      let ring = square.ring;
-      if (theme.fromCenter) {
-        ring = Math.round(board.size / 2) - ring + 1;
-      }
-      if (ring <= theme.rings) {
-        ctx.fillStyle = theme.colors["ring" + ring];
-        ctx.globalAlpha = theme.vars["rings-opacity"];
-        drawSquareHighlight();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    if (options.highlighter && square.coord in options.highlighter) {
-      ctx.fillStyle = withAlpha(options.highlighter[square.coord], 0.75);
-      drawSquareHighlight();
-    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
-      const alphas = [0.4, 0.75];
-      if (!options.plyIsDone) {
-        alphas.reverse();
-      }
-      ctx.fillStyle = withAlpha(
-        theme.colors.primary,
-        hlSquares.length > 1 && square.coord === hlSquares[0]
-          ? alphas[0]
-          : alphas[1]
-      );
-      drawSquareHighlight();
-    }
-
-    if (options.showRoads && square.connected.length && !board.isGameEndFlats) {
-      square.connected.forEach((side) => {
-        const coords = sideCoords[side];
-        ctx.fillStyle = withAlpha(
-          theme.colors[`player${square.color}road`],
-          square.roads[side] ? 0.8 : 0.2
-        );
-        ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
-      });
-      ctx.fillStyle = withAlpha(
-        theme.colors[`player${square.color}road`],
-        square.roads.length ? 0.8 : 0.2
-      );
-      ctx.fillRect(
-        (squareSize - roadSize) / 2,
-        (squareSize - roadSize) / 2,
-        roadSize,
-        roadSize
-      );
-    } else if (square.roads.length) {
-      ctx.fillStyle = withAlpha(
-        theme.colors[`player${square.color}road`],
-        0.35
-      );
-      drawSquareHighlight();
-    }
-
-    // Small Axis Label
-    if (
-      options.axisLabels &&
-      options.axisLabelsSmall &&
-      (square.edges.W || square.edges.S)
-    ) {
-      let coord = [xAxis[square.x], yAxis[square.y]];
-      if (options.transform[0] % 2) {
-        coord.reverse();
-      }
-      drawSquareNumber(square, coord.join(""), "bl");
-    }
-
-    if (square.piece) {
-      if (board.isGameEndFlats && !square.piece.typeCode()) {
-        ctx.fillStyle = withAlpha(
-          theme.colors[`player${square.color}road`],
-          0.4
-        );
-        drawSquareHighlight();
-      }
-
-      // Stack Count
-      if (options.stackCounts && square.pieces.length > 1) {
-        drawSquareNumber(square, square.pieces.length, "br");
-      }
-
-      square.pieces.forEach(drawPiece);
-    }
-
-    ctx.restore();
-  };
-
-  // Piece
-  const drawPiece = (piece) => {
-    ctx.save();
-
-    const pieces = piece.square ? piece.square.pieces : null;
-    const offset = squareSize / 2;
-    ctx.translate(offset, offset);
-
-    let y = 0;
-    const z = piece.z();
-    const isOverLimit = pieces && pieces.length > board.size;
-    const isImmovable = isOverLimit && z < pieces.length - board.size;
-
-    if (piece.square) {
-      // Played
-      y -= pieceSpacing * z;
-      if (isOverLimit && !isImmovable) {
-        y += pieceSpacing * (pieces.length - board.size);
-      }
-      if (piece.isStanding && pieces.length > 1) {
-        y += pieceSpacing;
-      }
-      const overflow = Math.max(0, pieces.length - 10 - board.size);
-      if (isImmovable) {
-        if (z < overflow) {
-          ctx.restore();
-          return;
-        }
-        y += pieceSpacing * overflow;
-      }
-    } else {
-      // Unplayed
-      const stackColor =
-        options.opening === "swap" && piece.index === 0 && !piece.isCapstone
-          ? piece.color === 1
-            ? 2
-            : 1
-          : piece.color;
-      const caps = board.pieceCounts[stackColor].cap;
-      const total = board.pieceCounts[stackColor].total;
-      y = board.size - 1;
-      if (piece.isCapstone) {
-        y *= total - piece.index - 1;
-      } else {
-        y *= total - piece.index - caps - 1;
-      }
-      y *= -squareSize / (total - 1);
-    }
-
-    y = Math.round(y);
-
-    if (piece.isCapstone) {
-      ctx.fillStyle = theme.colors[`player${piece.color}special`];
-      ctx.beginPath();
-      ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
-    } else if (piece.isStanding) {
-      ctx.fillStyle = theme.colors[`player${piece.color}special`];
-      ctx.translate(0, y);
-      ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
-      roundRect(
-        ctx,
-        Math.round(-wallSize / 2),
-        Math.round(-pieceSize / 2),
-        wallSize,
-        pieceSize,
-        pieceRadius
-      );
-    } else {
-      ctx.fillStyle = theme.colors[`player${piece.color}flat`];
-      if (isImmovable) {
-        roundRect(
-          ctx,
-          Math.round(pieceSize / 2),
-          Math.round(y + pieceSize / 2 - pieceSpacing),
-          immovableSize,
-          pieceSpacing,
-          pieceRadius / 2
-        );
-      } else {
-        roundRect(
-          ctx,
-          Math.round(-pieceSize / 2),
-          Math.round(y - pieceSize / 2),
-          pieceSize,
-          pieceSize,
-          pieceRadius
-        );
-      }
-    }
-
-    // Fill
-    ctx.save();
-    ctx.shadowBlur = shadowBlur;
-    ctx.shadowOffsetY = shadowOffset;
-    ctx.shadowColor = theme.colors.umbra;
-    ctx.fill();
-    ctx.restore();
-
-    // Stroke
-    if (theme.vars["piece-border-width"] > 0) {
-      ctx.strokeStyle = theme.colors[`player${piece.color}border`];
-      ctx.lineWidth = strokeWidth;
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  };
+  // Board Squares & Pieces
+  const { drawSquare, drawPiece } = createSquareDrawer(
+    ctx, options, board, theme, hlSquares, xAxis, yAxis, dims
+  );
 
   board.squares
     .concat()
@@ -907,48 +323,7 @@ exports.TPStoCanvas = function (options = {}) {
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
-    ctx.fillStyle = theme.colors.board3;
-    roundRect(
-      ctx,
-      axisSize + padding + boardSize,
-      headerHeight + padding,
-      unplayedWidth,
-      boardSize,
-      { tr: boardRadius, br: boardRadius }
-    );
-    ctx.fill();
-
-    [1, 2].forEach((color) => {
-      ctx.save();
-      ctx.translate(
-        padding + axisSize + boardSize + (color === 2) * squareSize * 0.75,
-        padding + headerHeight + boardSize - squareSize
-      );
-      ["flat", "cap"].forEach((type) => {
-        const total = board.pieceCounts[color][type];
-        const played = board.pieces.played[color][type].length;
-        const remaining = total - played;
-        const pieces = board.pieces.all[color][type].slice(total - remaining);
-        if (type === "flat" && options.opening === "swap") {
-          // Swap first pieces
-          if (color === 1) {
-            if (!board.pieces.played[2][type].length) {
-              pieces[0] = board.pieces.all[2][type][0];
-            } else if (!played) {
-              pieces.shift();
-            }
-          } else if (!board.pieces.played[1][type].length) {
-            if (!board.pieces.played[2][type].length) {
-              pieces[0] = board.pieces.all[1][type][0];
-            } else {
-              pieces.unshift(board.pieces.all[1][type][0]);
-            }
-          }
-        }
-        pieces.reverse().forEach(drawPiece);
-      });
-      ctx.restore();
-    });
+    drawUnplayedPieces(ctx, options, board, theme, drawPiece, dims);
   }
 
   canvas.isGameEnd = board.isGameEnd;
@@ -957,51 +332,3 @@ exports.TPStoCanvas = function (options = {}) {
   canvas.id = board.result || board.getTPS();
   return canvas;
 };
-
-function withAlpha(color, alpha) {
-  return color.substring(0, 7) + Math.round(256 * alpha).toString(16);
-}
-
-function limitText(ctx, text, width) {
-  const suffix = "…";
-  if (width <= 0) {
-    return "";
-  }
-  if (width >= ctx.measureText(text).width) {
-    return text;
-  }
-  do {
-    text = text.substring(0, text.length - 1);
-  } while (text.length && ctx.measureText(text + suffix).width >= width);
-  return text + suffix;
-}
-
-function roundRect(ctx, x, y, width, height, radius) {
-  let radii = {
-    tl: 0,
-    tr: 0,
-    bl: 0,
-    br: 0,
-  };
-  if (typeof radius === "object") {
-    for (let side in radius) {
-      radii[side] = radius[side];
-    }
-  } else {
-    for (let side in radii) {
-      radii[side] = radius;
-    }
-  }
-
-  ctx.beginPath();
-  ctx.moveTo(x + radii.tl, y);
-  ctx.lineTo(x + width - radii.tr, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radii.tr);
-  ctx.lineTo(x + width, y + height - radii.br);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radii.br, y + height);
-  ctx.lineTo(x + radii.bl, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radii.bl);
-  ctx.lineTo(x, y + radii.tl);
-  ctx.quadraticCurveTo(x, y, x + radii.tl, y);
-  ctx.closePath();
-}
