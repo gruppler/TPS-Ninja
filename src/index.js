@@ -856,17 +856,19 @@ export const TPStoCanvas = function (options = {}) {
       drawSquareHighlight();
     }
 
-    // Small Axis Label
-    if (
-      options.axisLabels &&
-      options.axisLabelsSmall &&
-      (square.edges.W || square.edges.S)
-    ) {
-      let coord = [xAxis[square.x], yAxis[square.y]];
+    // Small Axis Labels
+    if (options.axisLabels && options.axisLabelsSmall) {
+      let col = xAxis[square.x];
+      let row = yAxis[square.y];
       if (options.transform[0] % 2) {
-        coord.reverse();
+        [col, row] = [row, col];
       }
-      drawSquareNumber(square, coord.join(""), "bl");
+      if (square.edges.W) {
+        drawSquareNumber(square, row, "tl");
+      }
+      if (square.edges.S) {
+        drawSquareNumber(square, col, "br");
+      }
     }
 
     if (square.piece) {
@@ -880,7 +882,7 @@ export const TPStoCanvas = function (options = {}) {
 
       // Stack Count
       if (options.stackCounts && square.pieces.length > 1) {
-        drawSquareNumber(square, square.pieces.length, "br");
+        drawSquareNumber(square, square.pieces.length, "bl");
       }
 
       square.pieces.forEach(drawPiece);
