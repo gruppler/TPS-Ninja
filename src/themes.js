@@ -1,3 +1,18 @@
+import { isDark } from "./colors.js";
+
+export function computeThemeBooleans(theme) {
+  const c = theme.colors;
+  if (c.primary) theme.primaryDark = isDark(c.primary);
+  if (c.secondary) theme.secondaryDark = isDark(c.secondary);
+  if (c.player1) theme.player1Dark = isDark(c.player1);
+  if (c.player2) theme.player2Dark = isDark(c.player2);
+  if (c.player1flat) theme.player1FlatDark = isDark(c.player1flat);
+  if (c.player2flat) theme.player2FlatDark = isDark(c.player2flat);
+  if (c.board1) theme.board1Dark = isDark(c.board1);
+  if (c.board2) theme.board2Dark = isDark(c.board2);
+  return theme;
+}
+
 export default [
   {
     id: "classic",
@@ -25,12 +40,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000033",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "aaron",
@@ -67,12 +76,6 @@ export default [
       textDark: "#0a0a0acc",
       umbra: "#00000033",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "aer",
@@ -109,12 +112,6 @@ export default [
       ring3: "#cae3e3cc",
       ring4: "#ffffffff",
     },
-    primaryDark: false,
-    secondaryDark: false,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: false,
-    board2Dark: false,
   },
   {
     id: "aether",
@@ -144,12 +141,6 @@ export default [
       textDark: "#000000",
       umbra: "#00000066",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "aqua",
@@ -186,12 +177,6 @@ export default [
       textDark: "#001219cc",
       umbra: "#00000033",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "atlas",
@@ -228,12 +213,6 @@ export default [
       textDark: "#634831",
       umbra: "#453c3455",
     },
-    primaryDark: true,
-    secondaryDark: false,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "backlit",
@@ -261,12 +240,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000022",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "bubbletron",
@@ -302,12 +275,6 @@ export default [
       textDark: "#282033cc",
       umbra: "#28203354",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: true,
-    player2Dark: false,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "discord",
@@ -335,12 +302,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000033",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "essence",
@@ -377,12 +338,6 @@ export default [
       textDark: "#0a0a0acc",
       umbra: "#00000033",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: false,
   },
   {
     id: "fresh",
@@ -412,12 +367,6 @@ export default [
       textDark: "#183136cd",
       umbra: "#00000033",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: false,
-    board2Dark: true,
   },
   {
     id: "ignis",
@@ -453,12 +402,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000033",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "luna",
@@ -495,12 +438,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000066",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "paper",
@@ -528,12 +465,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000022",
     },
-    primaryDark: false,
-    secondaryDark: false,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: false,
-    board2Dark: false,
   },
   {
     id: "retro",
@@ -561,12 +492,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000033",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "stealth",
@@ -594,12 +519,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000066",
     },
-    primaryDark: true,
-    secondaryDark: true,
-    board1Dark: true,
-    board2Dark: true,
-    player1Dark: false,
-    player2Dark: true,
   },
   {
     id: "terra",
@@ -627,12 +546,6 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000033",
     },
-    primaryDark: false,
-    secondaryDark: true,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: true,
-    board2Dark: true,
   },
   {
     id: "zen",
@@ -660,11 +573,5 @@ export default [
       textDark: "#212121cd",
       umbra: "#00000055",
     },
-    primaryDark: true,
-    secondaryDark: false,
-    player1Dark: false,
-    player2Dark: true,
-    board1Dark: false,
-    board2Dark: false,
   },
 ];
