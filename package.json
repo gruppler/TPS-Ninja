@@ -7,6 +7,7 @@
   "license": "AGPL-3.0-or-later",
   "bin": {
     "TPStoPNG": "bin/TPStoPNG",
+    "TPStoSVG": "bin/TPStoSVG",
     "PTNtoTPS": "bin/PTNtoTPS"
   },
   "scripts": {
