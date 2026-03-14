@@ -21,6 +21,7 @@
   "bin": {
     "TPStoPNG": "bin/TPStoPNG.js",
     "TPStoGIF": "bin/TPStoGIF.js",
+    "TPStoSVG": "bin/TPStoSVG.js",
     "PTNtoTPS": "bin/PTNtoTPS.js"
   },
   "scripts": {
