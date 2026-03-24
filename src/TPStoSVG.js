@@ -91,7 +91,7 @@ function TPStoSVGString(options) {
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
   const stackCountFontSize = Math.min(squareSize * 0.18, fontSize);
-  const axisLabelFontSize = Math.min(squareSize * 0.15, 15);
+  const axisLabelFontSize = squareSize * 0.15;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
