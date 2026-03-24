@@ -7,7 +7,7 @@ import { sanitizeOptions } from "./options.js";
 import { parseTheme } from "./parseTheme.js";
 import { drawHeader } from "./drawHeader.js";
 import { drawAxisLabels, createSquareDrawer, drawUnplayedPieces } from "./drawBoard.js";
-import { drawAnalysis } from "./drawAnalysis.js";
+import { drawAnalysis } from "./drawAnalysisPNG.js";
 
 export const TPStoCanvas = function (options = {}) {
   sanitizeOptions(options);
@@ -62,7 +62,7 @@ export const TPStoCanvas = function (options = {}) {
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
   const stackCountFontSize = Math.min(squareSize * 0.18, fontSize);
-  const axisLabelFontSize = Math.min(squareSize * 0.15, 15);
+  const axisLabelFontSize = squareSize * 0.15;
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
