@@ -1,4 +1,5 @@
 import { withAlpha } from "./drawUtils.js";
+import { isDark } from "./colors.js";
 
 export function drawAxisLabelsSvg(
   svg,
@@ -99,6 +100,7 @@ export function drawBoardSvg(
     shadowOffset,
     shadowBlur,
     stackCountFontSize,
+    axisLabelFontSize,
     squareRadius,
     squareMargin,
     padding,
@@ -110,6 +112,49 @@ export function drawBoardSvg(
   // Shadow filter for pieces
   const pieceShadowId = "pieceShadow";
   svg.shadowFilter(pieceShadowId, 0, shadowOffset, shadowBlur, theme.colors.umbra);
+
+  function isAxisLabelTextLight(square) {
+    const isDiamonds3 = theme.boardStyle === "diamonds3";
+
+    if (
+      !isDiamonds3 &&
+      options.highlighter &&
+      square.coord in options.highlighter
+    ) {
+      return isDark(options.highlighter[square.coord]);
+    }
+
+    let isTextLight;
+    if (theme.boardChecker) {
+      if (isDiamonds3) {
+        isTextLight = square.isLight ? theme.board2Dark : theme.board1Dark;
+      } else {
+        isTextLight = square.isLight ? theme.board1Dark : theme.board2Dark;
+      }
+    } else {
+      isTextLight = isDiamonds3 ? theme.board2Dark : theme.board1Dark;
+    }
+
+    if (
+      !isDiamonds3 &&
+      options.hlSquares &&
+      hlSquares.includes(square.coord)
+    ) {
+      isTextLight = theme.primaryDark;
+    }
+
+    return Boolean(isTextLight);
+  }
+
+  function axisLabelInsetEm() {
+    if (theme.boardStyle === "diamonds2" || theme.boardStyle === "grid3") {
+      return 0.5;
+    }
+    if (theme.boardStyle === "grid2") {
+      return 0.25;
+    }
+    return 0;
+  }
 
   function squareOriginX(square) {
     return padding + axisSize + square.x * squareSize;
@@ -137,25 +182,20 @@ export function drawBoardSvg(
   }
 
   function drawSquareNumberEl(sx, sy, square, text, corner = "br") {
-    const isDark = theme.boardChecker && !square.isLight;
-    const radius = (stackCountFontSize * 1.5) / 2;
-    const cx = corner[1] === "r" ? sx + squareSize - radius : sx + radius;
-    const cy = corner[0] === "b" ? sy + squareSize - radius : sy + radius;
+    const cornerAnchor = axisLabelFontSize * 0.65;
+    const inset = axisLabelFontSize * axisLabelInsetEm();
+    const cx =
+      (corner[1] === "r" ? sx + squareSize - cornerAnchor : sx + cornerAnchor) +
+      (corner[1] === "r" ? -inset : inset);
+    const cy =
+      (corner[0] === "b" ? sy + squareSize - cornerAnchor : sy + cornerAnchor) +
+      (corner[0] === "b" ? -inset : inset);
 
-    let isTextLight = theme.board2Dark;
-    let circleFill = theme.colors.board2;
-    if (hlSquares.includes(square.coord)) {
-      isTextLight = theme.primaryDark;
-      circleFill = theme.colors.primary;
-    } else if (isDark) {
-      isTextLight = theme.board1Dark;
-      circleFill = theme.colors.board1;
-    }
+    const isTextLight = isAxisLabelTextLight(square);
 
-    svg.circle(cx, cy, radius, { fill: circleFill });
     svg.text(cx, cy, String(text), {
       fill: isTextLight ? theme.colors.textLight : theme.colors.textDark,
-      fontSize: stackCountFontSize,
+      fontSize: axisLabelFontSize,
       fontFamily: options.font,
       textAnchor: "middle",
       dy: "0.35em",
@@ -278,11 +318,6 @@ export function drawBoardSvg(
             );
           }
 
-          // Stack Count
-          if (options.stackCounts && square.pieces.length > 1) {
-            drawSquareNumberEl(sx, sy, square, square.pieces.length, "bl");
-          }
-
           // Pieces
           square.pieces.forEach((piece) => {
             drawPieceSvg(
@@ -302,6 +337,7 @@ export function drawBoardSvg(
                 wallSize,
                 strokeWidth,
                 pieceShadowId,
+                stackCountFontSize,
               }
             );
           });
@@ -318,7 +354,7 @@ function drawPieceSvg(
   board,
   options,
   theme,
-  { squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize, strokeWidth, pieceShadowId }
+  { squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize, strokeWidth, pieceShadowId, stackCountFontSize }
 ) {
   const pieces = piece.square ? piece.square.pieces : null;
   const z = piece.z();
@@ -437,6 +473,21 @@ function drawPieceSvg(
       );
       svg.closeGroup();
     }
+  }
+
+  // Stack Count (only on top piece)
+  const isTopPiece = pieces && z === pieces.length - 1;
+  if (options.stackCounts && isTopPiece && pieces.length > 1) {
+    const textFill = theme[`player${piece.color}FlatDark`]
+      ? theme.colors.textLight
+      : theme.colors.textDark;
+    svg.text(cx, cy + y, String(pieces.length), {
+      fill: textFill,
+      fontSize: stackCountFontSize,
+      fontFamily: options.font,
+      textAnchor: "middle",
+      dy: "0.35em",
+    });
   }
 }
 

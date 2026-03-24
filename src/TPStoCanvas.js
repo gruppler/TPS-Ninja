@@ -62,6 +62,7 @@ export const TPStoCanvas = function (options = {}) {
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
   const stackCountFontSize = Math.min(squareSize * 0.18, fontSize);
+  const axisLabelFontSize = Math.min(squareSize * 0.15, 15);
   const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
 
   const flatCounterHeight = options.turnIndicator
@@ -94,7 +95,7 @@ export const TPStoCanvas = function (options = {}) {
   const dims = {
     squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize,
     roadSize, sideCoords, strokeWidth, shadowOffset, shadowBlur, fontSize,
-    stackCountFontSize, padding, flatCounterHeight, turnIndicatorHeight,
+    stackCountFontSize, axisLabelFontSize, padding, flatCounterHeight, turnIndicatorHeight,
     headerHeight, axisSize, counterRadius, boardRadius, boardSize,
     unplayedWidth, squareRadius: 0, squareMargin: 0,
   };
