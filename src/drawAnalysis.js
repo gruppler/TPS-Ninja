@@ -153,6 +153,7 @@ export function computeArrowGeometry(
   const headLen = squareSize * 0.2;
   const headHalf = squareSize * 0.1;
   const lineWidth = squareSize * 0.08;
+  const shaftStartInset = squareSize * 0.01;
   const stackSpacing = squareSize * 0.07;
 
   const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
@@ -179,14 +180,16 @@ export function computeArrowGeometry(
   let finalTipY = tipY;
   let baseX = tipX - ndx * headLen;
   let baseY = tipY - ndy * headLen;
+  let sourceAdvance = startShorten;
 
-  let x1 = from.x + ndx * startShorten + ox;
-  let y1 = from.y + ndy * startShorten + oy;
+  let x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
+  let y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
 
   if (isVerticalOnScreen && bottomOffset > 0) {
     if (from.y > to.y) {
-      x1 = from.x + ndx * (startShorten + bottomOffset) + ox;
-      y1 = from.y + ndy * (startShorten + bottomOffset) + oy;
+      sourceAdvance = startShorten + bottomOffset;
+      x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
+      y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
     } else {
       const adjustedEndShorten = endShorten + bottomOffset;
       finalTipX = to.x - ndx * adjustedEndShorten + ox;
@@ -215,6 +218,7 @@ export function computeArrowGeometry(
     oy,
     x1,
     y1,
+    sourceAdvance,
     baseX,
     baseY,
     finalTipX,
@@ -233,7 +237,7 @@ export function computeArrowDrops(
   squareSize,
   getStackHeight
 ) {
-  const { ply, squares, boardSquares, from, ndx, ndy, px, py, ox, oy, x1, y1, baseX, baseY, finalTipX, finalTipY } =
+  const { ply, squares, boardSquares, from, ndx, ndy, px, py, ox, oy, sourceAdvance, baseX, baseY, finalTipX, finalTipY } =
     geometry;
 
   const dist = ply.distribution;
@@ -249,8 +253,8 @@ export function computeArrowDrops(
   const sourceHeight = getStackHeight(boardSquares[0]);
   const showPickup = pickup > 1 || sourceHeight > 1;
 
-  const pCx = x1 + ndx * squareSize * 0.03;
-  const pCy = y1 + ndy * squareSize * 0.03;
+  const pCx = from.x + ox + ndx * (sourceAdvance + squareSize * 0.03);
+  const pCy = from.y + oy + ndy * (sourceAdvance + squareSize * 0.03);
   const pLen = squareSize * 0.2;
   const pHalf = squareSize * 0.1;
   const pTipX = pCx + ndx * pLen * 0.6;
