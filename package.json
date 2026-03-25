@@ -1,6 +1,6 @@
 {
   "name": "tps-ninja",
-  "version": "1.1.18",
+  "version": "1.1.19",
   "description": "Generate images from Tak Positional System (TPS) strings",
   "productName": "TPS Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -17,7 +17,10 @@
     "images"
   ],
   "homepage": "https://github.com/gruppler/TPS-Ninja",
-  "repository": "git://github.com/gruppler/TPS-Ninja.git",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/gruppler/TPS-Ninja.git"
+  },
   "bin": {
     "TPStoPNG": "bin/TPStoPNG.js",
     "TPStoGIF": "bin/TPStoGIF.js",
