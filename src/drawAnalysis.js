@@ -103,6 +103,17 @@ export function groupPlacementsByCoord(placements) {
   return placementGroups;
 }
 
+export function getStrengthScale(strength) {
+  const minOpacity = 0.25;
+  const maxOpacity = 1.0;
+  const minScale = 0.45;
+  const maxScale = 1.2;
+  const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
+  const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
+  const eased = t * t;
+  return minScale + (maxScale - minScale) * eased;
+}
+
 export function computeArrowGeometry(
   move,
   arrowGroupMap,

@@ -3,6 +3,7 @@ import { roundRect, coordToCanvas } from "./drawUtils.js";
 import {
   computeArrowDrops,
   computeArrowGeometry,
+  getStrengthScale,
   getGroupOffsets,
   groupOverlappingArrows,
   groupPlacementsByCoord,
@@ -154,31 +155,48 @@ export function drawAnalysis(
     const plyColor = board.player;
 
     const arrowColor = theme.colors[`player${plyColor}flat`];
+    const borderColor = theme.colors[`player${plyColor}border`];
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight
       : theme.colors.textDark;
+    const strokeScale = getStrengthScale(strength);
+    const coreLineWidth = lineWidth * strokeScale;
+    const borderWidth = ghostStrokeWidth;
+    const borderLineWidth = coreLineWidth + borderWidth * 2;
+    const hasArrowBorder = borderWidth > 0;
+    const textItems = [];
 
     // Draw arrow elements to offscreen canvas at full opacity
     const offscreen = createCanvas(canvasW, canvasH);
     const octx = offscreen.getContext("2d");
 
-    // Draw line
-    octx.strokeStyle = arrowColor;
-    octx.lineWidth = lineWidth;
-    octx.lineCap = "round";
-    octx.beginPath();
-    octx.moveTo(x1, y1);
-    octx.lineTo(baseX, baseY);
-    octx.stroke();
+    // Draw border line beneath all arrow shapes
+    if (hasArrowBorder) {
+      octx.strokeStyle = borderColor;
+      octx.lineWidth = borderLineWidth;
+      octx.lineCap = "round";
+      octx.beginPath();
+      octx.moveTo(x1, y1);
+      octx.lineTo(baseX, baseY);
+      octx.stroke();
+    }
+
+    // Draw arrowhead and markers
+    octx.fillStyle = arrowColor;
+    if (hasArrowBorder) {
+      octx.strokeStyle = borderColor;
+      octx.lineWidth = borderWidth;
+      octx.lineJoin = "round";
+    }
 
     // Draw arrowhead
-    octx.fillStyle = arrowColor;
     octx.beginPath();
     octx.moveTo(finalTipX, finalTipY);
     octx.lineTo(lx, ly);
     octx.lineTo(rx, ry);
     octx.closePath();
     octx.fill();
+    if (hasArrowBorder) octx.stroke();
 
     const drops = computeArrowDrops(
       geometry,
@@ -196,44 +214,63 @@ export function drawAnalysis(
         finalDropLabel,
       } = drops;
 
-      octx.fillStyle = arrowColor;
       octx.beginPath();
       octx.moveTo(pickupTriangle.tipX, pickupTriangle.tipY);
       octx.lineTo(pickupTriangle.lx, pickupTriangle.ly);
       octx.lineTo(pickupTriangle.rx, pickupTriangle.ry);
       octx.closePath();
       octx.fill();
+      if (hasArrowBorder) octx.stroke();
 
       if (pickupLabel) {
-        octx.fillStyle = textColor;
-        octx.font = `${dropFontSize}px ${options.font}`;
-        octx.textAlign = "center";
-        octx.textBaseline = "middle";
-        octx.fillText(pickupLabel.text, pickupLabel.x, pickupLabel.y);
+        textItems.push({
+          x: pickupLabel.x,
+          y: pickupLabel.y,
+          text: pickupLabel.text,
+          size: dropFontSize,
+        });
       }
 
       intermediateDrops.forEach((drop) => {
-        octx.fillStyle = arrowColor;
         octx.beginPath();
         octx.arc(drop.x, drop.y, dropR, 0, 2 * Math.PI);
         octx.closePath();
         octx.fill();
-
-        octx.fillStyle = textColor;
-        octx.font = `${dropFontSize}px ${options.font}`;
-        octx.textAlign = "center";
-        octx.textBaseline = "middle";
-        octx.fillText(drop.text, drop.x, drop.y);
+        if (hasArrowBorder) octx.stroke();
+        textItems.push({
+          x: drop.x,
+          y: drop.y,
+          text: drop.text,
+          size: dropFontSize,
+        });
       });
 
       if (finalDropLabel) {
-        octx.fillStyle = textColor;
-        octx.font = `${dropFontSize}px ${options.font}`;
-        octx.textAlign = "center";
-        octx.textBaseline = "middle";
-        octx.fillText(finalDropLabel.text, finalDropLabel.x, finalDropLabel.y);
+        textItems.push({
+          x: finalDropLabel.x,
+          y: finalDropLabel.y,
+          text: finalDropLabel.text,
+          size: dropFontSize,
+        });
       }
     }
+
+    // Draw core line over arrowhead/markers to cover their borders
+    octx.strokeStyle = arrowColor;
+    octx.lineWidth = coreLineWidth;
+    octx.lineCap = "round";
+    octx.beginPath();
+    octx.moveTo(x1, y1);
+    octx.lineTo(baseX, baseY);
+    octx.stroke();
+
+    textItems.forEach((item) => {
+      octx.fillStyle = textColor;
+      octx.font = `${item.size}px ${options.font}`;
+      octx.textAlign = "center";
+      octx.textBaseline = "middle";
+      octx.fillText(item.text, item.x, item.y);
+    });
 
     // Composite the offscreen arrow onto the main canvas with group opacity
     ctx.save();

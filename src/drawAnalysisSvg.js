@@ -2,6 +2,7 @@ import { coordToCanvas } from "./drawUtils.js";
 import {
   computeArrowDrops,
   computeArrowGeometry,
+  getStrengthScale,
   getGroupOffsets,
   groupOverlappingArrows,
   groupPlacementsByCoord,
@@ -126,24 +127,38 @@ export function drawAnalysisSvg(
     const plyColor = board.player;
 
     const arrowColor = theme.colors[`player${plyColor}flat`];
+    const borderColor = theme.colors[`player${plyColor}border`];
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight
       : theme.colors.textDark;
+    const strokeScale = getStrengthScale(strength);
+    const coreLineWidth = lineWidth * strokeScale;
+    const borderWidth = ghostStrokeWidth;
+    const borderLineWidth = coreLineWidth + borderWidth * 2;
+    const hasArrowBorder = borderWidth > 0;
+
+    const textItems = [];
 
     // Wrap entire arrow in a group with opacity
     svg.openGroup({ opacity: strength });
 
-    // Line
-    svg.line(x1, y1, baseX, baseY, {
-      stroke: arrowColor,
-      strokeWidth: lineWidth,
-      lineCap: "round",
-    });
+    // Border line (under all arrow shapes)
+    if (hasArrowBorder) {
+      svg.line(x1, y1, baseX, baseY, {
+        stroke: borderColor,
+        strokeWidth: borderLineWidth,
+        lineCap: "round",
+      });
+    }
 
-    // Arrowhead
+    // Arrowhead and markers
     svg.polygon(
       [[finalTipX, finalTipY], [lx, ly], [rx, ry]],
-      { fill: arrowColor }
+      {
+        fill: arrowColor,
+        stroke: hasArrowBorder ? borderColor : undefined,
+        strokeWidth: hasArrowBorder ? borderWidth : undefined,
+      }
     );
 
     const drops = computeArrowDrops(
@@ -168,40 +183,62 @@ export function drawAnalysisSvg(
           [pickupTriangle.lx, pickupTriangle.ly],
           [pickupTriangle.rx, pickupTriangle.ry],
         ],
-        { fill: arrowColor }
+        {
+          fill: arrowColor,
+          stroke: hasArrowBorder ? borderColor : undefined,
+          strokeWidth: hasArrowBorder ? borderWidth : undefined,
+        }
       );
 
       if (pickupLabel) {
-        svg.text(pickupLabel.x, pickupLabel.y, pickupLabel.text, {
-          fill: textColor,
-          fontSize: dropFontSize,
-          fontFamily: options.font,
-          textAnchor: "middle",
-          dy: "0.35em",
+        textItems.push({
+          x: pickupLabel.x,
+          y: pickupLabel.y,
+          text: pickupLabel.text,
+          size: dropFontSize,
         });
       }
 
       intermediateDrops.forEach((drop) => {
-        svg.circle(drop.x, drop.y, dropR, { fill: arrowColor });
-        svg.text(drop.x, drop.y, drop.text, {
-          fill: textColor,
-          fontSize: dropFontSize,
-          fontFamily: options.font,
-          textAnchor: "middle",
-          dy: "0.35em",
+        svg.circle(drop.x, drop.y, dropR, {
+          fill: arrowColor,
+          stroke: hasArrowBorder ? borderColor : undefined,
+          strokeWidth: hasArrowBorder ? borderWidth : undefined,
+        });
+        textItems.push({
+          x: drop.x,
+          y: drop.y,
+          text: drop.text,
+          size: dropFontSize,
         });
       });
 
       if (finalDropLabel) {
-        svg.text(finalDropLabel.x, finalDropLabel.y, finalDropLabel.text, {
-          fill: textColor,
-          fontSize: dropFontSize,
-          fontFamily: options.font,
-          textAnchor: "middle",
-          dy: "0.35em",
+        textItems.push({
+          x: finalDropLabel.x,
+          y: finalDropLabel.y,
+          text: finalDropLabel.text,
+          size: dropFontSize,
         });
       }
     }
+
+    // Core line on top of arrow shapes to cover marker/head borders
+    svg.line(x1, y1, baseX, baseY, {
+      stroke: arrowColor,
+      strokeWidth: coreLineWidth,
+      lineCap: "round",
+    });
+
+    textItems.forEach((item) => {
+      svg.text(item.x, item.y, item.text, {
+        fill: textColor,
+        fontSize: item.size,
+        fontFamily: options.font,
+        textAnchor: "middle",
+        dy: "0.35em",
+      });
+    });
 
     svg.closeGroup();
   });
