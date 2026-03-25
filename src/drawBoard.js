@@ -1,4 +1,5 @@
 import { roundRect, withAlpha } from "./drawUtils.js";
+import { isDark } from "./colors.js";
 
 export function drawAxisLabels(
   ctx,
@@ -86,6 +87,7 @@ export function createSquareDrawer(
     shadowOffset,
     shadowBlur,
     stackCountFontSize,
+    axisLabelFontSize,
     squareRadius,
     squareMargin,
     padding,
@@ -94,6 +96,49 @@ export function createSquareDrawer(
     fontSize,
   }
 ) {
+  const isAxisLabelTextLight = (square) => {
+    const isDiamonds3 = theme.boardStyle === "diamonds3";
+
+    if (
+      !isDiamonds3 &&
+      options.highlighter &&
+      square.coord in options.highlighter
+    ) {
+      return isDark(options.highlighter[square.coord]);
+    }
+
+    let isTextLight;
+    if (theme.boardChecker) {
+      if (isDiamonds3) {
+        isTextLight = square.isLight ? theme.board2Dark : theme.board1Dark;
+      } else {
+        isTextLight = square.isLight ? theme.board1Dark : theme.board2Dark;
+      }
+    } else {
+      isTextLight = isDiamonds3 ? theme.board2Dark : theme.board1Dark;
+    }
+
+    if (
+      !isDiamonds3 &&
+      options.hlSquares &&
+      hlSquares.includes(square.coord)
+    ) {
+      isTextLight = theme.primaryDark;
+    }
+
+    return Boolean(isTextLight);
+  };
+
+  const axisLabelInsetEm = () => {
+    if (theme.boardStyle === "diamonds2" || theme.boardStyle === "grid3") {
+      return 0.5;
+    }
+    if (theme.boardStyle === "grid2") {
+      return 0.25;
+    }
+    return 0;
+  };
+
   const drawSquareHighlight = () => {
     const half = squareSize / 2;
     if (squareRadius >= half) {
@@ -114,39 +159,30 @@ export function createSquareDrawer(
   };
 
   const drawSquareNumber = (square, text, corner = "br") => {
-    const isDark = theme.boardChecker && !square.isLight;
     ctx.save();
-    ctx.font = `${stackCountFontSize}px ${options.font}`;
-    let isTextLight = theme.board2Dark;
-    ctx.fillStyle = theme.colors.board2;
-    if (hlSquares.includes(square.coord)) {
-      isTextLight = theme.primaryDark;
-      ctx.fillStyle = theme.colors.primary;
-    } else if (isDark) {
-      isTextLight = theme.board1Dark;
-      ctx.fillStyle = theme.colors.board1;
-    }
-    let radius = (stackCountFontSize * 1.5) / 2;
-    ctx.beginPath();
-    ctx.arc(
-      corner[1] === "r" ? squareSize - radius : radius,
-      corner[0] === "b" ? squareSize - radius : radius,
-      radius,
-      0,
-      2 * Math.PI
-    );
-    ctx.closePath();
-    ctx.fill();
+    ctx.font = `${axisLabelFontSize}px ${options.font}`;
+
+    const isTextLight = isAxisLabelTextLight(square);
+    const insetPx = axisLabelFontSize * axisLabelInsetEm();
 
     ctx.fillStyle = isTextLight
       ? theme.colors.textLight
       : theme.colors.textDark;
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
+    const cornerAnchor = axisLabelFontSize * 0.65;
+
+    const x =
+      (corner[1] === "r" ? squareSize - cornerAnchor : cornerAnchor) +
+      (corner[1] === "r" ? -insetPx : insetPx);
+    const y =
+      (corner[0] === "b" ? squareSize - cornerAnchor : cornerAnchor) +
+      (corner[0] === "b" ? -insetPx : insetPx);
+
     ctx.fillText(
       text,
-      corner[1] === "r" ? squareSize - radius : radius,
-      corner[0] === "b" ? squareSize - radius * 0.95 : radius * 0.95
+      x,
+      y
     );
     ctx.restore();
   };
@@ -208,6 +244,7 @@ export function createSquareDrawer(
       ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
     } else if (piece.isStanding) {
       ctx.fillStyle = theme.colors[`player${piece.color}special`];
+      ctx.save();
       ctx.translate(0, y);
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
       roundRect(
@@ -218,6 +255,7 @@ export function createSquareDrawer(
         pieceSize,
         pieceRadius
       );
+      ctx.restore();
     } else {
       ctx.fillStyle = theme.colors[`player${piece.color}flat`];
       if (isImmovable) {
@@ -254,6 +292,39 @@ export function createSquareDrawer(
       ctx.strokeStyle = theme.colors[`player${piece.color}border`];
       ctx.lineWidth = strokeWidth;
       ctx.stroke();
+    }
+
+    // For walls, re-draw the shape for stroke since we restored context
+    if (piece.isStanding && theme.vars["piece-border-width"] > 0) {
+      ctx.save();
+      ctx.translate(0, y);
+      ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
+      roundRect(
+        ctx,
+        Math.round(-wallSize / 2),
+        Math.round(-pieceSize / 2),
+        wallSize,
+        pieceSize,
+        pieceRadius
+      );
+      ctx.strokeStyle = theme.colors[`player${piece.color}border`];
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Stack Count (only on top piece)
+    const isTopPiece = pieces && z === pieces.length - 1;
+    if (options.stackCounts && isTopPiece && pieces.length > 1) {
+      ctx.save();
+      ctx.font = `${stackCountFontSize}px ${options.font}`;
+      ctx.fillStyle = theme[`player${piece.color}FlatDark`]
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.fillText(String(pieces.length), 0, y);
+      ctx.restore();
     }
 
     ctx.restore();
@@ -356,11 +427,6 @@ export function createSquareDrawer(
           0.4
         );
         drawSquareHighlight();
-      }
-
-      // Stack Count
-      if (options.stackCounts && square.pieces.length > 1) {
-        drawSquareNumber(square, square.pieces.length, "bl");
       }
 
       square.pieces.forEach(drawPiece);

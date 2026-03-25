@@ -1,3 +1,5 @@
+import { transformBoardXY } from "./boardTransform.js";
+
 export const pieceSizes = {
   xs: 12,
   sm: 24,
@@ -17,23 +19,7 @@ export const textSizes = {
 export function coordToCanvas(coord, { size, transform, squareSize, padding, axisSize, headerHeight }) {
   const bx = "abcdefgh".indexOf(coord[0]);
   const by = parseInt(coord.slice(1), 10) - 1;
-  const t = transform || [0, 0];
-
-  let row, col;
-  if (t[0] % 2) {
-    row = bx;
-    col = by;
-  } else {
-    row = by;
-    col = bx;
-  }
-  if (t[0] === 1 || t[0] === 2) {
-    row = size - 1 - row;
-  }
-  const rotation = (t[0] + 2 * t[1]) % 4;
-  if (rotation === 2 || rotation === 3) {
-    col = size - 1 - col;
-  }
+  const { x: col, y: row } = transformBoardXY(bx, by, size, transform || [0, 0]);
 
   return {
     x: padding + axisSize + col * squareSize + squareSize / 2,
