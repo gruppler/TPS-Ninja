@@ -44,6 +44,8 @@ export function drawAnalysis(
     group.forEach((p, i) => {
       const cx = center.x + offsets[i].dx;
       const cy = center.y + offsets[i].dy;
+      const strengthScale = getStrengthScale(p.strength);
+      const visualScale = scale * strengthScale;
 
       // Determine color: first move of game uses swap
       const plyColor =
@@ -58,7 +60,7 @@ export function drawAnalysis(
 
       if (p.move.ply.specialPiece === "C") {
         // Capstone — match HTML: r = 0.17 * scale (in square units)
-        const r = Math.round(squareSize * 0.17 * scale);
+        const r = Math.round(squareSize * 0.17 * visualScale);
         ctx.fillStyle = theme.colors[`player${plyColor}special`];
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, 2 * Math.PI);
@@ -71,8 +73,8 @@ export function drawAnalysis(
         }
       } else if (p.move.ply.specialPiece === "S") {
         // Wall — match HTML: w = 0.1 * scale, h = 0.35 * scale
-        const w = Math.round(squareSize * 0.1 * scale);
-        const h = Math.round(squareSize * 0.35 * scale);
+        const w = Math.round(squareSize * 0.1 * visualScale);
+        const h = Math.round(squareSize * 0.35 * visualScale);
         const wallRx = Math.round(w * 0.15);
         ctx.fillStyle = theme.colors[`player${plyColor}special`];
         ctx.save();
@@ -95,7 +97,7 @@ export function drawAnalysis(
         ctx.restore();
       } else {
         // Flat — match HTML: sz = 0.35 * scale, rx = sz * 0.12
-        const sz = Math.round(squareSize * 0.35 * scale);
+        const sz = Math.round(squareSize * 0.35 * visualScale);
         const flatRx = Math.round(sz * 0.12);
         ctx.fillStyle = theme.colors[`player${plyColor}flat`];
         roundRect(

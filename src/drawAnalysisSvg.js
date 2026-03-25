@@ -44,6 +44,8 @@ export function drawAnalysisSvg(
     group.forEach((p, i) => {
       const cx = center.x + offsets[i].dx;
       const cy = center.y + offsets[i].dy;
+      const strengthScale = getStrengthScale(p.strength);
+      const visualScale = scale * strengthScale;
 
       const plyColor =
         board.linenum === 1 && options.opening === "swap"
@@ -55,7 +57,7 @@ export function drawAnalysisSvg(
       const borderColor = theme.colors[`player${plyColor}border`];
 
       if (p.move.ply.specialPiece === "C") {
-        const r = Math.round(squareSize * 0.17 * scale);
+        const r = Math.round(squareSize * 0.17 * visualScale);
         svg.circle(cx, cy, r, {
           fill: theme.colors[`player${plyColor}special`],
           stroke: hasBorder ? borderColor : undefined,
@@ -63,8 +65,8 @@ export function drawAnalysisSvg(
           opacity: p.strength,
         });
       } else if (p.move.ply.specialPiece === "S") {
-        const w = Math.round(squareSize * 0.1 * scale);
-        const h = Math.round(squareSize * 0.35 * scale);
+        const w = Math.round(squareSize * 0.1 * visualScale);
+        const h = Math.round(squareSize * 0.35 * visualScale);
         const wallRx = Math.round(w * 0.15);
         const angle = plyColor === 1 ? -45 : 45;
         svg.openGroup({
@@ -81,7 +83,7 @@ export function drawAnalysisSvg(
         );
         svg.closeGroup();
       } else {
-        const sz = Math.round(squareSize * 0.35 * scale);
+        const sz = Math.round(squareSize * 0.35 * visualScale);
         const flatRx = Math.round(sz * 0.12);
         svg.path(
           svg.roundRectPath(Math.round(cx - sz / 2), Math.round(cy - sz / 2), sz, sz, flatRx),
