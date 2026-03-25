@@ -2,6 +2,7 @@ import { coordToCanvas } from "./drawUtils.js";
 import {
   computeArrowDrops,
   computeArrowGeometry,
+  getPlayerFlatOpaqueColor,
   getStrengthScale,
   getGroupOffsets,
   groupOverlappingArrows,
@@ -88,7 +89,7 @@ export function drawAnalysisSvg(
         svg.path(
           svg.roundRectPath(Math.round(cx - sz / 2), Math.round(cy - sz / 2), sz, sz, flatRx),
           {
-            fill: theme.colors[`player${plyColor}flat`],
+            fill: getPlayerFlatOpaqueColor(theme, plyColor),
             stroke: hasBorder ? borderColor : undefined,
             strokeWidth: hasBorder ? ghostStrokeScaled : undefined,
             opacity: p.strength,
@@ -128,7 +129,7 @@ export function drawAnalysisSvg(
     } = geometry;
     const plyColor = board.player;
 
-    const arrowColor = theme.colors[`player${plyColor}flat`];
+    const arrowColor = getPlayerFlatOpaqueColor(theme, plyColor);
     const borderColor = theme.colors[`player${plyColor}border`];
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight

@@ -114,6 +114,18 @@ export function getStrengthScale(strength) {
   return minScale + (maxScale - minScale) * eased;
 }
 
+export function getPlayerFlatOpaqueColor(theme, plyColor) {
+  const opaqueKey = `player${plyColor}flatOpaque`;
+  const opaqueColor = theme.colors[opaqueKey];
+  if (opaqueColor) return opaqueColor;
+
+  const flatColor = theme.colors[`player${plyColor}flat`];
+  if (typeof flatColor !== "string") return flatColor;
+  if (/^#[0-9a-f]{8}$/i.test(flatColor)) return `#${flatColor.slice(1, 7)}`;
+  if (/^#[0-9a-f]{4}$/i.test(flatColor)) return `#${flatColor.slice(1, 4)}`;
+  return flatColor;
+}
+
 export function computeArrowGeometry(
   move,
   arrowGroupMap,

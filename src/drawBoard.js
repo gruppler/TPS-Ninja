@@ -318,7 +318,10 @@ export function createSquareDrawer(
     if (options.stackCounts && isTopPiece && pieces.length > 1) {
       ctx.save();
       ctx.font = `${stackCountFontSize}px ${options.font}`;
-      ctx.fillStyle = theme[`player${piece.color}FlatDark`]
+      const darknessKey = piece.isCapstone || piece.isStanding
+        ? `player${piece.color}SpecialDark`
+        : `player${piece.color}FlatDark`;
+      ctx.fillStyle = theme[darknessKey]
         ? theme.colors.textLight
         : theme.colors.textDark;
       ctx.textBaseline = "middle";

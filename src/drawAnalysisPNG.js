@@ -3,6 +3,7 @@ import { roundRect, coordToCanvas } from "./drawUtils.js";
 import {
   computeArrowDrops,
   computeArrowGeometry,
+  getPlayerFlatOpaqueColor,
   getStrengthScale,
   getGroupOffsets,
   groupOverlappingArrows,
@@ -99,7 +100,7 @@ export function drawAnalysis(
         // Flat — match HTML: sz = 0.35 * scale, rx = sz * 0.12
         const sz = Math.round(squareSize * 0.35 * visualScale);
         const flatRx = Math.round(sz * 0.12);
-        ctx.fillStyle = theme.colors[`player${plyColor}flat`];
+        ctx.fillStyle = getPlayerFlatOpaqueColor(theme, plyColor);
         roundRect(
           ctx,
           Math.round(cx - sz / 2),
@@ -156,7 +157,7 @@ export function drawAnalysis(
     } = geometry;
     const plyColor = board.player;
 
-    const arrowColor = theme.colors[`player${plyColor}flat`];
+    const arrowColor = getPlayerFlatOpaqueColor(theme, plyColor);
     const borderColor = theme.colors[`player${plyColor}border`];
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight

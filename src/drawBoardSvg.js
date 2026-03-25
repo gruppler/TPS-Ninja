@@ -478,7 +478,10 @@ function drawPieceSvg(
   // Stack Count (only on top piece)
   const isTopPiece = pieces && z === pieces.length - 1;
   if (options.stackCounts && isTopPiece && pieces.length > 1) {
-    const textFill = theme[`player${piece.color}FlatDark`]
+    const darknessKey = piece.isCapstone || piece.isStanding
+      ? `player${piece.color}SpecialDark`
+      : `player${piece.color}FlatDark`;
+    const textFill = theme[darknessKey]
       ? theme.colors.textLight
       : theme.colors.textDark;
     svg.text(cx, cy + y, String(pieces.length), {
