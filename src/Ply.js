@@ -1,4 +1,5 @@
 const { atoi, itoa } = require("./Square");
+const { transformBoardXY, transformDirection } = require("./boardTransform");
 
 const directionModifier = {
   "+": [0, 1],
@@ -138,38 +139,9 @@ exports.Ply = class {
   }
 
   transform(size, [rotate, flip]) {
-    rotate = rotate % 4;
-    flip = flip % 2;
-
     let ptn = this.ptn;
-    let x = this.x;
-    let y = this.y;
-    let direction = this.direction;
-
-    if (rotate === 1) {
-      [x, y] = [y, size - 1 - x];
-      if (direction) {
-        direction = { "+": ">", "-": "<", ">": "-", "<": "+" }[direction];
-      }
-    } else if (rotate === 2) {
-      x = size - 1 - x;
-      y = size - 1 - y;
-      if (direction) {
-        direction = { "+": "-", "-": "+", ">": "<", "<": ">" }[direction];
-      }
-    } else if (rotate === 3) {
-      [x, y] = [size - 1 - y, x];
-      if (direction) {
-        direction = { "+": "<", "-": ">", ">": "+", "<": "-" }[direction];
-      }
-    }
-
-    if (flip) {
-      x = size - 1 - x;
-      if (direction) {
-        direction = { ">": "<", "<": ">" }[direction] || direction;
-      }
-    }
+    const { x, y } = transformBoardXY(this.x, this.y, size, [rotate, flip]);
+    const direction = transformDirection(this.direction, [rotate, flip]);
 
     ptn = ptn.replace(itoa(this.x, this.y), itoa(x, y));
     if (direction) {

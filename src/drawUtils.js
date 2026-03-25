@@ -1,3 +1,5 @@
+const { transformBoardXY } = require("./boardTransform");
+
 const pieceSizes = {
   xs: 12,
   sm: 24,
@@ -13,6 +15,17 @@ const textSizes = {
   lg: 0.3,
   xl: 0.4,
 };
+
+function coordToCanvas(coord, { size, transform, squareSize, padding, axisSize, headerHeight }) {
+  const bx = "abcdefgh".indexOf(coord[0]);
+  const by = parseInt(coord.slice(1), 10) - 1;
+  const { x: col, y: row } = transformBoardXY(bx, by, size, transform || [0, 0]);
+
+  return {
+    x: padding + axisSize + col * squareSize + squareSize / 2,
+    y: padding + headerHeight + (size - 1 - row) * squareSize + squareSize / 2,
+  };
+}
 
 function withAlpha(color, alpha) {
   return color.substring(0, 7) + Math.round(256 * alpha).toString(16);
@@ -64,6 +77,7 @@ function roundRect(ctx, x, y, width, height, radius) {
 
 exports.pieceSizes = pieceSizes;
 exports.textSizes = textSizes;
+exports.coordToCanvas = coordToCanvas;
 exports.withAlpha = withAlpha;
 exports.limitText = limitText;
 exports.roundRect = roundRect;
