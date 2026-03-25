@@ -1,6 +1,6 @@
 import fs from "fs";
 import GIFEncoder from "gif-encoder-2";
-import { isArray, isFunction } from "lodash-es";
+import { isArray, isFunction, isString } from "lodash-es";
 import { sanitizeOptions } from "./options.js";
 import { TPStoCanvas } from "./TPStoCanvas.js";
 
@@ -16,6 +16,21 @@ export const TPStoGIF = function (args, streamTo = null) {
     options = args;
   }
   sanitizeOptions(options);
+
+  let suggestionsByFrame = null;
+  if (isString(options.suggestionsByFrame)) {
+    try {
+      suggestionsByFrame = JSON.parse(options.suggestionsByFrame);
+    } catch (error) {
+      suggestionsByFrame = null;
+    }
+  } else if (isArray(options.suggestionsByFrame)) {
+    suggestionsByFrame = options.suggestionsByFrame;
+  }
+  delete options.suggestionsByFrame;
+  if (suggestionsByFrame) {
+    options.suggestions = suggestionsByFrame[0] || null;
+  }
 
   const plies = options.plies || [];
   if (plies.length) {
@@ -57,13 +72,18 @@ export const TPStoGIF = function (args, streamTo = null) {
   encoder.start();
   encoder.setDelay(options.delay);
   encoder.addFrame(canvas.ctx);
+  let frameIndex = 1;
   while (plies.length) {
     options.tps = tps;
     options.ply = plies.shift();
+    if (suggestionsByFrame) {
+      options.suggestions = suggestionsByFrame[frameIndex] || null;
+    }
     canvas = TPStoCanvas(options);
     tps = canvas.tps;
     encoder.setDelay(options.delay + options.delay * !plies.length);
     encoder.addFrame(canvas.ctx);
+    frameIndex += 1;
   }
   encoder.finish();
   return stream;

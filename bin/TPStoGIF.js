@@ -24,7 +24,8 @@ if (!options.length) {
       "  showRoads      [true|false] Show road connections\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
       "  padding        [true|false] Pad the image\n" +
-      "  suggestions    [JSON] Array of analysis suggestions to overlay\n\n" +
+      "  suggestions    [JSON] Array of analysis suggestions to overlay\n" +
+      "  suggestionsByFrame [JSON] Per-frame analysis suggestions\n\n" +
       "  name           Filename of exported GIF, defaults to 'takboard.gif'\n" +
       "  player1        Name of Player 1\n" +
       "  player2        Name of Player 2\n" +
