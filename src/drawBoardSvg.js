@@ -1,5 +1,6 @@
 import { withAlpha } from "./drawUtils.js";
 import { isDark } from "./colors.js";
+import { getEvaluationBarRect } from "./drawEvaluationBar.js";
 
 export function drawAxisLabelsSvg(
   svg,
@@ -514,6 +515,20 @@ export function drawUnplayedPiecesSvg(
     ),
     { fill: theme.colors.board3 }
   );
+
+  const evalBar = getEvaluationBarRect(options, {
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    headerHeight,
+  });
+  if (evalBar) {
+    svg.rect(evalBar.x, evalBar.y, evalBar.width, evalBar.height, {
+      fill: evalBar.evaluation > 0 ? theme.colors.player1 : theme.colors.player2,
+      opacity: 0.3,
+    });
+  }
 
   [1, 2].forEach((color) => {
     const baseX =

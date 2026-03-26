@@ -32,9 +32,19 @@ export const defaults = {
   plyIsDone: true,
   font: "sans",
   suggestions: null,
+  boardEvalBar: false,
+  evaluation: null,
+  delayAnalysis: false,
 };
 
 export function sanitizeOptions(options) {
+  if (
+    options.delayAnalysisByFrame !== undefined &&
+    options.delayAnalysis === undefined
+  ) {
+    options.delayAnalysis = options.delayAnalysisByFrame;
+  }
+
   for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (key === "highlighter" && isString(options[key])) {
@@ -74,6 +84,19 @@ export function sanitizeOptions(options) {
           } catch (err) {
             options[key] = null;
           }
+        }
+      } else if (key === "evaluation") {
+        if (
+          options[key] === null ||
+          options[key] === undefined ||
+          options[key] === ""
+        ) {
+          options[key] = null;
+        } else {
+          const evaluation = Number(options[key]);
+          options[key] = isNaN(evaluation)
+            ? null
+            : Math.max(-100, Math.min(100, evaluation));
         }
       } else if (key === "plies") {
         if (isString(options[key])) {

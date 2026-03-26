@@ -28,15 +28,62 @@ export const TPStoGIF = function (args, streamTo = null) {
     suggestionsByFrame = options.suggestionsByFrame;
   }
   delete options.suggestionsByFrame;
-  if (suggestionsByFrame) {
-    options.suggestions = suggestionsByFrame[0] || null;
+
+  let evaluationsByFrame = null;
+  if (isString(options.evaluationsByFrame)) {
+    try {
+      evaluationsByFrame = JSON.parse(options.evaluationsByFrame);
+    } catch (error) {
+      evaluationsByFrame = null;
+    }
+  } else if (isArray(options.evaluationsByFrame)) {
+    evaluationsByFrame = options.evaluationsByFrame;
   }
+  delete options.evaluationsByFrame;
+
+  const delayAnalysis = options.delayAnalysis && suggestionsByFrame;
+
+  function hasSuggestions(s) {
+    return isArray(s) && s.length > 0;
+  }
+
+  function normalizeEvaluation(value) {
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+    const evaluation = Number(value);
+    return isNaN(evaluation)
+      ? null
+      : Math.max(-100, Math.min(100, evaluation));
+  }
+
+  // Set initial suggestions
+  const initialSuggestions = suggestionsByFrame
+    ? suggestionsByFrame[0] || null
+    : null;
+  if (delayAnalysis && hasSuggestions(initialSuggestions)) {
+    options.suggestions = null;
+  } else {
+    options.suggestions = initialSuggestions;
+  }
+  const initialEvaluation = evaluationsByFrame
+    ? normalizeEvaluation(evaluationsByFrame[0])
+    : options.evaluation;
+  options.evaluation = initialEvaluation;
 
   const plies = options.plies || [];
   if (plies.length) {
     delete options.plies;
     delete options.ply;
     delete options.hl;
+  }
+
+  // Calculate total frames (extra frame inserted per position with suggestions)
+  let totalFrames = plies.length + 1;
+  if (delayAnalysis) {
+    for (let i = 0; i <= plies.length; i++) {
+      if (hasSuggestions(suggestionsByFrame[i])) totalFrames++;
+    }
   }
 
   let canvas = TPStoCanvas(options);
@@ -46,7 +93,7 @@ export const TPStoGIF = function (args, streamTo = null) {
     canvas.height,
     "neuquant",
     false,
-    plies.length + 1
+    totalFrames
   );
   const stream = encoder.createReadStream();
   if (streamTo) {
@@ -72,18 +119,59 @@ export const TPStoGIF = function (args, streamTo = null) {
   encoder.start();
   encoder.setDelay(options.delay);
   encoder.addFrame(canvas.ctx);
+
+  // If initial position has suggestions, add the analysis frame
+  if (delayAnalysis && hasSuggestions(initialSuggestions)) {
+    options.tps = tps;
+    delete options.ply;
+    options.suggestions = initialSuggestions;
+    options.evaluation = initialEvaluation;
+    canvas = TPStoCanvas(options);
+    encoder.setDelay(options.delay);
+    encoder.addFrame(canvas.ctx);
+  }
+
   let frameIndex = 1;
   while (plies.length) {
+    const plyText = plies.shift();
     options.tps = tps;
-    options.ply = plies.shift();
-    if (suggestionsByFrame) {
-      options.suggestions = suggestionsByFrame[frameIndex] || null;
+    options.ply = plyText;
+    const isLastPly = !plies.length;
+    const frameSuggestions = suggestionsByFrame
+      ? suggestionsByFrame[frameIndex] || null
+      : null;
+    const frameEvaluation = evaluationsByFrame
+      ? normalizeEvaluation(evaluationsByFrame[frameIndex])
+      : options.evaluation;
+    options.evaluation = frameEvaluation;
+
+    if (delayAnalysis && hasSuggestions(frameSuggestions)) {
+      // Render ply frame without suggestions
+      options.suggestions = null;
+      canvas = TPStoCanvas(options);
+      tps = canvas.tps;
+      encoder.setDelay(options.delay);
+      encoder.addFrame(canvas.ctx);
+
+      // Render same position with suggestions (hl preserves highlight)
+      options.tps = tps;
+      options.hl = plyText;
+      delete options.ply;
+      options.suggestions = frameSuggestions;
+      options.evaluation = frameEvaluation;
+      canvas = TPStoCanvas(options);
+      delete options.hl;
+      encoder.setDelay(options.delay + options.delay * isLastPly);
+      encoder.addFrame(canvas.ctx);
+    } else {
+      options.suggestions = frameSuggestions;
+      canvas = TPStoCanvas(options);
+      tps = canvas.tps;
+      encoder.setDelay(options.delay + options.delay * isLastPly);
+      encoder.addFrame(canvas.ctx);
     }
-    canvas = TPStoCanvas(options);
-    tps = canvas.tps;
-    encoder.setDelay(options.delay + options.delay * !plies.length);
-    encoder.addFrame(canvas.ctx);
-    frameIndex += 1;
+
+    frameIndex++;
   }
   encoder.finish();
   return stream;

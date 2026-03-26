@@ -279,6 +279,8 @@ opening        [swap|no-swap] Opening variations
 showRoads      [true|false] Show road connections
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
+boardEvalBar   [true|false] Show evaluation bar in unplayed area
+evaluation     [number] Position evaluation from -100 to 100
 highlighter    [JSON] Square coordinates mapped to color, overrides highlight
 suggestions    [JSON] Array of analysis suggestions to overlay on the board
                Each element can be a PTN string or an object with:
@@ -295,6 +297,11 @@ suggestionsByFrame [JSON] Per-frame suggestions for animated GIFs
                Array where index 0 applies to the initial frame and each
                subsequent index applies to each ply frame in order.
                Each frame value uses the same format as `suggestions`.
+evaluationsByFrame [JSON] Per-frame evaluation values for animated GIFs
+               Array where index 0 applies to the initial frame and each
+               subsequent index applies to each ply frame in order.
+delayAnalysis  [true|false] Insert a frame without analysis before each
+               frame that has analysis suggestions
 
 name           Filename of exported GIF, defaults to 'takboard.gif'
 player1        Name of Player 1
