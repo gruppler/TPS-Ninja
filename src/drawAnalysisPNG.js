@@ -45,7 +45,10 @@ export function drawAnalysis(
     group.forEach((p, i) => {
       const cx = center.x + offsets[i].dx;
       const cy = center.y + offsets[i].dy;
-      const strengthScale = getStrengthScale(p.strength);
+      const strengthScale =
+        p.scale === null || p.scale === undefined
+          ? getStrengthScale(p.strength)
+          : p.scale;
       const visualScale = scale * strengthScale;
 
       // Determine color: first move of game uses swap
@@ -131,7 +134,7 @@ export function drawAnalysis(
   const canvasW = ctx.canvas.width;
   const canvasH = ctx.canvas.height;
 
-  arrows.forEach(({ move, strength }) => {
+  arrows.forEach(({ move, strength, scale }) => {
     const geometry = computeArrowGeometry(
       move,
       arrowGroupMap,
@@ -162,7 +165,8 @@ export function drawAnalysis(
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight
       : theme.colors.textDark;
-    const strokeScale = getStrengthScale(strength);
+    const strokeScale =
+      scale === null || scale === undefined ? getStrengthScale(strength) : scale;
     const coreLineWidth = lineWidth * strokeScale;
     const borderWidth = ghostStrokeWidth;
     const borderLineWidth = coreLineWidth + borderWidth * 2;
