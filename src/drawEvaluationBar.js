@@ -1,4 +1,5 @@
 import { roundRect } from "./drawUtils.js";
+import { isDark } from "./colors.js";
 
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === "") {
@@ -33,7 +34,14 @@ function normalizeWDL(wdl = null, evaluation = null) {
       player2 = toFiniteNumber(wdl[2]);
     } else {
       player1 = toFiniteNumber(
-        pickDefined(wdl.player1, wdl.p1, wdl.win1, wdl.wins1, wdl.white, wdl.win)
+        pickDefined(
+          wdl.player1,
+          wdl.p1,
+          wdl.win1,
+          wdl.wins1,
+          wdl.white,
+          wdl.win,
+        ),
       );
       draw = toFiniteNumber(pickDefined(wdl.draw, wdl.draws, wdl.d));
       player2 = toFiniteNumber(
@@ -43,8 +51,8 @@ function normalizeWDL(wdl = null, evaluation = null) {
           wdl.win2,
           wdl.wins2,
           wdl.black,
-          wdl.loss !== undefined ? wdl.loss : wdl.win2
-        )
+          wdl.loss !== undefined ? wdl.loss : wdl.win2,
+        ),
       );
     }
   }
@@ -84,11 +92,7 @@ function resolveWDL(options) {
     return options.wdl;
   }
 
-  if (
-    options.wins1 != null ||
-    options.draws != null ||
-    options.wins2 != null
-  ) {
+  if (options.wins1 != null || options.draws != null || options.wins2 != null) {
     return {
       player1: options.wins1,
       draw: options.draws,
@@ -118,8 +122,45 @@ function getSegmentHeights(totalHeight, wdl) {
   return { player1, draw, player2 };
 }
 
-function markerColor(theme) {
-  return theme.secondaryDark ? theme.colors.textLight : theme.colors.textDark;
+function midpointSegment(bar) {
+  const heights = getSegmentHeights(bar.height, bar.wdl);
+  const midpointOffset = bar.height / 2;
+  if (midpointOffset < heights.player2) {
+    return "player2";
+  }
+  if (midpointOffset < heights.player2 + heights.draw) {
+    return "draw";
+  }
+  return "player1";
+}
+
+function markerColor(theme, bar) {
+  const currentTheme = theme || {};
+  const colors = currentTheme.colors || {};
+  const resolveDark = (flag, color) => {
+    if (flag === true || flag === false) {
+      return flag;
+    }
+    if (color) {
+      return isDark(color);
+    }
+    return false;
+  };
+
+  const segment = midpointSegment(bar);
+  const isDarkBySegment = {
+    player1: resolveDark(currentTheme.player1Dark, colors.player1),
+    player2: resolveDark(currentTheme.player2Dark, colors.player2),
+    draw: resolveDark(
+      currentTheme.board3Dark !== undefined
+        ? currentTheme.board3Dark
+        : currentTheme.secondaryDark,
+      colors.board3,
+    ),
+  };
+  const segmentIsDark = isDarkBySegment[segment];
+
+  return segmentIsDark ? "#ffffff" : "#000000";
 }
 
 function drawFillSegmentsCanvas(ctx, bar, theme) {
@@ -199,8 +240,8 @@ export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   ctx.restore();
 
   ctx.save();
+  ctx.strokeStyle = markerColor(theme, bar);
   ctx.globalAlpha = 0.2;
-  ctx.strokeStyle = markerColor(theme);
   ctx.lineWidth = 1;
   const midY = bar.y + bar.height / 2;
   ctx.beginPath();
@@ -225,8 +266,8 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
       bar.y,
       bar.width,
       bar.height,
-      { tr: radius, br: radius }
-    )}"/></clipPath>`
+      { tr: radius, br: radius },
+    )}"/></clipPath>`,
   );
 
   svg.openGroup({ clipPath: clipId });
@@ -235,7 +276,7 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
 
   const midY = bar.y + bar.height / 2;
   svg.line(bar.x, midY, bar.x + bar.width, midY, {
-    stroke: markerColor(theme),
+    stroke: markerColor(theme, bar),
     strokeWidth: 1,
     opacity: 0.2,
   });
