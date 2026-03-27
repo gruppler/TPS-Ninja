@@ -1,6 +1,6 @@
 import { roundRect, withAlpha } from "./drawUtils.js";
 import { isDark } from "./colors.js";
-import { getEvaluationBarRect } from "./drawEvaluationBar.js";
+import { drawEvaluationBarCanvas } from "./drawEvaluationBar.js";
 
 export function drawAxisLabels(
   ctx,
@@ -461,20 +461,14 @@ export function drawUnplayedPieces(
   );
   ctx.fill();
 
-  const evalBar = getEvaluationBarRect(options, {
+  drawEvaluationBarCanvas(ctx, options, theme, {
     padding,
     axisSize,
     boardSize,
     unplayedWidth,
     headerHeight,
+    boardRadius,
   });
-  if (evalBar) {
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = evalBar.evaluation > 0 ? theme.colors.player1 : theme.colors.player2;
-    ctx.fillRect(evalBar.x, evalBar.y, evalBar.width, evalBar.height);
-    ctx.restore();
-  }
 
   [1, 2].forEach((color) => {
     ctx.save();

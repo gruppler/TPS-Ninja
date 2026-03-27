@@ -34,6 +34,10 @@ export const defaults = {
   suggestions: null,
   boardEvalBar: false,
   evaluation: null,
+  wdl: null,
+  wins1: null,
+  draws: null,
+  wins2: null,
   delayAnalysis: false,
 };
 
@@ -85,6 +89,14 @@ export function sanitizeOptions(options) {
             options[key] = null;
           }
         }
+      } else if (key === "wdl") {
+        if (isString(options[key])) {
+          try {
+            options[key] = JSON.parse(options[key]);
+          } catch (err) {
+            options[key] = null;
+          }
+        }
       } else if (key === "evaluation") {
         if (
           options[key] === null ||
@@ -97,6 +109,17 @@ export function sanitizeOptions(options) {
           options[key] = isNaN(evaluation)
             ? null
             : Math.max(-100, Math.min(100, evaluation));
+        }
+      } else if (["wins1", "draws", "wins2"].includes(key)) {
+        if (
+          options[key] === null ||
+          options[key] === undefined ||
+          options[key] === ""
+        ) {
+          options[key] = null;
+        } else {
+          const value = Number(options[key]);
+          options[key] = isNaN(value) ? null : Math.max(0, value);
         }
       } else if (key === "plies") {
         if (isString(options[key])) {

@@ -41,6 +41,18 @@ export const TPStoGIF = function (args, streamTo = null) {
   }
   delete options.evaluationsByFrame;
 
+  let wdlsByFrame = null;
+  if (isString(options.wdlsByFrame)) {
+    try {
+      wdlsByFrame = JSON.parse(options.wdlsByFrame);
+    } catch (error) {
+      wdlsByFrame = null;
+    }
+  } else if (isArray(options.wdlsByFrame)) {
+    wdlsByFrame = options.wdlsByFrame;
+  }
+  delete options.wdlsByFrame;
+
   const delayAnalysis = options.delayAnalysis && suggestionsByFrame;
 
   function hasSuggestions(s) {
@@ -69,7 +81,9 @@ export const TPStoGIF = function (args, streamTo = null) {
   const initialEvaluation = evaluationsByFrame
     ? normalizeEvaluation(evaluationsByFrame[0])
     : options.evaluation;
+  const initialWdl = wdlsByFrame ? wdlsByFrame[0] || null : options.wdl;
   options.evaluation = initialEvaluation;
+  options.wdl = initialWdl;
 
   const plies = options.plies || [];
   if (plies.length) {
@@ -126,6 +140,7 @@ export const TPStoGIF = function (args, streamTo = null) {
     delete options.ply;
     options.suggestions = initialSuggestions;
     options.evaluation = initialEvaluation;
+    options.wdl = initialWdl;
     canvas = TPStoCanvas(options);
     encoder.setDelay(options.delay);
     encoder.addFrame(canvas.ctx);
@@ -143,7 +158,9 @@ export const TPStoGIF = function (args, streamTo = null) {
     const frameEvaluation = evaluationsByFrame
       ? normalizeEvaluation(evaluationsByFrame[frameIndex])
       : options.evaluation;
+    const frameWdl = wdlsByFrame ? wdlsByFrame[frameIndex] || null : options.wdl;
     options.evaluation = frameEvaluation;
+    options.wdl = frameWdl;
 
     if (delayAnalysis && hasSuggestions(frameSuggestions)) {
       // Render ply frame without suggestions
@@ -159,6 +176,7 @@ export const TPStoGIF = function (args, streamTo = null) {
       delete options.ply;
       options.suggestions = frameSuggestions;
       options.evaluation = frameEvaluation;
+      options.wdl = frameWdl;
       canvas = TPStoCanvas(options);
       delete options.hl;
       encoder.setDelay(options.delay + options.delay * isLastPly);
