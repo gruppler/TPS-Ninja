@@ -12,6 +12,59 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
+function parseColorRgb(color) {
+  if (typeof color !== "string") {
+    return null;
+  }
+
+  const value = color.trim();
+  if (!value) {
+    return null;
+  }
+
+  if (value[0] === "#") {
+    let hex = value.slice(1);
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    }
+    if (hex.length !== 6 && hex.length !== 8) {
+      return null;
+    }
+    return {
+      r: Number.parseInt(hex.slice(0, 2), 16),
+      g: Number.parseInt(hex.slice(2, 4), 16),
+      b: Number.parseInt(hex.slice(4, 6), 16),
+    };
+  }
+
+  const rgb = value.match(/^rgba?\(([^)]+)\)$/i);
+  if (!rgb) {
+    return null;
+  }
+  const channels = rgb[1].split(",").map((part) => Number(part.trim()));
+  if (channels.length < 3 || channels.some((n, i) => i < 3 && !Number.isFinite(n))) {
+    return null;
+  }
+  return {
+    r: channels[0],
+    g: channels[1],
+    b: channels[2],
+  };
+}
+
+function isDarkColor(color) {
+  const rgb = parseColorRgb(color);
+  if (!rgb) {
+    return null;
+  }
+  const luminance =
+    (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+  return luminance <= 0.4;
+}
+
 function pickDefined() {
   for (let i = 0; i < arguments.length; i++) {
     if (arguments[i] !== null && arguments[i] !== undefined) {
@@ -118,8 +171,46 @@ function getSegmentHeights(totalHeight, wdl) {
   return { player1, draw, player2 };
 }
 
-function markerColor(theme) {
-  return theme.secondaryDark ? theme.colors.textLight : theme.colors.textDark;
+function midpointSegment(bar) {
+  const heights = getSegmentHeights(bar.height, bar.wdl);
+  const midpointOffset = bar.height / 2;
+  if (midpointOffset < heights.player2) {
+    return "player2";
+  }
+  if (midpointOffset < heights.player2 + heights.draw) {
+    return "draw";
+  }
+  return "player1";
+}
+
+function markerColor(theme, bar) {
+  const currentTheme = theme || {};
+  const colors = currentTheme.colors || {};
+  const resolveDark = (flag, color) => {
+    if (flag === true || flag === false) {
+      return flag;
+    }
+    const computed = isDarkColor(color);
+    if (computed === true || computed === false) {
+      return computed;
+    }
+    return false;
+  };
+
+  const segment = midpointSegment(bar);
+  const isDarkBySegment = {
+    player1: resolveDark(currentTheme.player1Dark, colors.player1),
+    player2: resolveDark(currentTheme.player2Dark, colors.player2),
+    draw: resolveDark(
+      currentTheme.board3Dark !== undefined
+        ? currentTheme.board3Dark
+        : currentTheme.secondaryDark,
+      colors.board3
+    ),
+  };
+  const segmentIsDark = isDarkBySegment[segment];
+
+  return segmentIsDark ? "#ffffff" : "#000000";
 }
 
 function drawFillSegmentsCanvas(ctx, bar, theme) {
@@ -199,8 +290,8 @@ function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   ctx.restore();
 
   ctx.save();
+  ctx.strokeStyle = markerColor(theme, bar);
   ctx.globalAlpha = 0.2;
-  ctx.strokeStyle = markerColor(theme);
   ctx.lineWidth = 1;
   const midY = bar.y + bar.height / 2;
   ctx.beginPath();
@@ -235,7 +326,7 @@ function drawEvaluationBarSvg(svg, options, theme, dims) {
 
   const midY = bar.y + bar.height / 2;
   svg.line(bar.x, midY, bar.x + bar.width, midY, {
-    stroke: markerColor(theme),
+    stroke: markerColor(theme, bar),
     strokeWidth: 1,
     opacity: 0.2,
   });
