@@ -61,14 +61,15 @@ export function prepareAnalysisData(
 
   const deduped = dedupeMoves(moves);
   const strengths = computeStrengths(deduped, board.player);
+  const scales = computeScales(deduped, board.player);
 
   const placements = [];
   const arrows = [];
   deduped.forEach((move, i) => {
     if (move.ply.movement) {
-      arrows.push({ move, strength: strengths[i] });
+      arrows.push({ move, strength: strengths[i], scale: scales[i] });
     } else {
-      placements.push({ move, strength: strengths[i] });
+      placements.push({ move, strength: strengths[i], scale: scales[i] });
     }
   });
 
@@ -441,6 +442,39 @@ function computeStrengths(moves, currentPlayer) {
     if (i === 0) return DEFAULT_OPACITY;
     if (value === null) return MIN_OPACITY;
     return Math.max(MIN_OPACITY, DEFAULT_OPACITY * (value / topEval));
+  });
+}
+
+function computeScales(moves, currentPlayer) {
+  const MIN_SCALE = 0.55;
+  const MAX_SCALE = 1.2;
+  const K = 2;
+
+  if (moves.length === 0) return [];
+  if (moves.length === 1) return [MAX_SCALE];
+
+  const hasOpenings = moves.some((move) => move.totalGames != null && move.totalGames > 0);
+
+  const subjEvals = moves.map((move) => {
+    if (hasOpenings) {
+      if (!move.totalGames || move.totalGames === 0) return 100;
+      const wins = currentPlayer === 1 ? move.wins1 : move.wins2;
+      const draws = move.draws || 0;
+      return ((wins + draws * 0.5) / move.totalGames) * 200;
+    }
+
+    if (move.evaluation === null || move.evaluation === undefined) return null;
+    return currentPlayer === 1 ? 100 + move.evaluation : 100 - move.evaluation;
+  });
+
+  const topEval = subjEvals[0];
+  if (topEval === null || topEval === 0) return moves.map(() => MAX_SCALE);
+
+  return subjEvals.map((value, i) => {
+    if (i === 0) return MAX_SCALE;
+    if (value === null) return MIN_SCALE;
+    const scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.exp((K * (value - topEval)) / topEval);
+    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
   });
 }
 

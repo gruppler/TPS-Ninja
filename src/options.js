@@ -28,6 +28,12 @@ const defaults = {
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
+  boardEvalBar: false,
+  evaluation: null,
+  wdl: null,
+  wins1: null,
+  draws: null,
+  wins2: null,
 };
 
 function sanitizeOptions(options) {
@@ -66,6 +72,38 @@ function sanitizeOptions(options) {
       } else if (key === "plies") {
         if (isString(options[key])) {
           options[key] = options[key].split(/[\s,]+/);
+        }
+      } else if (key === "wdl") {
+        if (isString(options[key])) {
+          try {
+            options[key] = JSON.parse(options[key]);
+          } catch (err) {
+            options[key] = null;
+          }
+        }
+      } else if (key === "evaluation") {
+        if (
+          options[key] === null ||
+          options[key] === undefined ||
+          options[key] === ""
+        ) {
+          options[key] = null;
+        } else {
+          const evaluation = Number(options[key]);
+          options[key] = isNaN(evaluation)
+            ? null
+            : Math.max(-100, Math.min(100, evaluation));
+        }
+      } else if (["wins1", "draws", "wins2"].includes(key)) {
+        if (
+          options[key] === null ||
+          options[key] === undefined ||
+          options[key] === ""
+        ) {
+          options[key] = null;
+        } else {
+          const value = Number(options[key]);
+          options[key] = isNaN(value) ? null : Math.max(0, value);
         }
       } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";

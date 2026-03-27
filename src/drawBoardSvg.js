@@ -1,5 +1,6 @@
 const { withAlpha } = require("./drawUtils");
 const { isDark } = require("./colors");
+const { drawEvaluationBarSvg } = require("./drawEvaluationBar");
 
 function drawAxisLabelsSvg(
   svg,
@@ -502,6 +503,15 @@ function drawUnplayedPiecesSvg(
     ),
     { fill: theme.colors.board3 }
   );
+
+  drawEvaluationBarSvg(svg, options, theme, {
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    headerHeight,
+    boardRadius,
+  });
 
   [1, 2].forEach(function (color) {
     const baseX =

@@ -1,5 +1,6 @@
 const { roundRect, withAlpha } = require("./drawUtils");
 const { isDark } = require("./colors");
+const { drawEvaluationBarCanvas } = require("./drawEvaluationBar");
 
 function drawAxisLabels(
   ctx,
@@ -459,6 +460,15 @@ function drawUnplayedPieces(
     { tr: boardRadius, br: boardRadius }
   );
   ctx.fill();
+
+  drawEvaluationBarCanvas(ctx, options, theme, {
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    headerHeight,
+    boardRadius,
+  });
 
   [1, 2].forEach((color) => {
     ctx.save();
