@@ -287,10 +287,20 @@ export function drawBoardSvg(
             }
           );
         } else if (square.roads.length) {
-          drawSquareHighlightEl(
-            sx,
-            sy,
-            withAlpha(theme.colors[`player${square.color}road`], 0.35)
+          square.roads.forEach((side) => {
+            const coords = sideCoords[side];
+            svg.rect(sx + coords[0], sy + coords[1], roadSize, roadSize, {
+              fill: withAlpha(theme.colors[`player${square.color}road`], 0.8),
+            });
+          });
+          svg.rect(
+            sx + (squareSize - roadSize) / 2,
+            sy + (squareSize - roadSize) / 2,
+            roadSize,
+            roadSize,
+            {
+              fill: withAlpha(theme.colors[`player${square.color}road`], 0.8),
+            }
           );
         }
 
