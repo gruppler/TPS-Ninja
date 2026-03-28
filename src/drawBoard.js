@@ -402,11 +402,18 @@ function createSquareDrawer(
         roadSize
       );
     } else if (square.roads.length) {
-      ctx.fillStyle = withAlpha(
-        theme.colors[`player${square.color}road`],
-        0.35
+      square.roads.forEach((side) => {
+        const coords = sideCoords[side];
+        ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
+        ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
+      });
+      ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
+      ctx.fillRect(
+        (squareSize - roadSize) / 2,
+        (squareSize - roadSize) / 2,
+        roadSize,
+        roadSize
       );
-      drawSquareHighlight();
     }
 
     // Small Axis Labels
