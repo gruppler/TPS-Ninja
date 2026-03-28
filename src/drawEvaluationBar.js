@@ -291,7 +291,7 @@ function drawEvaluationBarCanvas(ctx, options, theme, dims) {
 
   ctx.save();
   ctx.strokeStyle = markerColor(theme, bar);
-  ctx.globalAlpha = 0.2;
+  ctx.globalAlpha = 0.35;
   ctx.lineWidth = 1;
   const midY = bar.y + bar.height / 2;
   ctx.beginPath();
@@ -328,7 +328,7 @@ function drawEvaluationBarSvg(svg, options, theme, dims) {
   svg.line(bar.x, midY, bar.x + bar.width, midY, {
     stroke: markerColor(theme, bar),
     strokeWidth: 1,
-    opacity: 0.2,
+    opacity: 0.35,
   });
 }
 
