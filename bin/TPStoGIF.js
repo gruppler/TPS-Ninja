@@ -21,7 +21,7 @@ if (!options.length) {
       "  moveNumber     [true|false|<number>] Show current move number\n" +
       "  komi           [half-integer] Bonus points awarded to Player 2\n" +
       "  opening        [swap|no-swap] Opening variations\n" +
-      "  showRoads      [true|false] Show road connections\n" +
+      "  showRoads      [true|false] Show partial roads\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
       "  padding        [true|false] Pad the image\n" +
       "  boardEvalBar   [true|false] Show evaluation bar in unplayed area\n" +
