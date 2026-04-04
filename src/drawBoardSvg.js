@@ -1,5 +1,5 @@
 const { withAlpha } = require("./drawUtils");
-const { isDark } = require("./colors");
+const { isDark, compositeColors } = require("./colors");
 const { drawEvaluationBarSvg } = require("./drawEvaluationBar");
 
 function drawAxisLabelsSvg(
@@ -112,35 +112,54 @@ function drawBoardSvg(
 
   function isAxisLabelTextLight(square) {
     const isDiamonds3 = theme.boardStyle === "diamonds3";
+    const isCheckerDark = theme.boardChecker && !square.isLight;
 
-    if (
-      !isDiamonds3 &&
-      options.highlighter &&
-      square.coord in options.highlighter
-    ) {
-      return isDark(options.highlighter[square.coord]);
-    }
-
-    let isTextLight;
-    if (theme.boardChecker) {
-      if (isDiamonds3) {
-        isTextLight = square.isLight ? theme.board2Dark : theme.board1Dark;
-      } else {
-        isTextLight = square.isLight ? theme.board1Dark : theme.board2Dark;
-      }
+    let baseColor;
+    if (!theme.boardStyle || theme.boardStyle === "blank") {
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+    } else if (isDiamonds3) {
+      baseColor = theme.colors["board" + (isCheckerDark ? 1 : 2)];
     } else {
-      isTextLight = isDiamonds3 ? theme.board2Dark : theme.board1Dark;
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
     }
 
-    if (
-      !isDiamonds3 &&
-      options.hlSquares &&
-      hlSquares.includes(square.coord)
-    ) {
-      isTextLight = theme.primaryDark;
+    if (isDiamonds3) {
+      return isDark(baseColor);
     }
 
-    return Boolean(isTextLight);
+    let composited = baseColor;
+
+    if (theme.rings) {
+      let ring = square.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(board.size / 2) - ring + 1;
+      }
+      if (ring <= theme.rings) {
+        composited = compositeColors(
+          composited,
+          theme.colors["ring" + ring],
+          theme.vars["rings-opacity"]
+        );
+      }
+    }
+
+    if (options.highlighter && square.coord in options.highlighter) {
+      composited = compositeColors(
+        composited,
+        options.highlighter[square.coord],
+        0.75
+      );
+    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
+      var alphas = [0.4, 0.75];
+      if (!options.plyIsDone) alphas.reverse();
+      var hlAlpha =
+        hlSquares.length > 1 && square.coord === hlSquares[0]
+          ? alphas[0]
+          : alphas[1];
+      composited = compositeColors(composited, theme.colors.primary, hlAlpha);
+    }
+
+    return isDark(composited);
   }
 
   function axisLabelInsetEm() {
@@ -341,6 +360,8 @@ function drawBoardSvg(
                 strokeWidth: strokeWidth,
                 pieceShadowId: pieceShadowId,
                 stackCountFontSize: stackCountFontSize,
+                axisLabelInsetPx: axisLabelFontSize * axisLabelInsetEm(),
+                isAxisLabelTextLight: isAxisLabelTextLight,
               }
             );
           });
@@ -357,7 +378,19 @@ function drawPieceSvg(
   board,
   options,
   theme,
-  { squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize, strokeWidth, pieceShadowId, stackCountFontSize }
+  {
+    squareSize,
+    pieceSize,
+    pieceRadius,
+    pieceSpacing,
+    immovableSize,
+    wallSize,
+    strokeWidth,
+    pieceShadowId,
+    stackCountFontSize,
+    axisLabelInsetPx,
+    isAxisLabelTextLight,
+  }
 ) {
   const pieces = piece.square ? piece.square.pieces : null;
   const z = piece.z();
@@ -478,13 +511,28 @@ function drawPieceSvg(
   // Stack Count (only on top piece)
   const isTopPiece = pieces && z === pieces.length - 1;
   if (options.stackCounts && isTopPiece && pieces.length > 1) {
-    const darknessKey = piece.isCapstone || piece.isStanding
-      ? "player" + piece.color + "SpecialDark"
-      : "player" + piece.color + "FlatDark";
-    const textFill = theme[darknessKey]
-      ? theme.colors.textLight
-      : theme.colors.textDark;
-    svg.text(cx, cy + y, String(pieces.length), {
+    var textFill;
+    let textX = cx;
+    let textY = cy + y;
+    if (!options.centerStackCounts) {
+      const cornerAnchor = stackCountFontSize * 0.65;
+      textX = cx + squareSize / 2 - cornerAnchor - axisLabelInsetPx;
+      textY = cy + squareSize / 2 - cornerAnchor - axisLabelInsetPx;
+      var isTextLight = isAxisLabelTextLight
+        ? isAxisLabelTextLight(piece.square)
+        : false;
+      textFill = isTextLight
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+    } else {
+      const darknessKey = piece.isCapstone || piece.isStanding
+        ? "player" + piece.color + "SpecialDark"
+        : "player" + piece.color + "FlatDark";
+      textFill = theme[darknessKey]
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+    }
+    svg.text(textX, textY, String(pieces.length), {
       fill: textFill,
       fontSize: stackCountFontSize,
       fontFamily: options.font,
@@ -559,6 +607,7 @@ function drawUnplayedPiecesSvg(
           wallSize: wallSize,
           strokeWidth: strokeWidth,
           pieceShadowId: pieceShadowId,
+          axisLabelInsetPx: 0,
         });
       });
     });

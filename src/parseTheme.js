@@ -1,9 +1,21 @@
 const { isString } = require("lodash");
+const { isDark } = require("./colors");
 const { themes } = require("./themes");
+
+function computeThemeBooleans(theme) {
+  var c = theme.colors;
+  if (c.player1flat) theme.player1FlatDark = isDark(c.player1flat);
+  if (c.player1special) theme.player1SpecialDark = isDark(c.player1special);
+  if (c.player2flat) theme.player2FlatDark = isDark(c.player2flat);
+  if (c.player2special) theme.player2SpecialDark = isDark(c.player2special);
+  if (c.board1) theme.board1Dark = isDark(c.board1);
+  if (c.board2) theme.board2Dark = isDark(c.board2);
+  return theme;
+}
 
 function parseTheme(theme) {
   if (!theme || !isString(theme)) {
-    return theme || themes[0];
+    return computeThemeBooleans(theme || themes[0]);
   }
   if (theme[0] === "{") {
     // Custom theme
@@ -30,7 +42,7 @@ function parseTheme(theme) {
           }
         }
       }
-      return parsedTheme;
+      return computeThemeBooleans(parsedTheme);
     } catch (err) {
       console.log(err);
       throw new Error("Invalid theme");
@@ -41,7 +53,7 @@ function parseTheme(theme) {
     if (!theme) {
       throw new Error("Invalid theme ID");
     }
-    return theme;
+    return computeThemeBooleans(theme);
   }
 }
 
