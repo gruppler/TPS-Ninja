@@ -7,7 +7,9 @@ export function computeThemeBooleans(theme) {
   if (c.player1) theme.player1Dark = isDark(c.player1);
   if (c.player2) theme.player2Dark = isDark(c.player2);
   if (c.player1flat) theme.player1FlatDark = isDark(c.player1flat);
+  if (c.player1special) theme.player1SpecialDark = isDark(c.player1special);
   if (c.player2flat) theme.player2FlatDark = isDark(c.player2flat);
+  if (c.player2special) theme.player2SpecialDark = isDark(c.player2special);
   if (c.board1) theme.board1Dark = isDark(c.board1);
   if (c.board2) theme.board2Dark = isDark(c.board2);
   return theme;

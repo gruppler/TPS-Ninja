@@ -183,6 +183,8 @@ axisLabelsSmall [true|false] Show board coordinate labels inside the board
 turnIndicator   [true|false] Show turn indicator and player names
 flatCounts      [true|false] Show flat counts
 stackCounts     [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+                Forced true when axisLabels and axisLabelsSmall are both true
 moveNumber      [true|false|<number>] Show current move number
 evalText        [true|false] Show current ply eval notation
 komi            [half-integer] Bonus points awarded to Player 2
@@ -272,6 +274,8 @@ axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+               Forced true when axisLabels and axisLabelsSmall are both true
 moveNumber     [true|false|<number>] Show current move number
 evalText       [true|false] Show current ply eval notation
 komi           [half-integer] Bonus points awarded to Player 2

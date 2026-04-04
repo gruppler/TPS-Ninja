@@ -11,6 +11,7 @@ export const defaults = {
   textSize: "md",
   axisLabels: true,
   axisLabelsSmall: false,
+  centerStackCounts: false,
   turnIndicator: true,
   flatCounts: true,
   stackCounts: true,
@@ -139,6 +140,9 @@ export function sanitizeOptions(options) {
   }
   if (isString(options.tps) && options.tps && options.tps.length === 1) {
     options.tps = Number(options.tps);
+  }
+  if (options.axisLabels && options.axisLabelsSmall) {
+    options.centerStackCounts = true;
   }
   return options;
 }

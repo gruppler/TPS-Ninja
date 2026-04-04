@@ -18,6 +18,8 @@ if (!options.length) {
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
       "  flatCounts     [true|false] Show flat counts\n" +
       "  stackCounts    [true|false] Show stack counts\n" +
+      "  centerStackCounts [true|false] Show stack counts in piece center instead of corner\n" +
+      "               Forced true when axisLabels and axisLabelsSmall are both true\n" +
       "  moveNumber     [true|false|<number>] Show current move number\n" +
       "  komi           [half-integer] Bonus points awarded to Player 2\n" +
       "  opening        [swap|no-swap] Opening variations\n" +
