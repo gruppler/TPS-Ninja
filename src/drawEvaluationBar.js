@@ -103,6 +103,52 @@ function resolveWDL(options) {
   return null;
 }
 
+function shouldShowWdlSegments(options) {
+  if (options.evalBarMode === "wdl" || options.showWdlBars === true) {
+    return true;
+  }
+  if (options.evalBarMode === "single" || options.showWdlBars === false) {
+    return false;
+  }
+  return (
+    options.wins1 != null || options.draws != null || options.wins2 != null
+  );
+}
+
+function resolvePlayer1Percent(bar) {
+  const evalValue = toFiniteNumber(bar.evaluation);
+  if (evalValue !== null) {
+    return clampPercent((100 + evalValue) / 2);
+  }
+  if (!bar.wdl) {
+    return null;
+  }
+  return clampPercent(bar.wdl.player1 + bar.wdl.draw / 2);
+}
+
+function getSingleSegmentRect(bar) {
+  const player1Percent = resolvePlayer1Percent(bar);
+  if (player1Percent === null) {
+    return null;
+  }
+  const magnitude = Math.max(0, Math.min(100, Math.abs(player1Percent - 50) * 2));
+  if (magnitude <= 0) {
+    return null;
+  }
+  const segmentHeight = Math.max(0, Math.round((bar.height * magnitude) / 100));
+  if (!segmentHeight) {
+    return null;
+  }
+  const winner = player1Percent > 50 ? "player1" : "player2";
+  return {
+    winner,
+    x: bar.x,
+    y: bar.y + bar.height - segmentHeight,
+    width: bar.width,
+    height: segmentHeight,
+  };
+}
+
 function getSegmentHeights(totalHeight, wdl) {
   let player1 = Math.max(0, Math.round((totalHeight * wdl.player1) / 100));
   let draw = Math.max(0, Math.round((totalHeight * wdl.draw) / 100));
@@ -123,6 +169,9 @@ function getSegmentHeights(totalHeight, wdl) {
 }
 
 function midpointSegment(bar) {
+  if (!bar.showWdlSegments || !bar.wdl) {
+    return "draw";
+  }
   const heights = getSegmentHeights(bar.height, bar.wdl);
   const midpointOffset = bar.height / 2;
   if (midpointOffset < heights.player2) {
@@ -164,6 +213,9 @@ function markerColor(theme, bar) {
 }
 
 function drawFillSegmentsCanvas(ctx, bar, theme) {
+  if (!bar.wdl) {
+    return;
+  }
   const heights = getSegmentHeights(bar.height, bar.wdl);
   const segments = [
     { height: heights.player1, fill: theme.colors.player1 },
@@ -181,7 +233,20 @@ function drawFillSegmentsCanvas(ctx, bar, theme) {
   });
 }
 
+function drawSingleSegmentCanvas(ctx, bar, theme) {
+  const segment = getSingleSegmentRect(bar);
+  if (!segment) {
+    return;
+  }
+  ctx.fillStyle =
+    segment.winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+  ctx.fillRect(segment.x, segment.y, segment.width, segment.height);
+}
+
 function drawFillSegmentsSvg(svg, bar, theme) {
+  if (!bar.wdl) {
+    return;
+  }
   const heights = getSegmentHeights(bar.height, bar.wdl);
   const segments = [
     { height: heights.player1, fill: theme.colors.player1 },
@@ -201,13 +266,29 @@ function drawFillSegmentsSvg(svg, bar, theme) {
   });
 }
 
+function drawSingleSegmentSvg(svg, bar, theme) {
+  const segment = getSingleSegmentRect(bar);
+  if (!segment) {
+    return;
+  }
+  const fill =
+    segment.winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+  svg.rect(segment.x, segment.y, segment.width, segment.height, {
+    fill,
+    opacity: 0.3,
+  });
+}
+
 export function getEvaluationBarRect(options, dims) {
   if (!options.boardEvalBar || !options.unplayedPieces) {
     return null;
   }
 
-  const wdl = normalizeWDL(resolveWDL(options), options.evaluation);
-  if (!wdl) {
+  const showWdlSegments = shouldShowWdlSegments(options);
+  const evaluation = toFiniteNumber(options.evaluation);
+  const wdl = normalizeWDL(resolveWDL(options), evaluation);
+  const hasSingleData = evaluation !== null || wdl !== null;
+  if (!hasSingleData || (showWdlSegments && !wdl)) {
     return null;
   }
 
@@ -218,6 +299,8 @@ export function getEvaluationBarRect(options, dims) {
     width: unplayedWidth,
     height: boardSize,
     wdl,
+    evaluation,
+    showWdlSegments,
   };
 }
 
@@ -236,19 +319,25 @@ export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   });
   ctx.clip();
   ctx.globalAlpha = 0.3;
-  drawFillSegmentsCanvas(ctx, bar, theme);
+  if (bar.showWdlSegments) {
+    drawFillSegmentsCanvas(ctx, bar, theme);
+  } else {
+    drawSingleSegmentCanvas(ctx, bar, theme);
+  }
   ctx.restore();
 
-  ctx.save();
-  ctx.strokeStyle = markerColor(theme, bar);
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 1;
-  const midY = bar.y + bar.height / 2;
-  ctx.beginPath();
-  ctx.moveTo(bar.x, midY);
-  ctx.lineTo(bar.x + bar.width, midY);
-  ctx.stroke();
-  ctx.restore();
+  if (bar.showWdlSegments) {
+    ctx.save();
+    ctx.strokeStyle = markerColor(theme, bar);
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1;
+    const midY = bar.y + bar.height / 2;
+    ctx.beginPath();
+    ctx.moveTo(bar.x, midY);
+    ctx.lineTo(bar.x + bar.width, midY);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 export function drawEvaluationBarSvg(svg, options, theme, dims) {
@@ -271,13 +360,19 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
   );
 
   svg.openGroup({ clipPath: clipId });
-  drawFillSegmentsSvg(svg, bar, theme);
+  if (bar.showWdlSegments) {
+    drawFillSegmentsSvg(svg, bar, theme);
+  } else {
+    drawSingleSegmentSvg(svg, bar, theme);
+  }
   svg.closeGroup();
 
-  const midY = bar.y + bar.height / 2;
-  svg.line(bar.x, midY, bar.x + bar.width, midY, {
-    stroke: markerColor(theme, bar),
-    strokeWidth: 1,
-    opacity: 0.35,
-  });
+  if (bar.showWdlSegments) {
+    const midY = bar.y + bar.height / 2;
+    svg.line(bar.x, midY, bar.x + bar.width, midY, {
+      stroke: markerColor(theme, bar),
+      strokeWidth: 1,
+      opacity: 0.35,
+    });
+  }
 }
