@@ -26,7 +26,7 @@ export function drawAnalysis(
   });
   if (!prepared) return;
 
-  const { layoutParams, placements, arrows, getStackHeight, getStackInfo } = prepared;
+  const { size, layoutParams, placements, arrows, getStackHeight, getStackInfo } = prepared;
 
   const ghostStrokeWidth = Math.round(
     theme.vars["piece-border-width"] * squareSize * 0.013 * 0.5
@@ -140,7 +140,8 @@ export function drawAnalysis(
       arrowGroupMap,
       layoutParams,
       squareSize,
-      getStackInfo
+      getStackInfo,
+      size
     );
     if (!geometry) return;
 
