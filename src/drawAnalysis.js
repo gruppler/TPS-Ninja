@@ -132,7 +132,8 @@ export function computeArrowGeometry(
   arrowGroupMap,
   layoutParams,
   squareSize,
-  getStackInfo
+  getStackInfo,
+  boardSize
 ) {
   const ply = move.ply;
   const squares = ply.squares;
@@ -167,7 +168,7 @@ export function computeArrowGeometry(
   const headHalf = squareSize * 0.1;
   const lineWidth = squareSize * 0.08;
   const shaftStartInset = squareSize * 0.01;
-  const stackSpacing = squareSize * 0.07;
+  const stackSpacing = Math.round(squareSize * 0.07);
 
   const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
   let bottomOffset = 0;
@@ -179,7 +180,11 @@ export function computeArrowGeometry(
       : boardSquares[boardSquares.length - 1];
     const { stackHeight, topIsWall } = getStackInfo(bottomSquare);
     if (stackHeight > 0) {
-      let offset = stackSpacing * (stackHeight - 1);
+      // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
+      const effectiveTop = boardSize
+        ? Math.min(stackHeight - 1, boardSize - 1)
+        : stackHeight - 1;
+      let offset = stackSpacing * effectiveTop;
       if (topIsWall && stackHeight > 1) {
         offset -= stackSpacing;
       }
