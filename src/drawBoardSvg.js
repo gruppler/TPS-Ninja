@@ -413,19 +413,31 @@ function drawPieceSvg(
       y += pieceSpacing * overflow;
     }
   } else {
-    const stackColor =
-      options.opening === "swap" && piece.index === 0 && !piece.isCapstone
-        ? piece.color === 1
-          ? 2
-          : 1
-        : piece.color;
+    const isDBS = options.opening === "double black stack";
+    const isSwapOpening = options.opening === "swap" || isDBS;
+    let stackColor = piece.color;
+    let stackIndex = piece.index;
+    if (isSwapOpening && !piece.isCapstone) {
+      if (piece.index === 0) {
+        stackColor = piece.color === 1 ? 2 : 1;
+      } else if (isDBS && piece.color === 2 && piece.index === 1) {
+        stackColor = 1;
+      }
+      if (isDBS) {
+        if (piece.color === 1 && stackColor === 1) {
+          stackIndex = piece.index + 1;
+        } else if (piece.color === 2 && stackColor === 2) {
+          stackIndex = piece.index + 1;
+        }
+      }
+    }
     const caps = board.pieceCounts[stackColor].cap;
     const total = board.pieceCounts[stackColor].total;
     y = board.size - 1;
     if (piece.isCapstone) {
-      y *= total - piece.index - 1;
+      y *= total - stackIndex - 1;
     } else {
-      y *= total - piece.index - caps - 1;
+      y *= total - stackIndex - caps - 1;
     }
     y *= -squareSize / (total - 1);
   }
@@ -582,18 +594,41 @@ function drawUnplayedPiecesSvg(
       const played = board.pieces.played[color][type].length;
       const remaining = total - played;
       const pieces = board.pieces.all[color][type].slice(total - remaining);
-      if (type === "flat" && options.opening === "swap") {
+      const isDBS = options.opening === "double black stack";
+      const isSwapOpening = options.opening === "swap" || isDBS;
+      if (type === "flat" && isSwapOpening) {
         if (color === 1) {
           if (!board.pieces.played[2][type].length) {
             pieces[0] = board.pieces.all[2][type][0];
+            if (isDBS && board.pieces.all[2][type][1]) {
+              pieces.splice(1, 0, board.pieces.all[2][type][1]);
+            }
+          } else if (
+            isDBS &&
+            board.pieces.played[2][type].length < 2
+          ) {
+            pieces[0] = board.pieces.all[2][type][1];
           } else if (!played) {
             pieces.shift();
+            if (isDBS) {
+              pieces.shift();
+            }
           }
-        } else if (!board.pieces.played[1][type].length) {
-          if (!board.pieces.played[2][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
-          } else {
-            pieces.unshift(board.pieces.all[1][type][0]);
+        } else {
+          // Color 2's reserve
+          if (!board.pieces.played[1][type].length) {
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
+          }
+          if (isDBS) {
+            const dbs = board.pieces.all[2][type][1];
+            const dbsIdx = pieces.indexOf(dbs);
+            if (dbsIdx >= 0) {
+              pieces.splice(dbsIdx, 1);
+            }
           }
         }
       }
