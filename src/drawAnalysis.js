@@ -105,9 +105,9 @@ export function groupPlacementsByCoord(placements) {
 }
 
 export function getStrengthScale(strength) {
-  const minOpacity = 0.25;
+  const minOpacity = 0.2;
   const maxOpacity = 1.0;
-  const minScale = 0.45;
+  const minScale = 0.55;
   const maxScale = 1.2;
   const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
   const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
@@ -419,34 +419,80 @@ function isSuperior(candidate, existing) {
   return false;
 }
 
-function computeStrengths(moves, currentPlayer) {
-  const DEFAULT_OPACITY = 1.0;
-  const MIN_OPACITY = 0.25;
+function hasOpeningData(moves) {
+  return moves.some((move) => move.totalGames != null && move.totalGames > 0);
+}
 
-  if (moves.length === 0) return [];
-  if (moves.length === 1) return [DEFAULT_OPACITY];
-
-  const hasOpenings = moves.some((move) => move.totalGames != null && move.totalGames > 0);
-
-  const subjEvals = moves.map((move) => {
-    if (hasOpenings) {
+function computeSubjectiveEvals(moves, currentPlayer, isOpenings) {
+  return moves.map((move) => {
+    if (isOpenings) {
       if (!move.totalGames || move.totalGames === 0) return 100;
       const wins = currentPlayer === 1 ? move.wins1 : move.wins2;
       const draws = move.draws || 0;
       return ((wins + draws * 0.5) / move.totalGames) * 200;
     }
-
     if (move.evaluation === null || move.evaluation === undefined) return null;
     return currentPlayer === 1 ? 100 + move.evaluation : 100 - move.evaluation;
   });
+}
 
-  const topEval = subjEvals[0];
-  if (topEval === null || topEval === 0) return moves.map(() => DEFAULT_OPACITY);
+function computeStrengths(moves, currentPlayer) {
+  const DEFAULT_OPACITY = 1.0;
+  const MIN_OPACITY = 0.2;
+  const K = 4; // Sensitivity constant for opacity curve
 
-  return subjEvals.map((value, i) => {
+  if (moves.length === 0) return [];
+  if (moves.length === 1) return [DEFAULT_OPACITY];
+
+  const isOpenings = hasOpeningData(moves);
+
+  // For openings, opacity is based on commonality (totalGames) of each
+  // move relative to the previous one, with a bounded step-down.
+  if (isOpenings) {
+    const MAX_OPACITY_DIFF = 0.15;
+    const opacities = [];
+    let prevOpacity = DEFAULT_OPACITY;
+    let prevCommonality = null;
+    for (let i = 0; i < moves.length; i++) {
+      const commonality = Number(moves[i].totalGames) || 0;
+      if (i === 0) {
+        opacities.push(DEFAULT_OPACITY);
+        prevCommonality = commonality;
+        continue;
+      }
+      let opacity;
+      if (!prevCommonality) {
+        opacity = MIN_OPACITY;
+      } else {
+        const rel = commonality / prevCommonality;
+        opacity = Math.max(
+          prevOpacity * rel,
+          prevOpacity - MAX_OPACITY_DIFF
+        );
+      }
+      opacity = Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
+      opacities.push(opacity);
+      prevOpacity = opacity;
+      prevCommonality = commonality;
+    }
+    return opacities;
+  }
+
+  const subjEvals = computeSubjectiveEvals(moves, currentPlayer, false);
+
+  // Top suggestion (index 0) always gets DEFAULT_OPACITY.
+  // Others use exponential formula: 0.2 + 0.8 * e^(k * (x - B) / B)
+  // This is more sensitive for moves close to best, less sensitive for blunders.
+  const B = subjEvals[0];
+  if (B === null || B === 0) {
+    return moves.map(() => DEFAULT_OPACITY);
+  }
+
+  return subjEvals.map((x, i) => {
     if (i === 0) return DEFAULT_OPACITY;
-    if (value === null) return MIN_OPACITY;
-    return Math.max(MIN_OPACITY, DEFAULT_OPACITY * (value / topEval));
+    if (x === null) return MIN_OPACITY;
+    const opacity = MIN_OPACITY + 0.8 * Math.exp((K * (x - B)) / B);
+    return Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
   });
 }
 
@@ -458,27 +504,24 @@ function computeScales(moves, currentPlayer) {
   if (moves.length === 0) return [];
   if (moves.length === 1) return [MAX_SCALE];
 
-  const hasOpenings = moves.some((move) => move.totalGames != null && move.totalGames > 0);
+  // For openings, size is derived from opacity via getStrengthScale (the
+  // shared size_function). Returning null lets the element renderers
+  // fall back to getStrengthScale(strength).
+  if (hasOpeningData(moves)) {
+    return moves.map(() => null);
+  }
 
-  const subjEvals = moves.map((move) => {
-    if (hasOpenings) {
-      if (!move.totalGames || move.totalGames === 0) return 100;
-      const wins = currentPlayer === 1 ? move.wins1 : move.wins2;
-      const draws = move.draws || 0;
-      return ((wins + draws * 0.5) / move.totalGames) * 200;
-    }
+  const subjEvals = computeSubjectiveEvals(moves, currentPlayer, false);
+  const B = subjEvals[0];
+  if (B === null || B === 0) {
+    return moves.map(() => MAX_SCALE);
+  }
 
-    if (move.evaluation === null || move.evaluation === undefined) return null;
-    return currentPlayer === 1 ? 100 + move.evaluation : 100 - move.evaluation;
-  });
-
-  const topEval = subjEvals[0];
-  if (topEval === null || topEval === 0) return moves.map(() => MAX_SCALE);
-
-  return subjEvals.map((value, i) => {
+  return subjEvals.map((x, i) => {
     if (i === 0) return MAX_SCALE;
-    if (value === null) return MIN_SCALE;
-    const scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.exp((K * (value - topEval)) / topEval);
+    if (x === null) return MIN_SCALE;
+    const scale =
+      MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.exp((K * (x - B)) / B);
     return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
   });
 }
