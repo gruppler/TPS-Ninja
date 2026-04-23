@@ -1,5 +1,6 @@
 import { roundRect, withAlpha } from "./drawUtils.js";
-import { isDark } from "./colors.js";
+import { isDark, compositeColors } from "./colors.js";
+import { drawEvaluationBarCanvas } from "./drawEvaluationBar.js";
 
 export function drawAxisLabels(
   ctx,
@@ -98,35 +99,59 @@ export function createSquareDrawer(
 ) {
   const isAxisLabelTextLight = (square) => {
     const isDiamonds3 = theme.boardStyle === "diamonds3";
+    const isCheckerDark = theme.boardChecker && !square.isLight;
 
-    if (
-      !isDiamonds3 &&
-      options.highlighter &&
-      square.coord in options.highlighter
-    ) {
-      return isDark(options.highlighter[square.coord]);
-    }
-
-    let isTextLight;
-    if (theme.boardChecker) {
-      if (isDiamonds3) {
-        isTextLight = square.isLight ? theme.board2Dark : theme.board1Dark;
-      } else {
-        isTextLight = square.isLight ? theme.board1Dark : theme.board2Dark;
-      }
+    // diamonds3: text sits outside the highlight shapes, on the background
+    // other styles: text sits inside the shaped area
+    let baseColor;
+    if (!theme.boardStyle || theme.boardStyle === "blank") {
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+    } else if (isDiamonds3) {
+      baseColor = theme.colors["board" + (isCheckerDark ? 1 : 2)];
     } else {
-      isTextLight = isDiamonds3 ? theme.board2Dark : theme.board1Dark;
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
     }
 
-    if (
-      !isDiamonds3 &&
-      options.hlSquares &&
-      hlSquares.includes(square.coord)
-    ) {
-      isTextLight = theme.primaryDark;
+    // For diamonds3, overlays don't cover the text corner, so skip compositing
+    if (isDiamonds3) {
+      return isDark(baseColor);
     }
 
-    return Boolean(isTextLight);
+    let composited = baseColor;
+
+    // Composite ring color
+    if (theme.rings) {
+      let ring = square.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(board.size / 2) - ring + 1;
+      }
+      if (ring <= theme.rings) {
+        composited = compositeColors(
+          composited,
+          theme.colors["ring" + ring],
+          theme.vars["rings-opacity"]
+        );
+      }
+    }
+
+    // Composite highlighter color
+    if (options.highlighter && square.coord in options.highlighter) {
+      composited = compositeColors(
+        composited,
+        options.highlighter[square.coord],
+        0.75
+      );
+    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
+      const alphas = [0.4, 0.75];
+      if (!options.plyIsDone) alphas.reverse();
+      const hlAlpha =
+        hlSquares.length > 1 && square.coord === hlSquares[0]
+          ? alphas[0]
+          : alphas[1];
+      composited = compositeColors(composited, theme.colors.primary, hlAlpha);
+    }
+
+    return isDark(composited);
   };
 
   const axisLabelInsetEm = () => {
@@ -219,19 +244,36 @@ export function createSquareDrawer(
       }
     } else {
       // Unplayed
-      const stackColor =
-        options.opening === "swap" && piece.index === 0 && !piece.isCapstone
-          ? piece.color === 1
-            ? 2
-            : 1
-          : piece.color;
+      const isDBS = options.opening === "double black stack";
+      const isSwapOpening =
+        options.opening === "swap" || isDBS;
+      let stackColor = piece.color;
+      let stackIndex = piece.index;
+      if (isSwapOpening && !piece.isCapstone) {
+        if (piece.index === 0) {
+          stackColor = piece.color === 1 ? 2 : 1;
+        } else if (
+          isDBS &&
+          piece.color === 2 &&
+          piece.index === 1
+        ) {
+          stackColor = 1;
+        }
+        if (isDBS) {
+          if (piece.color === 1 && stackColor === 1) {
+            stackIndex = piece.index + 1;
+          } else if (piece.color === 2 && stackColor === 2) {
+            stackIndex = piece.index + 1;
+          }
+        }
+      }
       const caps = board.pieceCounts[stackColor].cap;
       const total = board.pieceCounts[stackColor].total;
       y = board.size - 1;
       if (piece.isCapstone) {
-        y *= total - piece.index - 1;
+        y *= total - stackIndex - 1;
       } else {
-        y *= total - piece.index - caps - 1;
+        y *= total - stackIndex - caps - 1;
       }
       y *= -squareSize / (total - 1);
     }
@@ -318,12 +360,28 @@ export function createSquareDrawer(
     if (options.stackCounts && isTopPiece && pieces.length > 1) {
       ctx.save();
       ctx.font = `${stackCountFontSize}px ${options.font}`;
-      ctx.fillStyle = theme[`player${piece.color}FlatDark`]
-        ? theme.colors.textLight
-        : theme.colors.textDark;
+      let textX = 0;
+      let textY = y;
+      if (!options.centerStackCounts) {
+        const cornerAnchor = stackCountFontSize * 0.65;
+        const insetPx = axisLabelFontSize * axisLabelInsetEm();
+        textX = squareSize / 2 - cornerAnchor - insetPx;
+        textY = squareSize / 2 - cornerAnchor - insetPx;
+        const isTextLight = isAxisLabelTextLight(piece.square);
+        ctx.fillStyle = isTextLight
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      } else {
+        const darknessKey = piece.isCapstone || piece.isStanding
+          ? `player${piece.color}SpecialDark`
+          : `player${piece.color}FlatDark`;
+        ctx.fillStyle = theme[darknessKey]
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      }
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
-      ctx.fillText(String(pieces.length), 0, y);
+      ctx.fillText(String(pieces.length), textX, textY);
       ctx.restore();
     }
 
@@ -398,11 +456,18 @@ export function createSquareDrawer(
         roadSize
       );
     } else if (square.roads.length) {
-      ctx.fillStyle = withAlpha(
-        theme.colors[`player${square.color}road`],
-        0.35
+      square.roads.forEach((side) => {
+        const coords = sideCoords[side];
+        ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
+        ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
+      });
+      ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
+      ctx.fillRect(
+        (squareSize - roadSize) / 2,
+        (squareSize - roadSize) / 2,
+        roadSize,
+        roadSize
       );
-      drawSquareHighlight();
     }
 
     // Small Axis Labels
@@ -457,6 +522,15 @@ export function drawUnplayedPieces(
   );
   ctx.fill();
 
+  drawEvaluationBarCanvas(ctx, options, theme, {
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    headerHeight,
+    boardRadius,
+  });
+
   [1, 2].forEach((color) => {
     ctx.save();
     ctx.translate(
@@ -468,19 +542,43 @@ export function drawUnplayedPieces(
       const played = board.pieces.played[color][type].length;
       const remaining = total - played;
       const pieces = board.pieces.all[color][type].slice(total - remaining);
-      if (type === "flat" && options.opening === "swap") {
+      const isDBS = options.opening === "double black stack";
+      const isSwapOpening = options.opening === "swap" || isDBS;
+      if (type === "flat" && isSwapOpening) {
         // Swap first pieces
         if (color === 1) {
           if (!board.pieces.played[2][type].length) {
             pieces[0] = board.pieces.all[2][type][0];
+            if (isDBS && board.pieces.all[2][type][1]) {
+              pieces.splice(1, 0, board.pieces.all[2][type][1]);
+            }
+          } else if (
+            isDBS &&
+            board.pieces.played[2][type].length < 2
+          ) {
+            pieces[0] = board.pieces.all[2][type][1];
           } else if (!played) {
             pieces.shift();
+            if (isDBS) {
+              pieces.shift();
+            }
           }
-        } else if (!board.pieces.played[1][type].length) {
-          if (!board.pieces.played[2][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
-          } else {
-            pieces.unshift(board.pieces.all[1][type][0]);
+        } else {
+          // Color 2's reserve
+          if (!board.pieces.played[1][type].length) {
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
+          }
+          if (isDBS) {
+            // Remove DBS piece (index 1) from color 2's reserve
+            const dbs = board.pieces.all[2][type][1];
+            const dbsIdx = pieces.indexOf(dbs);
+            if (dbsIdx >= 0) {
+              pieces.splice(dbsIdx, 1);
+            }
           }
         }
       }

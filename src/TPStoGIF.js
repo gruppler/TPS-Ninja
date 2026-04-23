@@ -1,6 +1,6 @@
 import fs from "fs";
 import GIFEncoder from "gif-encoder-2";
-import { isArray, isFunction } from "lodash-es";
+import { isArray, isFunction, isString } from "lodash-es";
 import { sanitizeOptions } from "./options.js";
 import { TPStoCanvas } from "./TPStoCanvas.js";
 
@@ -17,11 +17,87 @@ export const TPStoGIF = function (args, streamTo = null) {
   }
   sanitizeOptions(options);
 
+  let suggestionsByFrame = null;
+  if (isString(options.suggestionsByFrame)) {
+    try {
+      suggestionsByFrame = JSON.parse(options.suggestionsByFrame);
+    } catch (error) {
+      suggestionsByFrame = null;
+    }
+  } else if (isArray(options.suggestionsByFrame)) {
+    suggestionsByFrame = options.suggestionsByFrame;
+  }
+  delete options.suggestionsByFrame;
+
+  let evaluationsByFrame = null;
+  if (isString(options.evaluationsByFrame)) {
+    try {
+      evaluationsByFrame = JSON.parse(options.evaluationsByFrame);
+    } catch (error) {
+      evaluationsByFrame = null;
+    }
+  } else if (isArray(options.evaluationsByFrame)) {
+    evaluationsByFrame = options.evaluationsByFrame;
+  }
+  delete options.evaluationsByFrame;
+
+  let wdlsByFrame = null;
+  if (isString(options.wdlsByFrame)) {
+    try {
+      wdlsByFrame = JSON.parse(options.wdlsByFrame);
+    } catch (error) {
+      wdlsByFrame = null;
+    }
+  } else if (isArray(options.wdlsByFrame)) {
+    wdlsByFrame = options.wdlsByFrame;
+  }
+  delete options.wdlsByFrame;
+
+  const delayAnalysis = options.delayAnalysis && suggestionsByFrame;
+
+  function hasSuggestions(s) {
+    return isArray(s) && s.length > 0;
+  }
+
+  function normalizeEvaluation(value) {
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+    const evaluation = Number(value);
+    return isNaN(evaluation)
+      ? null
+      : Math.max(-100, Math.min(100, evaluation));
+  }
+
+  // Set initial suggestions
+  const initialSuggestions = suggestionsByFrame
+    ? suggestionsByFrame[0] || null
+    : null;
+  if (delayAnalysis && hasSuggestions(initialSuggestions)) {
+    options.suggestions = null;
+  } else {
+    options.suggestions = initialSuggestions;
+  }
+  const initialEvaluation = evaluationsByFrame
+    ? normalizeEvaluation(evaluationsByFrame[0])
+    : options.evaluation;
+  const initialWdl = wdlsByFrame ? wdlsByFrame[0] || null : options.wdl;
+  options.evaluation = initialEvaluation;
+  options.wdl = initialWdl;
+
   const plies = options.plies || [];
   if (plies.length) {
     delete options.plies;
     delete options.ply;
     delete options.hl;
+  }
+
+  // Calculate total frames (extra frame inserted per position with suggestions)
+  let totalFrames = plies.length + 1;
+  if (delayAnalysis) {
+    for (let i = 0; i <= plies.length; i++) {
+      if (hasSuggestions(suggestionsByFrame[i])) totalFrames++;
+    }
   }
 
   let canvas = TPStoCanvas(options);
@@ -31,7 +107,7 @@ export const TPStoGIF = function (args, streamTo = null) {
     canvas.height,
     "neuquant",
     false,
-    plies.length + 1
+    totalFrames
   );
   const stream = encoder.createReadStream();
   if (streamTo) {
@@ -57,13 +133,63 @@ export const TPStoGIF = function (args, streamTo = null) {
   encoder.start();
   encoder.setDelay(options.delay);
   encoder.addFrame(canvas.ctx);
-  while (plies.length) {
+
+  // If initial position has suggestions, add the analysis frame
+  if (delayAnalysis && hasSuggestions(initialSuggestions)) {
     options.tps = tps;
-    options.ply = plies.shift();
+    delete options.ply;
+    options.suggestions = initialSuggestions;
+    options.evaluation = initialEvaluation;
+    options.wdl = initialWdl;
     canvas = TPStoCanvas(options);
-    tps = canvas.tps;
-    encoder.setDelay(options.delay + options.delay * !plies.length);
+    encoder.setDelay(options.delay);
     encoder.addFrame(canvas.ctx);
+  }
+
+  let frameIndex = 1;
+  while (plies.length) {
+    const plyText = plies.shift();
+    options.tps = tps;
+    options.ply = plyText;
+    const isLastPly = !plies.length;
+    const frameSuggestions = suggestionsByFrame
+      ? suggestionsByFrame[frameIndex] || null
+      : null;
+    const frameEvaluation = evaluationsByFrame
+      ? normalizeEvaluation(evaluationsByFrame[frameIndex])
+      : options.evaluation;
+    const frameWdl = wdlsByFrame ? wdlsByFrame[frameIndex] || null : options.wdl;
+    options.evaluation = frameEvaluation;
+    options.wdl = frameWdl;
+
+    if (delayAnalysis && hasSuggestions(frameSuggestions)) {
+      // Render ply frame without suggestions
+      options.suggestions = null;
+      canvas = TPStoCanvas(options);
+      tps = canvas.tps;
+      encoder.setDelay(options.delay);
+      encoder.addFrame(canvas.ctx);
+
+      // Render same position with suggestions (hl preserves highlight)
+      options.tps = tps;
+      options.hl = plyText;
+      delete options.ply;
+      options.suggestions = frameSuggestions;
+      options.evaluation = frameEvaluation;
+      options.wdl = frameWdl;
+      canvas = TPStoCanvas(options);
+      delete options.hl;
+      encoder.setDelay(options.delay + options.delay * isLastPly);
+      encoder.addFrame(canvas.ctx);
+    } else {
+      options.suggestions = frameSuggestions;
+      canvas = TPStoCanvas(options);
+      tps = canvas.tps;
+      encoder.setDelay(options.delay + options.delay * isLastPly);
+      encoder.addFrame(canvas.ctx);
+    }
+
+    frameIndex++;
   }
   encoder.finish();
   return stream;

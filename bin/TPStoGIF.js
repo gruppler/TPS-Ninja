@@ -18,13 +18,20 @@ if (!options.length) {
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
       "  flatCounts     [true|false] Show flat counts\n" +
       "  stackCounts    [true|false] Show stack counts\n" +
+      "  centerStackCounts [true|false] Show stack counts in piece center instead of corner\n" +
+      "               Forced true when axisLabels and axisLabelsSmall are both true\n" +
       "  moveNumber     [true|false|<number>] Show current move number\n" +
       "  komi           [half-integer] Bonus points awarded to Player 2\n" +
       "  opening        [swap|no-swap] Opening variations\n" +
-      "  showRoads      [true|false] Show road connections\n" +
+      "  showRoads      [true|false] Show partial roads\n" +
       "  unplayedPieces [true|false] Show unplayed pieces\n" +
       "  padding        [true|false] Pad the image\n" +
-      "  suggestions    [JSON] Array of analysis suggestions to overlay\n\n" +
+      "  boardEvalBar   [true|false] Show evaluation bar in unplayed area\n" +
+      "  evaluation     [number] Position evaluation from -100 to 100\n" +
+      "  suggestions    [JSON] Array of analysis suggestions to overlay\n" +
+      "  suggestionsByFrame [JSON] Per-frame analysis suggestions\n" +
+      "  evaluationsByFrame [JSON] Per-frame evaluation values\n" +
+      "  delayAnalysis [true|false] Insert a frame without analysis before each analysis frame\n\n" +
       "  name           Filename of exported GIF, defaults to 'takboard.gif'\n" +
       "  player1        Name of Player 1\n" +
       "  player2        Name of Player 2\n" +

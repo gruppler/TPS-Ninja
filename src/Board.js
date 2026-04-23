@@ -321,7 +321,14 @@ export const Board = class {
     if (ply.pieceCount > this.size) {
       throw new Error("Ply violates carry limit");
     }
-    if (this.linenum === 1 && (ply.specialPiece || ply.movement)) {
+    const isDBS = this.options.opening === "double black stack";
+    const isSwapOpening = this.options.opening === "swap" || isDBS;
+    const isFirstMove =
+      this.linenum === 1 &&
+      !(
+        this.pieces.played[1].flat.length && this.pieces.played[2].flat.length
+      );
+    if (isFirstMove && isSwapOpening && (ply.specialPiece || ply.movement)) {
       throw new Error("Invalid first move");
     }
 
@@ -353,19 +360,24 @@ export const Board = class {
           if (square.piece) {
             throw new Error("Invalid move");
           }
-          const piece = this.playPiece(
-            this.options.opening === "swap" && this.linenum === 1
+          const color =
+            isSwapOpening && isFirstMove
               ? this.player === 1
                 ? 2
                 : 1
-              : this.player,
-            type,
-            square
-          );
+              : this.player;
+          const piece = this.playPiece(color, type, square);
           if (!piece) {
             throw new Error("Invalid move");
           }
           piece.ply = ply;
+          if (isDBS && isFirstMove && this.player === 1) {
+            const piece2 = this.playPiece(color, type, square);
+            if (!piece2) {
+              throw new Error("Invalid move");
+            }
+            piece2.ply = ply;
+          }
         }
       } else if (action === "pop") {
         // Begin movement

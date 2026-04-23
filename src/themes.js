@@ -7,7 +7,9 @@ export function computeThemeBooleans(theme) {
   if (c.player1) theme.player1Dark = isDark(c.player1);
   if (c.player2) theme.player2Dark = isDark(c.player2);
   if (c.player1flat) theme.player1FlatDark = isDark(c.player1flat);
+  if (c.player1special) theme.player1SpecialDark = isDark(c.player1special);
   if (c.player2flat) theme.player2FlatDark = isDark(c.player2flat);
+  if (c.player2special) theme.player2SpecialDark = isDark(c.player2special);
   if (c.board1) theme.board1Dark = isDark(c.board1);
   if (c.board2) theme.board2Dark = isDark(c.board2);
   return theme;
@@ -507,8 +509,8 @@ export default [
       board3: "#303030",
       player1: "#ababab",
       player1road: "#ababab",
-      player1flat: "#a2a2a2",
-      player1special: "#b3b3b3",
+      player1flat: "#b3b3b3",
+      player1special: "#a2a2a2",
       player1border: "#262626",
       player2: "#000000",
       player2road: "#262626",

@@ -183,11 +183,13 @@ axisLabelsSmall [true|false] Show board coordinate labels inside the board
 turnIndicator   [true|false] Show turn indicator and player names
 flatCounts      [true|false] Show flat counts
 stackCounts     [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+                Forced true when axisLabels and axisLabelsSmall are both true
 moveNumber      [true|false|<number>] Show current move number
 evalText        [true|false] Show current ply eval notation
 komi            [half-integer] Bonus points awarded to Player 2
 opening         [swap|no-swap] Opening variations
-showRoads       [true|false] Show road connections
+showRoads       [true|false] Show partial roads
 unplayedPieces  [true|false] Show unplayed pieces
 padding         [true|false] Pad the image
 highlighter     [JSON] Square coordinates mapped to color, overrides highlight
@@ -272,13 +274,17 @@ axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+               Forced true when axisLabels and axisLabelsSmall are both true
 moveNumber     [true|false|<number>] Show current move number
 evalText       [true|false] Show current ply eval notation
 komi           [half-integer] Bonus points awarded to Player 2
 opening        [swap|no-swap] Opening variations
-showRoads      [true|false] Show road connections
+showRoads      [true|false] Show partial roads
 unplayedPieces [true|false] Show unplayed pieces
 padding        [true|false] Pad the image
+boardEvalBar   [true|false] Show evaluation bar in unplayed area
+evaluation     [number] Position evaluation from -100 to 100
 highlighter    [JSON] Square coordinates mapped to color, overrides highlight
 suggestions    [JSON] Array of analysis suggestions to overlay on the board
                Each element can be a PTN string or an object with:
@@ -291,6 +297,15 @@ suggestions    [JSON] Array of analysis suggestions to overlay on the board
                  wins2         Player 2 wins (for opening book suggestions)
                  draws         Draws (for opening book suggestions)
                Placements render as ghost pieces; movements render as arrows
+suggestionsByFrame [JSON] Per-frame suggestions for animated GIFs
+               Array where index 0 applies to the initial frame and each
+               subsequent index applies to each ply frame in order.
+               Each frame value uses the same format as `suggestions`.
+evaluationsByFrame [JSON] Per-frame evaluation values for animated GIFs
+               Array where index 0 applies to the initial frame and each
+               subsequent index applies to each ply frame in order.
+delayAnalysis  [true|false] Insert a frame without analysis before each
+               frame that has analysis suggestions
 
 name           Filename of exported GIF, defaults to 'takboard.gif'
 player1        Name of Player 1

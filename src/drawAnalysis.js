@@ -61,14 +61,15 @@ export function prepareAnalysisData(
 
   const deduped = dedupeMoves(moves);
   const strengths = computeStrengths(deduped, board.player);
+  const scales = computeScales(deduped, board.player);
 
   const placements = [];
   const arrows = [];
   deduped.forEach((move, i) => {
     if (move.ply.movement) {
-      arrows.push({ move, strength: strengths[i] });
+      arrows.push({ move, strength: strengths[i], scale: scales[i] });
     } else {
-      placements.push({ move, strength: strengths[i] });
+      placements.push({ move, strength: strengths[i], scale: scales[i] });
     }
   });
 
@@ -114,12 +115,25 @@ export function getStrengthScale(strength) {
   return minScale + (maxScale - minScale) * eased;
 }
 
+export function getPlayerFlatOpaqueColor(theme, plyColor) {
+  const opaqueKey = `player${plyColor}flatOpaque`;
+  const opaqueColor = theme.colors[opaqueKey];
+  if (opaqueColor) return opaqueColor;
+
+  const flatColor = theme.colors[`player${plyColor}flat`];
+  if (typeof flatColor !== "string") return flatColor;
+  if (/^#[0-9a-f]{8}$/i.test(flatColor)) return `#${flatColor.slice(1, 7)}`;
+  if (/^#[0-9a-f]{4}$/i.test(flatColor)) return `#${flatColor.slice(1, 4)}`;
+  return flatColor;
+}
+
 export function computeArrowGeometry(
   move,
   arrowGroupMap,
   layoutParams,
   squareSize,
-  getStackInfo
+  getStackInfo,
+  boardSize
 ) {
   const ply = move.ply;
   const squares = ply.squares;
@@ -153,7 +167,8 @@ export function computeArrowGeometry(
   const headLen = squareSize * 0.2;
   const headHalf = squareSize * 0.1;
   const lineWidth = squareSize * 0.08;
-  const stackSpacing = squareSize * 0.07;
+  const shaftStartInset = squareSize * 0.01;
+  const stackSpacing = Math.round(squareSize * 0.07);
 
   const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
   let bottomOffset = 0;
@@ -165,7 +180,11 @@ export function computeArrowGeometry(
       : boardSquares[boardSquares.length - 1];
     const { stackHeight, topIsWall } = getStackInfo(bottomSquare);
     if (stackHeight > 0) {
-      let offset = stackSpacing * (stackHeight - 1);
+      // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
+      const effectiveTop = boardSize
+        ? Math.min(stackHeight - 1, boardSize - 1)
+        : stackHeight - 1;
+      let offset = stackSpacing * effectiveTop;
       if (topIsWall && stackHeight > 1) {
         offset -= stackSpacing;
       }
@@ -179,14 +198,16 @@ export function computeArrowGeometry(
   let finalTipY = tipY;
   let baseX = tipX - ndx * headLen;
   let baseY = tipY - ndy * headLen;
+  let sourceAdvance = startShorten;
 
-  let x1 = from.x + ndx * startShorten + ox;
-  let y1 = from.y + ndy * startShorten + oy;
+  let x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
+  let y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
 
   if (isVerticalOnScreen && bottomOffset > 0) {
     if (from.y > to.y) {
-      x1 = from.x + ndx * (startShorten + bottomOffset) + ox;
-      y1 = from.y + ndy * (startShorten + bottomOffset) + oy;
+      sourceAdvance = startShorten + bottomOffset;
+      x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
+      y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
     } else {
       const adjustedEndShorten = endShorten + bottomOffset;
       finalTipX = to.x - ndx * adjustedEndShorten + ox;
@@ -215,6 +236,7 @@ export function computeArrowGeometry(
     oy,
     x1,
     y1,
+    sourceAdvance,
     baseX,
     baseY,
     finalTipX,
@@ -233,7 +255,7 @@ export function computeArrowDrops(
   squareSize,
   getStackHeight
 ) {
-  const { ply, squares, boardSquares, from, ndx, ndy, px, py, ox, oy, x1, y1, baseX, baseY, finalTipX, finalTipY } =
+  const { ply, squares, boardSquares, from, ndx, ndy, px, py, ox, oy, sourceAdvance, baseX, baseY, finalTipX, finalTipY } =
     geometry;
 
   const dist = ply.distribution;
@@ -249,8 +271,8 @@ export function computeArrowDrops(
   const sourceHeight = getStackHeight(boardSquares[0]);
   const showPickup = pickup > 1 || sourceHeight > 1;
 
-  const pCx = x1 + ndx * squareSize * 0.03;
-  const pCy = y1 + ndy * squareSize * 0.03;
+  const pCx = from.x + ox + ndx * (sourceAdvance + squareSize * 0.03);
+  const pCy = from.y + oy + ndy * (sourceAdvance + squareSize * 0.03);
   const pLen = squareSize * 0.2;
   const pHalf = squareSize * 0.1;
   const pTipX = pCx + ndx * pLen * 0.6;
@@ -425,6 +447,39 @@ function computeStrengths(moves, currentPlayer) {
     if (i === 0) return DEFAULT_OPACITY;
     if (value === null) return MIN_OPACITY;
     return Math.max(MIN_OPACITY, DEFAULT_OPACITY * (value / topEval));
+  });
+}
+
+function computeScales(moves, currentPlayer) {
+  const MIN_SCALE = 0.55;
+  const MAX_SCALE = 1.2;
+  const K = 2;
+
+  if (moves.length === 0) return [];
+  if (moves.length === 1) return [MAX_SCALE];
+
+  const hasOpenings = moves.some((move) => move.totalGames != null && move.totalGames > 0);
+
+  const subjEvals = moves.map((move) => {
+    if (hasOpenings) {
+      if (!move.totalGames || move.totalGames === 0) return 100;
+      const wins = currentPlayer === 1 ? move.wins1 : move.wins2;
+      const draws = move.draws || 0;
+      return ((wins + draws * 0.5) / move.totalGames) * 200;
+    }
+
+    if (move.evaluation === null || move.evaluation === undefined) return null;
+    return currentPlayer === 1 ? 100 + move.evaluation : 100 - move.evaluation;
+  });
+
+  const topEval = subjEvals[0];
+  if (topEval === null || topEval === 0) return moves.map(() => MAX_SCALE);
+
+  return subjEvals.map((value, i) => {
+    if (i === 0) return MAX_SCALE;
+    if (value === null) return MIN_SCALE;
+    const scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.exp((K * (value - topEval)) / topEval);
+    return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
   });
 }
 
