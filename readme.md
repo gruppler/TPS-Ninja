@@ -66,11 +66,13 @@ axisLabelsSmall [true|false] Show board coordinate labels inside the board
 turnIndicator   [true|false] Show turn indicator and player names
 flatCounts      [true|false] Show flat counts
 stackCounts     [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+                Forced true when axisLabels and axisLabelsSmall are both true
 moveNumber      [true|false|<number>] Show current move number
 evalText        [true|false] Show current ply eval notation
 komi            [half-integer] Bonus points awarded to Player 2
 opening         [swap|no-swap] Opening variations
-showRoads       [true|false] Show road connections
+showRoads       [true|false] Show partial roads
 unplayedPieces  [true|false] Show unplayed pieces
 padding         [true|false] Pad the image
 highlighter     [JSON] Square coordinates mapped to color, overrides highlight

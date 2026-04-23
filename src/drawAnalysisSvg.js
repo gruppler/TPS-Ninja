@@ -2,6 +2,7 @@ import { coordToCanvas } from "./drawUtils.js";
 import {
   computeArrowDrops,
   computeArrowGeometry,
+  getPlayerFlatOpaqueColor,
   getStrengthScale,
   getGroupOffsets,
   groupOverlappingArrows,
@@ -24,7 +25,7 @@ export function drawAnalysisSvg(
   });
   if (!prepared) return;
 
-  const { layoutParams, placements, arrows, getStackHeight, getStackInfo } = prepared;
+  const { size, layoutParams, placements, arrows, getStackHeight, getStackInfo } = prepared;
 
   const ghostStrokeWidth = Math.round(
     theme.vars["piece-border-width"] * squareSize * 0.013 * 0.5
@@ -44,7 +45,10 @@ export function drawAnalysisSvg(
     group.forEach((p, i) => {
       const cx = center.x + offsets[i].dx;
       const cy = center.y + offsets[i].dy;
-      const strengthScale = getStrengthScale(p.strength);
+      const strengthScale =
+        p.scale === null || p.scale === undefined
+          ? getStrengthScale(p.strength)
+          : p.scale;
       const visualScale = scale * strengthScale;
 
       const plyColor =
@@ -88,7 +92,7 @@ export function drawAnalysisSvg(
         svg.path(
           svg.roundRectPath(Math.round(cx - sz / 2), Math.round(cy - sz / 2), sz, sz, flatRx),
           {
-            fill: theme.colors[`player${plyColor}flat`],
+            fill: getPlayerFlatOpaqueColor(theme, plyColor),
             stroke: hasBorder ? borderColor : undefined,
             strokeWidth: hasBorder ? ghostStrokeScaled : undefined,
             opacity: p.strength,
@@ -102,13 +106,14 @@ export function drawAnalysisSvg(
   const arrowGroupMap = groupOverlappingArrows(arrows);
 
   // Draw movement arrows
-  arrows.forEach(({ move, strength }) => {
+  arrows.forEach(({ move, strength, scale }) => {
     const geometry = computeArrowGeometry(
       move,
       arrowGroupMap,
       layoutParams,
       squareSize,
-      getStackInfo
+      getStackInfo,
+      size
     );
     if (!geometry) return;
 
@@ -128,12 +133,13 @@ export function drawAnalysisSvg(
     } = geometry;
     const plyColor = board.player;
 
-    const arrowColor = theme.colors[`player${plyColor}flat`];
+    const arrowColor = getPlayerFlatOpaqueColor(theme, plyColor);
     const borderColor = theme.colors[`player${plyColor}border`];
     const textColor = theme[`player${plyColor}FlatDark`]
       ? theme.colors.textLight
       : theme.colors.textDark;
-    const strokeScale = getStrengthScale(strength);
+    const strokeScale =
+      scale === null || scale === undefined ? getStrengthScale(strength) : scale;
     const coreLineWidth = lineWidth * strokeScale;
     const borderWidth = ghostStrokeWidth;
     const borderLineWidth = coreLineWidth + borderWidth * 2;

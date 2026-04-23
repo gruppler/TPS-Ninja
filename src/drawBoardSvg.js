@@ -1,5 +1,6 @@
 const { withAlpha } = require("./drawUtils");
-const { isDark } = require("./colors");
+const { isDark, compositeColors } = require("./colors");
+const { drawEvaluationBarSvg } = require("./drawEvaluationBar");
 
 function drawAxisLabelsSvg(
   svg,
@@ -111,35 +112,54 @@ function drawBoardSvg(
 
   function isAxisLabelTextLight(square) {
     const isDiamonds3 = theme.boardStyle === "diamonds3";
+    const isCheckerDark = theme.boardChecker && !square.isLight;
 
-    if (
-      !isDiamonds3 &&
-      options.highlighter &&
-      square.coord in options.highlighter
-    ) {
-      return isDark(options.highlighter[square.coord]);
-    }
-
-    let isTextLight;
-    if (theme.boardChecker) {
-      if (isDiamonds3) {
-        isTextLight = square.isLight ? theme.board2Dark : theme.board1Dark;
-      } else {
-        isTextLight = square.isLight ? theme.board1Dark : theme.board2Dark;
-      }
+    let baseColor;
+    if (!theme.boardStyle || theme.boardStyle === "blank") {
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+    } else if (isDiamonds3) {
+      baseColor = theme.colors["board" + (isCheckerDark ? 1 : 2)];
     } else {
-      isTextLight = isDiamonds3 ? theme.board2Dark : theme.board1Dark;
+      baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
     }
 
-    if (
-      !isDiamonds3 &&
-      options.hlSquares &&
-      hlSquares.includes(square.coord)
-    ) {
-      isTextLight = theme.primaryDark;
+    if (isDiamonds3) {
+      return isDark(baseColor);
     }
 
-    return Boolean(isTextLight);
+    let composited = baseColor;
+
+    if (theme.rings) {
+      let ring = square.ring;
+      if (theme.fromCenter) {
+        ring = Math.round(board.size / 2) - ring + 1;
+      }
+      if (ring <= theme.rings) {
+        composited = compositeColors(
+          composited,
+          theme.colors["ring" + ring],
+          theme.vars["rings-opacity"]
+        );
+      }
+    }
+
+    if (options.highlighter && square.coord in options.highlighter) {
+      composited = compositeColors(
+        composited,
+        options.highlighter[square.coord],
+        0.75
+      );
+    } else if (options.hlSquares && hlSquares.includes(square.coord)) {
+      var alphas = [0.4, 0.75];
+      if (!options.plyIsDone) alphas.reverse();
+      var hlAlpha =
+        hlSquares.length > 1 && square.coord === hlSquares[0]
+          ? alphas[0]
+          : alphas[1];
+      composited = compositeColors(composited, theme.colors.primary, hlAlpha);
+    }
+
+    return isDark(composited);
   }
 
   function axisLabelInsetEm() {
@@ -278,10 +298,20 @@ function drawBoardSvg(
             }
           );
         } else if (square.roads.length) {
-          drawSquareHighlightEl(
-            sx,
-            sy,
-            withAlpha(theme.colors["player" + square.color + "road"], 0.35)
+          square.roads.forEach(function (side) {
+            const coords = sideCoords[side];
+            svg.rect(sx + coords[0], sy + coords[1], roadSize, roadSize, {
+              fill: withAlpha(theme.colors["player" + square.color + "road"], 0.8),
+            });
+          });
+          svg.rect(
+            sx + (squareSize - roadSize) / 2,
+            sy + (squareSize - roadSize) / 2,
+            roadSize,
+            roadSize,
+            {
+              fill: withAlpha(theme.colors["player" + square.color + "road"], 0.8),
+            }
           );
         }
 
@@ -330,6 +360,8 @@ function drawBoardSvg(
                 strokeWidth: strokeWidth,
                 pieceShadowId: pieceShadowId,
                 stackCountFontSize: stackCountFontSize,
+                axisLabelInsetPx: axisLabelFontSize * axisLabelInsetEm(),
+                isAxisLabelTextLight: isAxisLabelTextLight,
               }
             );
           });
@@ -346,7 +378,19 @@ function drawPieceSvg(
   board,
   options,
   theme,
-  { squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize, strokeWidth, pieceShadowId, stackCountFontSize }
+  {
+    squareSize,
+    pieceSize,
+    pieceRadius,
+    pieceSpacing,
+    immovableSize,
+    wallSize,
+    strokeWidth,
+    pieceShadowId,
+    stackCountFontSize,
+    axisLabelInsetPx,
+    isAxisLabelTextLight,
+  }
 ) {
   const pieces = piece.square ? piece.square.pieces : null;
   const z = piece.z();
@@ -369,19 +413,31 @@ function drawPieceSvg(
       y += pieceSpacing * overflow;
     }
   } else {
-    const stackColor =
-      options.opening === "swap" && piece.index === 0 && !piece.isCapstone
-        ? piece.color === 1
-          ? 2
-          : 1
-        : piece.color;
+    const isDBS = options.opening === "double black stack";
+    const isSwapOpening = options.opening === "swap" || isDBS;
+    let stackColor = piece.color;
+    let stackIndex = piece.index;
+    if (isSwapOpening && !piece.isCapstone) {
+      if (piece.index === 0) {
+        stackColor = piece.color === 1 ? 2 : 1;
+      } else if (isDBS && piece.color === 2 && piece.index === 1) {
+        stackColor = 1;
+      }
+      if (isDBS) {
+        if (piece.color === 1 && stackColor === 1) {
+          stackIndex = piece.index + 1;
+        } else if (piece.color === 2 && stackColor === 2) {
+          stackIndex = piece.index + 1;
+        }
+      }
+    }
     const caps = board.pieceCounts[stackColor].cap;
     const total = board.pieceCounts[stackColor].total;
     y = board.size - 1;
     if (piece.isCapstone) {
-      y *= total - piece.index - 1;
+      y *= total - stackIndex - 1;
     } else {
-      y *= total - piece.index - caps - 1;
+      y *= total - stackIndex - caps - 1;
     }
     y *= -squareSize / (total - 1);
   }
@@ -467,10 +523,28 @@ function drawPieceSvg(
   // Stack Count (only on top piece)
   const isTopPiece = pieces && z === pieces.length - 1;
   if (options.stackCounts && isTopPiece && pieces.length > 1) {
-    const textFill = theme["player" + piece.color + "FlatDark"]
-      ? theme.colors.textLight
-      : theme.colors.textDark;
-    svg.text(cx, cy + y, String(pieces.length), {
+    var textFill;
+    let textX = cx;
+    let textY = cy + y;
+    if (!options.centerStackCounts) {
+      const cornerAnchor = stackCountFontSize * 0.65;
+      textX = cx + squareSize / 2 - cornerAnchor - axisLabelInsetPx;
+      textY = cy + squareSize / 2 - cornerAnchor - axisLabelInsetPx;
+      var isTextLight = isAxisLabelTextLight
+        ? isAxisLabelTextLight(piece.square)
+        : false;
+      textFill = isTextLight
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+    } else {
+      const darknessKey = piece.isCapstone || piece.isStanding
+        ? "player" + piece.color + "SpecialDark"
+        : "player" + piece.color + "FlatDark";
+      textFill = theme[darknessKey]
+        ? theme.colors.textLight
+        : theme.colors.textDark;
+    }
+    svg.text(textX, textY, String(pieces.length), {
       fill: textFill,
       fontSize: stackCountFontSize,
       fontFamily: options.font,
@@ -500,6 +574,15 @@ function drawUnplayedPiecesSvg(
     { fill: theme.colors.board3 }
   );
 
+  drawEvaluationBarSvg(svg, options, theme, {
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    headerHeight,
+    boardRadius,
+  });
+
   [1, 2].forEach(function (color) {
     const baseX =
       padding + axisSize + boardSize + (color === 2) * squareSize * 0.75 + squareSize / 2;
@@ -511,18 +594,41 @@ function drawUnplayedPiecesSvg(
       const played = board.pieces.played[color][type].length;
       const remaining = total - played;
       const pieces = board.pieces.all[color][type].slice(total - remaining);
-      if (type === "flat" && options.opening === "swap") {
+      const isDBS = options.opening === "double black stack";
+      const isSwapOpening = options.opening === "swap" || isDBS;
+      if (type === "flat" && isSwapOpening) {
         if (color === 1) {
           if (!board.pieces.played[2][type].length) {
             pieces[0] = board.pieces.all[2][type][0];
+            if (isDBS && board.pieces.all[2][type][1]) {
+              pieces.splice(1, 0, board.pieces.all[2][type][1]);
+            }
+          } else if (
+            isDBS &&
+            board.pieces.played[2][type].length < 2
+          ) {
+            pieces[0] = board.pieces.all[2][type][1];
           } else if (!played) {
             pieces.shift();
+            if (isDBS) {
+              pieces.shift();
+            }
           }
-        } else if (!board.pieces.played[1][type].length) {
-          if (!board.pieces.played[2][type].length) {
-            pieces[0] = board.pieces.all[1][type][0];
-          } else {
-            pieces.unshift(board.pieces.all[1][type][0]);
+        } else {
+          // Color 2's reserve
+          if (!board.pieces.played[1][type].length) {
+            if (!board.pieces.played[2][type].length) {
+              pieces[0] = board.pieces.all[1][type][0];
+            } else {
+              pieces.unshift(board.pieces.all[1][type][0]);
+            }
+          }
+          if (isDBS) {
+            const dbs = board.pieces.all[2][type][1];
+            const dbsIdx = pieces.indexOf(dbs);
+            if (dbsIdx >= 0) {
+              pieces.splice(dbsIdx, 1);
+            }
           }
         }
       }
@@ -536,6 +642,7 @@ function drawUnplayedPiecesSvg(
           wallSize: wallSize,
           strokeWidth: strokeWidth,
           pieceShadowId: pieceShadowId,
+          axisLabelInsetPx: 0,
         });
       });
     });
