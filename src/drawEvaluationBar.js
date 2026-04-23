@@ -116,14 +116,14 @@ function shouldShowWdlSegments(options) {
 }
 
 function resolvePlayer1Percent(bar) {
+  if (bar.wdl) {
+    return clampPercent(bar.wdl.player1 + bar.wdl.draw / 2);
+  }
   const evalValue = toFiniteNumber(bar.evaluation);
   if (evalValue !== null) {
     return clampPercent((100 + evalValue) / 2);
   }
-  if (!bar.wdl) {
-    return null;
-  }
-  return clampPercent(bar.wdl.player1 + bar.wdl.draw / 2);
+  return null;
 }
 
 function getSingleSegmentRect(bar) {
