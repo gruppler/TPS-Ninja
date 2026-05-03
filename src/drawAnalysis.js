@@ -108,7 +108,7 @@ export function getStrengthScale(strength) {
   const minOpacity = 0.2;
   const maxOpacity = 1.0;
   const minScale = 0.55;
-  const maxScale = 1.2;
+  const maxScale = 1.0;
   const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
   const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
   const eased = t * t;
@@ -497,9 +497,9 @@ function computeStrengths(moves, currentPlayer) {
 }
 
 function computeScales(moves, currentPlayer) {
-  const MIN_SCALE = 0.55;
-  const MAX_SCALE = 1.2;
-  const K = 2;
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 1.0;
+  const K = 5;
 
   if (moves.length === 0) return [];
   if (moves.length === 1) return [MAX_SCALE];
