@@ -269,13 +269,18 @@ export function createSquareDrawer(
       }
       const caps = board.pieceCounts[stackColor].cap;
       const total = board.pieceCounts[stackColor].total;
+      // In DBS mode, own-color pieces are shifted by +1 in stackIndex,
+      // so the maximum stackIndex reaches total (instead of total - 1).
+      // Adding +1 to numerator and denominator rescales positions so that
+      // the bottom piece sits at the baseline without overflow.
+      const dbsExtra = isDBS ? 1 : 0;
       y = board.size - 1;
       if (piece.isCapstone) {
-        y *= total - stackIndex - 1;
+        y *= total - stackIndex - 1 + dbsExtra;
       } else {
-        y *= total - stackIndex - caps - 1;
+        y *= total - stackIndex - caps - 1 + dbsExtra;
       }
-      y *= -squareSize / (total - 1);
+      y *= -squareSize / (total - 1 + dbsExtra);
     }
 
     y = Math.round(y);
