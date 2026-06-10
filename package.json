@@ -31,7 +31,7 @@
     "lint": "eslint --ext .js src"
   },
   "dependencies": {
-    "canvas": "^2.11.2",
+    "canvas": "^3.2.3",
     "fs": "0.0.1-security",
     "gif-encoder-2": "^1.0.5",
     "lodash-es": "^4.17.21"
