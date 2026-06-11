@@ -554,9 +554,6 @@ function drawUnplayedPieces(
             pieces[0] = board.pieces.all[2][type][1];
           } else if (!played) {
             pieces.shift();
-            if (isDBS) {
-              pieces.shift();
-            }
           }
         } else {
           // Color 2's reserve
