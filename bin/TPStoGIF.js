@@ -16,6 +16,8 @@ if (!options.length) {
       "  hlSquares      [true|false] Highlight last ply's squares\n" +
       "  axisLabels     [true|false] Show board coordinate labels\n" +
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
+      "  hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header\n" +
+      "  hideFlatWinHighlights [true|false] Hide the highlighted squares of a flat win\n" +
       "  flatCounts     [true|false] Show flat counts\n" +
       "  stackCounts    [true|false] Show stack counts\n" +
       "  centerStackCounts [true|false] Show stack counts in piece center instead of corner\n" +

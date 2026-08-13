@@ -192,7 +192,7 @@ export function drawHeaderSvg(
   }
 
   // Turn Indicator
-  if (!board.isGameEnd) {
+  if (!board.isGameEnd && turnIndicatorHeight) {
     svg.rect(
       padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),
       padding + flatCounterHeight,

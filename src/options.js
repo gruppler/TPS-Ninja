@@ -13,6 +13,8 @@ export const defaults = {
   axisLabelsSmall: false,
   centerStackCounts: false,
   turnIndicator: true,
+  hideTurnIndicator: false,
+  hideFlatWinHighlights: false,
   flatCounts: true,
   stackCounts: true,
   komi: 0,
