@@ -67,9 +67,10 @@ function TPStoCanvas(options = {}) {
   const flatCounterHeight = options.turnIndicator
     ? Math.round(fontSize * 2)
     : 0;
-  const turnIndicatorHeight = options.turnIndicator
-    ? Math.round(fontSize * 0.5)
-    : 0;
+  const turnIndicatorHeight =
+    options.turnIndicator && !options.hideTurnIndicator
+      ? Math.round(fontSize * 0.5)
+      : 0;
   const headerHeight = turnIndicatorHeight + flatCounterHeight;
 
   const axisSize =
