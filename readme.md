@@ -181,6 +181,8 @@ hlSquares       [true|false] Highlight last ply's squares
 axisLabels      [true|false] Show board coordinate labels
 axisLabelsSmall [true|false] Show board coordinate labels inside the board
 turnIndicator   [true|false] Show turn indicator and player names
+hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header
+hideFlatWinHighlights [true|false] Hide the highlighted squares of a flat win
 flatCounts      [true|false] Show flat counts
 stackCounts     [true|false] Show stack counts
 centerStackCounts [true|false] Show stack counts in piece center instead of corner
@@ -272,6 +274,8 @@ transparent    [true|false] Transparent background
 hlSquares      [true|false] Highlight last ply's squares
 axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
+hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header
+hideFlatWinHighlights [true|false] Hide the highlighted squares of a flat win
 flatCounts     [true|false] Show flat counts
 stackCounts    [true|false] Show stack counts
 centerStackCounts [true|false] Show stack counts in piece center instead of corner

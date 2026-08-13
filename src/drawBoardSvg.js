@@ -340,7 +340,11 @@ export function drawBoardSvg(
 
         // Game-end flat highlight
         if (square.piece) {
-          if (board.isGameEndFlats && !square.piece.typeCode()) {
+          if (
+            board.isGameEndFlats &&
+            !options.hideFlatWinHighlights &&
+            !square.piece.typeCode()
+          ) {
             drawSquareHighlightEl(
               sx,
               sy,

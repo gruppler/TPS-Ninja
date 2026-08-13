@@ -15,6 +15,8 @@ if (!options.length) {
       "  axisLabels      [true|false] Show board coordinate labels\n" +
       "  axisLabelsSmall [true|false] Show board coordinate labels inside the board\n" +
       "  turnIndicator   [true|false] Show turn indicator and player names\n" +
+      "  hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header\n" +
+      "  hideFlatWinHighlights [true|false] Hide the highlighted squares of a flat win\n" +
       "  flatCounts      [true|false] Show flat counts\n" +
       "  stackCounts     [true|false] Show stack counts\n" +
       "  centerStackCounts [true|false] Show stack counts in piece center instead of corner\n" +
