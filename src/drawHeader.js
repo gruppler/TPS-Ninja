@@ -192,7 +192,7 @@ function drawHeader(
   }
 
   // Turn Indicator
-  if (!board.isGameEnd) {
+  if (!board.isGameEnd && turnIndicatorHeight) {
     ctx.fillStyle = theme.colors.primary;
     ctx.fillRect(
       padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),

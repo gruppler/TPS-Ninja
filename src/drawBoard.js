@@ -481,7 +481,11 @@ function createSquareDrawer(
     }
 
     if (square.piece) {
-      if (board.isGameEndFlats && !square.piece.typeCode()) {
+      if (
+        board.isGameEndFlats &&
+        !options.hideFlatWinHighlights &&
+        !square.piece.typeCode()
+      ) {
         ctx.fillStyle = withAlpha(
           theme.colors[`player${square.color}road`],
           0.4
