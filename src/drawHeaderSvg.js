@@ -15,12 +15,26 @@ export function drawHeaderSvg(
   options,
   board,
   theme,
-  { fontSize, squareSize, padding, axisSize, boardSize, unplayedWidth, flatCounterHeight, turnIndicatorHeight, counterRadius }
+  {
+    fontSize,
+    squareSize,
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    flatCounterHeight,
+    turnIndicatorHeight,
+    moveNumberRowHeight,
+    counterRadius,
+  },
 ) {
   const flats = board.flats.concat();
   const komi = options.komi;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
   const font = options.font;
+
+  // In vertical layout with moveNumber, the move number occupies its own row
+  // above the flat bars. flatTop is the y-coordinate where flat bars begin.
+  const flatTop = padding + moveNumberRowHeight;
 
   const totalFlats = flats[0] + flats[1];
   const flats1Width = Math.round(
@@ -29,16 +43,16 @@ export function drawHeaderSvg(
       Math.max(
         squareSize,
         (options.flatCounts && totalFlats ? flats[0] / totalFlats : 0.5) *
-          boardSize
-      )
-    )
+          boardSize,
+      ),
+    ),
   );
   const flats2Width = Math.round(boardSize - flats1Width);
   const komiWidth = options.flatCounts
     ? Math.round(
         komi < 0
           ? flats1Width * (-komi / flats[0])
-          : flats2Width * (komi / flats[1])
+          : flats2Width * (komi / flats[1]),
       )
     : 0;
   if (options.flatCounts) {
@@ -46,8 +60,7 @@ export function drawHeaderSvg(
       flats[0] =
         flats[0] + komi + " +" + (-komi).toString().replace(/0?\.5/, "½");
     } else if (komi > 0) {
-      flats[1] =
-        flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
+      flats[1] = flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
     }
   } else {
     flats[0] = "";
@@ -63,23 +76,23 @@ export function drawHeaderSvg(
   svg.path(
     svg.roundRectPath(
       padding + axisSize,
-      padding,
+      flatTop,
       flats1Width,
       flatCounterHeight,
-      { tl: counterRadius }
+      { tl: counterRadius },
     ),
-    { fill: theme.colors.player1 }
+    { fill: theme.colors.player1 },
   );
 
   svg.path(
     svg.roundRectPath(
       padding + axisSize + flats1Width,
-      padding,
+      flatTop,
       flats2Width,
       flatCounterHeight,
-      { tr: counterRadius }
+      { tr: counterRadius },
     ),
-    { fill: theme.colors.player2 }
+    { fill: theme.colors.player2 },
   );
 
   if (komiWidth) {
@@ -90,27 +103,27 @@ export function drawHeaderSvg(
       svg.path(
         svg.roundRectPath(
           padding + axisSize + (komi > 0) * flats1Width,
-          padding,
+          flatTop,
           flatWidth,
           flatCounterHeight,
-          { [komi < 0 ? "tl" : "tr"]: counterRadius }
+          { [komi < 0 ? "tl" : "tr"]: counterRadius },
         ),
-        { fill: komiColor, opacity: 0.13 }
+        { fill: komiColor, opacity: 0.13 },
       );
     } else {
       svg.rect(
         padding + axisSize + flats1Width - (komi < 0) * komiWidth,
-        padding,
+        flatTop,
         komiWidth,
         flatCounterHeight,
-        { fill: komiColor, opacity: 0.13 }
+        { fill: komiColor, opacity: 0.13 },
       );
     }
   }
 
   // Flat Counts
   svg.setFont(`${fontSize}px ${font}`);
-  const textY = padding + flatCounterHeight / 2;
+  const flatMidY = flatTop + flatCounterHeight / 2;
 
   const fill1 = theme.player1Dark
     ? theme.colors.textLight
@@ -122,32 +135,46 @@ export function drawHeaderSvg(
     const player1 = limitTextSvg(
       svg,
       options.player1,
-      flats1Width - flatCount1Width - fontSize * 1.2
+      flats1Width - flatCount1Width - fontSize * 1.2,
     );
-    svg.text(
-      padding + axisSize + fontSize / 2,
-      textY,
-      player1,
-      { fill: fill1, fontSize, fontFamily: font, textAnchor: "start", dy: "0.35em" }
-    );
+    svg.text(padding + axisSize + fontSize / 2, flatMidY, player1, {
+      fill: fill1,
+      fontSize,
+      fontFamily: font,
+      textAnchor: "start",
+      dy: "0.35em",
+    });
   }
   // Player 1 Flat Count
   if (flats[0] !== "") {
     const parts = String(flats[0]).split(" ");
     svg.text(
       padding + axisSize + flats1Width - fontSize / 2,
-      textY,
+      flatMidY,
       parts[0],
-      { fill: fill1, fontSize, fontFamily: font, textAnchor: "end", dy: "0.35em" }
+      {
+        fill: fill1,
+        fontSize,
+        fontFamily: font,
+        textAnchor: "end",
+        dy: "0.35em",
+      },
     );
     if (parts[1]) {
       const mainWidth = svg.measureText(parts[0] + " ").width;
       const komiText = parts[1].substring(1) + "+";
       svg.text(
         padding + axisSize + flats1Width - fontSize / 2 - mainWidth,
-        textY,
+        flatMidY,
         komiText,
-        { fill: fill1, fontSize, fontFamily: font, textAnchor: "end", dy: "0.35em", opacity: 0.5 }
+        {
+          fill: fill1,
+          fontSize,
+          fontFamily: font,
+          textAnchor: "end",
+          dy: "0.35em",
+          opacity: 0.5,
+        },
       );
     }
   }
@@ -162,31 +189,45 @@ export function drawHeaderSvg(
     const player2 = limitTextSvg(
       svg,
       options.player2,
-      flats2Width - flatCount2Width - fontSize * 1.2
+      flats2Width - flatCount2Width - fontSize * 1.2,
     );
-    svg.text(
-      padding + axisSize + boardSize - fontSize / 2,
-      textY,
-      player2,
-      { fill: fill2, fontSize, fontFamily: font, textAnchor: "end", dy: "0.35em" }
-    );
+    svg.text(padding + axisSize + boardSize - fontSize / 2, flatMidY, player2, {
+      fill: fill2,
+      fontSize,
+      fontFamily: font,
+      textAnchor: "end",
+      dy: "0.35em",
+    });
   }
   // Player 2 Flat Count
   if (flats[1] !== "") {
     const parts = String(flats[1]).split(" ");
     svg.text(
       padding + axisSize + flats1Width + fontSize / 2,
-      textY,
+      flatMidY,
       parts[0],
-      { fill: fill2, fontSize, fontFamily: font, textAnchor: "start", dy: "0.35em" }
+      {
+        fill: fill2,
+        fontSize,
+        fontFamily: font,
+        textAnchor: "start",
+        dy: "0.35em",
+      },
     );
     if (parts[1]) {
       const mainWidth = svg.measureText(parts[0] + " ").width;
       svg.text(
         padding + axisSize + flats1Width + fontSize / 2 + mainWidth,
-        textY,
+        flatMidY,
         parts[1],
-        { fill: fill2, fontSize, fontFamily: font, textAnchor: "start", dy: "0.35em", opacity: 0.5 }
+        {
+          fill: fill2,
+          fontSize,
+          fontFamily: font,
+          textAnchor: "start",
+          dy: "0.35em",
+          opacity: 0.5,
+        },
       );
     }
   }
@@ -195,20 +236,35 @@ export function drawHeaderSvg(
   if (!board.isGameEnd && turnIndicatorHeight) {
     svg.rect(
       padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),
-      padding + flatCounterHeight,
+      flatTop + flatCounterHeight,
       boardSize / 2,
       turnIndicatorHeight,
-      { fill: theme.colors.primary }
+      { fill: theme.colors.primary },
     );
   }
 
-  // Move number
+  // Move number / eval text
+  // In vertical layout, these go in the dedicated top row (moveNumberRowHeight > 0).
+  // In horizontal layout, they go in the flat counter bar to the right of the board.
+  const textCenterX = options.verticalLayout
+    ? padding + axisSize + boardSize / 2
+    : padding + axisSize + boardSize + unplayedWidth / 2;
+  const textCenterY = options.verticalLayout
+    ? (padding + moveNumberRowHeight) / 2
+    : flatMidY;
+
   const textShadowFiltId = "textShadow";
   const shadowColor =
     theme.secondaryDark || options.bgAlpha < 0.5
       ? theme.colors.textDark
       : theme.colors.textLight;
-  svg.shadowFilter(textShadowFiltId, 0, fontSize * 0.05, fontSize * 0.1, shadowColor);
+  svg.shadowFilter(
+    textShadowFiltId,
+    0,
+    fontSize * 0.05,
+    fontSize * 0.1,
+    shadowColor,
+  );
 
   const textFill =
     theme.secondaryDark || options.bgAlpha < 0.5
@@ -229,19 +285,14 @@ export function drawHeaderSvg(
     moveNumber += ".";
     svg.setFont(`${fontSize}px ${font}`);
     moveNumberWidth = svg.measureText(moveNumber).width;
-    svg.text(
-      padding + axisSize + boardSize + unplayedWidth / 2,
-      padding + flatCounterHeight / 2,
-      moveNumber,
-      {
-        fill: textFill,
-        fontSize,
-        fontFamily: font,
-        textAnchor: "middle",
-        dy: "0.35em",
-        filter: textShadowFiltId,
-      }
-    );
+    svg.text(textCenterX, textCenterY, moveNumber, {
+      fill: textFill,
+      fontSize,
+      fontFamily: font,
+      textAnchor: "middle",
+      dy: "0.35em",
+      filter: textShadowFiltId,
+    });
   }
 
   // Eval text
@@ -250,19 +301,14 @@ export function drawHeaderSvg(
     if (moveNumberWidth) {
       evalText = " " + evalText;
     }
-    svg.text(
-      padding + axisSize + boardSize + unplayedWidth / 2 + moveNumberWidth / 2,
-      padding + flatCounterHeight / 2,
-      evalText,
-      {
-        fill: theme.colors.primary,
-        fontSize,
-        fontWeight: "bold",
-        fontFamily: font,
-        textAnchor: options.moveNumber ? "start" : "middle",
-        dy: "0.35em",
-        filter: textShadowFiltId,
-      }
-    );
+    svg.text(textCenterX + moveNumberWidth / 2, textCenterY, evalText, {
+      fill: theme.colors.primary,
+      fontSize,
+      fontWeight: "bold",
+      fontFamily: font,
+      textAnchor: options.moveNumber ? "start" : "middle",
+      dy: "0.35em",
+      filter: textShadowFiltId,
+    });
   }
 }

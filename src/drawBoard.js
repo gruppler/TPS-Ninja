@@ -7,7 +7,15 @@ export function drawAxisLabels(
   options,
   board,
   theme,
-  { fontSize, squareSize, padding, axisSize, headerHeight, boardSize }
+  {
+    fontSize,
+    squareSize,
+    padding,
+    axisSize,
+    headerHeight,
+    boardSize,
+    unplayedHeight,
+  },
 ) {
   let cols = "abcdefgh".substring(0, board.size).split("");
   let rows = "12345678".substring(0, board.size).split("");
@@ -38,6 +46,13 @@ export function drawAxisLabels(
       theme.secondaryDark || options.bgAlpha < 0.5
         ? theme.colors.textLight
         : theme.colors.textDark;
+    // In vertical layout, column labels appear below the reserves strip
+    const colLabelY =
+      padding +
+      headerHeight +
+      boardSize +
+      (options.verticalLayout ? unplayedHeight : 0) +
+      (padding ? (axisSize + padding) / 2 : axisSize);
     for (let i = 0; i < board.size; i++) {
       const coord = [xAxis[i], yAxis[i]];
       ctx.textBaseline = padding ? "middle" : "bottom";
@@ -45,10 +60,7 @@ export function drawAxisLabels(
       ctx.fillText(
         coord[0],
         padding + axisSize + squareSize * i + squareSize / 2,
-        padding +
-          headerHeight +
-          boardSize +
-          (padding ? (axisSize + padding) / 2 : axisSize)
+        colLabelY,
       );
       ctx.textBaseline = "middle";
       ctx.textAlign = padding ? "center" : "left";
@@ -58,7 +70,7 @@ export function drawAxisLabels(
         padding +
           headerHeight +
           squareSize * (board.size - i - 1) +
-          squareSize / 2
+          squareSize / 2,
       );
     }
     ctx.restore();
@@ -95,7 +107,7 @@ export function createSquareDrawer(
     axisSize,
     headerHeight,
     fontSize,
-  }
+  },
 ) {
   const isAxisLabelTextLight = (square) => {
     const isDiamonds3 = theme.boardStyle === "diamonds3";
@@ -129,7 +141,7 @@ export function createSquareDrawer(
         composited = compositeColors(
           composited,
           theme.colors["ring" + ring],
-          theme.vars["rings-opacity"]
+          theme.vars["rings-opacity"],
         );
       }
     }
@@ -139,7 +151,7 @@ export function createSquareDrawer(
       composited = compositeColors(
         composited,
         options.highlighter[square.coord],
-        0.75
+        0.75,
       );
     } else if (options.hlSquares && hlSquares.includes(square.coord)) {
       const alphas = [0.4, 0.75];
@@ -177,7 +189,7 @@ export function createSquareDrawer(
         squareMargin,
         squareSize - squareMargin * 2,
         squareSize - squareMargin * 2,
-        squareRadius
+        squareRadius,
       );
     }
     ctx.fill();
@@ -204,11 +216,7 @@ export function createSquareDrawer(
       (corner[0] === "b" ? squareSize - cornerAnchor : cornerAnchor) +
       (corner[0] === "b" ? -insetPx : insetPx);
 
-    ctx.fillText(
-      text,
-      x,
-      y
-    );
+    ctx.fillText(text, x, y);
     ctx.restore();
   };
 
@@ -245,18 +253,13 @@ export function createSquareDrawer(
     } else {
       // Unplayed
       const isDBS = options.opening === "double black stack";
-      const isSwapOpening =
-        options.opening === "swap" || isDBS;
+      const isSwapOpening = options.opening === "swap" || isDBS;
       let stackColor = piece.color;
       let stackIndex = piece.index;
       if (isSwapOpening && !piece.isCapstone) {
         if (piece.index === 0) {
           stackColor = piece.color === 1 ? 2 : 1;
-        } else if (
-          isDBS &&
-          piece.color === 2 &&
-          piece.index === 1
-        ) {
+        } else if (isDBS && piece.color === 2 && piece.index === 1) {
           stackColor = 1;
         }
         if (isDBS) {
@@ -300,7 +303,7 @@ export function createSquareDrawer(
         Math.round(-pieceSize / 2),
         wallSize,
         pieceSize,
-        pieceRadius
+        pieceRadius,
       );
       ctx.restore();
     } else {
@@ -312,7 +315,7 @@ export function createSquareDrawer(
           Math.round(y + pieceSize / 2 - pieceSpacing),
           immovableSize,
           pieceSpacing,
-          pieceRadius / 2
+          pieceRadius / 2,
         );
       } else {
         roundRect(
@@ -321,7 +324,7 @@ export function createSquareDrawer(
           Math.round(y - pieceSize / 2),
           pieceSize,
           pieceSize,
-          pieceRadius
+          pieceRadius,
         );
       }
     }
@@ -352,7 +355,7 @@ export function createSquareDrawer(
         Math.round(-pieceSize / 2),
         wallSize,
         pieceSize,
-        pieceRadius
+        pieceRadius,
       );
       ctx.strokeStyle = theme.colors[`player${piece.color}border`];
       ctx.lineWidth = strokeWidth;
@@ -377,9 +380,10 @@ export function createSquareDrawer(
           ? theme.colors.textLight
           : theme.colors.textDark;
       } else {
-        const darknessKey = piece.isCapstone || piece.isStanding
-          ? `player${piece.color}SpecialDark`
-          : `player${piece.color}FlatDark`;
+        const darknessKey =
+          piece.isCapstone || piece.isStanding
+            ? `player${piece.color}SpecialDark`
+            : `player${piece.color}FlatDark`;
         ctx.fillStyle = theme[darknessKey]
           ? theme.colors.textLight
           : theme.colors.textDark;
@@ -398,7 +402,7 @@ export function createSquareDrawer(
     ctx.save();
     ctx.translate(
       padding + axisSize + square.x * squareSize,
-      padding + headerHeight + (board.size - square.y - 1) * squareSize
+      padding + headerHeight + (board.size - square.y - 1) * squareSize,
     );
 
     if (!theme.boardStyle || theme.boardStyle === "blank") {
@@ -436,7 +440,7 @@ export function createSquareDrawer(
         theme.colors.primary,
         hlSquares.length > 1 && square.coord === hlSquares[0]
           ? alphas[0]
-          : alphas[1]
+          : alphas[1],
       );
       drawSquareHighlight();
     }
@@ -446,24 +450,27 @@ export function createSquareDrawer(
         const coords = sideCoords[side];
         ctx.fillStyle = withAlpha(
           theme.colors[`player${square.color}road`],
-          square.roads[side] ? 0.8 : 0.2
+          square.roads[side] ? 0.8 : 0.2,
         );
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
       ctx.fillStyle = withAlpha(
         theme.colors[`player${square.color}road`],
-        square.roads.length ? 0.8 : 0.2
+        square.roads.length ? 0.8 : 0.2,
       );
       ctx.fillRect(
         (squareSize - roadSize) / 2,
         (squareSize - roadSize) / 2,
         roadSize,
-        roadSize
+        roadSize,
       );
     } else if (square.roads.length) {
       square.roads.forEach((side) => {
         const coords = sideCoords[side];
-        ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
+        ctx.fillStyle = withAlpha(
+          theme.colors[`player${square.color}road`],
+          0.8,
+        );
         ctx.fillRect(coords[0], coords[1], roadSize, roadSize);
       });
       ctx.fillStyle = withAlpha(theme.colors[`player${square.color}road`], 0.8);
@@ -471,7 +478,7 @@ export function createSquareDrawer(
         (squareSize - roadSize) / 2,
         (squareSize - roadSize) / 2,
         roadSize,
-        roadSize
+        roadSize,
       );
     }
 
@@ -498,7 +505,7 @@ export function createSquareDrawer(
       ) {
         ctx.fillStyle = withAlpha(
           theme.colors[`player${square.color}road`],
-          0.4
+          0.4,
         );
         drawSquareHighlight();
       }
@@ -512,14 +519,181 @@ export function createSquareDrawer(
   return { drawSquare, drawPiece };
 }
 
+function applySwapOpeningPieces(pieces, board, options, color, type) {
+  const isDBS = options.opening === "double black stack";
+  const isSwapOpening = options.opening === "swap" || isDBS;
+  if (type !== "flat" || !isSwapOpening) return;
+  const played = board.pieces.played[color][type].length;
+  if (color === 1) {
+    if (!board.pieces.played[2][type].length) {
+      pieces[0] = board.pieces.all[2][type][0];
+      if (isDBS && board.pieces.all[2][type][1]) {
+        pieces.splice(1, 0, board.pieces.all[2][type][1]);
+      }
+    } else if (isDBS && board.pieces.played[2][type].length < 2) {
+      pieces[0] = board.pieces.all[2][type][1];
+    } else if (!played) {
+      pieces.shift();
+    }
+  } else {
+    if (!board.pieces.played[1][type].length) {
+      if (!board.pieces.played[2][type].length) {
+        pieces[0] = board.pieces.all[1][type][0];
+      } else {
+        pieces.unshift(board.pieces.all[1][type][0]);
+      }
+    }
+    if (isDBS) {
+      const dbs = board.pieces.all[2][type][1];
+      const dbsIdx = pieces.indexOf(dbs);
+      if (dbsIdx >= 0) {
+        pieces.splice(dbsIdx, 1);
+      }
+    }
+  }
+}
+
 export function drawUnplayedPieces(
   ctx,
   options,
   board,
   theme,
   drawPiece,
-  { squareSize, padding, axisSize, headerHeight, boardSize, boardRadius, unplayedWidth }
+  dims,
 ) {
+  const {
+    squareSize,
+    pieceSize,
+    pieceRadius,
+    strokeWidth,
+    shadowBlur,
+    shadowOffset,
+    padding,
+    axisSize,
+    headerHeight,
+    boardSize,
+    boardRadius,
+    unplayedWidth,
+    unplayedHeight,
+  } = dims;
+
+  if (options.verticalLayout) {
+    // Panel below the board
+    ctx.fillStyle = theme.colors.board3;
+    roundRect(
+      ctx,
+      axisSize + padding,
+      headerHeight + padding + boardSize,
+      boardSize,
+      unplayedHeight,
+      { bl: boardRadius, br: boardRadius },
+    );
+    ctx.fill();
+
+    drawEvaluationBarCanvas(ctx, options, theme, dims);
+
+    const isDBS = options.opening === "double black stack";
+    const dbsExtra = isDBS ? 1 : 0;
+    const panelCenterY = Math.round(
+      padding + headerHeight + boardSize + unplayedHeight / 2,
+    );
+    const boardLeftX = padding + axisSize;
+    const scale = board.size / 2 - 1 + 0.125;
+
+    // Collect all pieces in draw order (outermost first = behind, innermost last = front)
+    const allPiecesToDraw = [];
+    [1, 2].forEach((color) => {
+      const totalColor = board.pieceCounts[color].total;
+      const capsColor = board.pieceCounts[color].cap;
+      ["flat", "cap"].forEach((type) => {
+        const total = board.pieceCounts[color][type];
+        const played = board.pieces.played[color][type].length;
+        const remaining = total - played;
+        const pieces = board.pieces.all[color][type].slice(total - remaining);
+        applySwapOpeningPieces(pieces, board, options, color, type);
+
+        pieces.forEach((piece) => {
+          if (!piece) return;
+          const isDBS2 = options.opening === "double black stack";
+          const isSwapOpening = options.opening === "swap" || isDBS2;
+          let stackColor = piece.color;
+          let stackIndex = piece.index;
+          if (isSwapOpening && !piece.isCapstone) {
+            if (piece.index === 0) stackColor = piece.color === 1 ? 2 : 1;
+            else if (isDBS2 && piece.color === 2 && piece.index === 1)
+              stackColor = 1;
+            if (isDBS2) {
+              if (piece.color === 1 && stackColor === 1)
+                stackIndex = piece.index + 1;
+              else if (piece.color === 2 && stackColor === 2)
+                stackIndex = piece.index + 1;
+            }
+          }
+          const totalSC = board.pieceCounts[stackColor].total;
+          const capsSC = board.pieceCounts[stackColor].cap;
+          const dbsX = isDBS2 ? 1 : 0;
+          const denom = Math.max(1, totalSC - 1 + dbsX);
+          let ratio;
+          if (piece.isCapstone) {
+            ratio = (totalSC - stackIndex - 1 + dbsX) / denom;
+          } else {
+            ratio = (totalSC - stackIndex - capsSC - 1 + dbsX) / denom;
+          }
+          ratio = Math.max(0, Math.min(1, ratio));
+          const xBase = scale * ratio;
+          let xInSquares;
+          if (stackColor === 1) {
+            xInSquares = scale - xBase;
+          } else {
+            xInSquares = board.size / 2 - 0.125 + xBase;
+          }
+          const xPixel = Math.round(
+            boardLeftX + xInSquares * squareSize + squareSize / 2,
+          );
+          allPiecesToDraw.push({ piece, xPixel, ratio });
+        });
+      });
+    });
+
+    // Sort ascending so innermost (ratio=0) are drawn first (behind) and cap/outermost (ratio=1) last (on top)
+    allPiecesToDraw.sort((a, b) => a.ratio - b.ratio);
+
+    allPiecesToDraw.forEach(({ piece, xPixel }) => {
+      ctx.save();
+      ctx.translate(xPixel, panelCenterY);
+      if (piece.isCapstone) {
+        ctx.fillStyle = theme.colors[`player${piece.color}special`];
+        ctx.beginPath();
+        ctx.arc(0, 0, pieceSize / 2, 0, 2 * Math.PI);
+      } else {
+        ctx.fillStyle = theme.colors[`player${piece.color}flat`];
+        ctx.beginPath();
+        roundRect(
+          ctx,
+          -pieceSize / 2,
+          -pieceSize / 2,
+          pieceSize,
+          pieceSize,
+          pieceRadius,
+        );
+      }
+      ctx.save();
+      ctx.shadowBlur = shadowBlur;
+      ctx.shadowOffsetY = shadowOffset;
+      ctx.shadowColor = theme.colors.umbra;
+      ctx.fill();
+      ctx.restore();
+      if (theme.vars["piece-border-width"] > 0) {
+        ctx.strokeStyle = theme.colors[`player${piece.color}border`];
+        ctx.lineWidth = strokeWidth;
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+    return;
+  }
+
+  // Horizontal layout (original)
   ctx.fillStyle = theme.colors.board3;
   roundRect(
     ctx,
@@ -527,67 +701,24 @@ export function drawUnplayedPieces(
     headerHeight + padding,
     unplayedWidth,
     boardSize,
-    { tr: boardRadius, br: boardRadius }
+    { tr: boardRadius, br: boardRadius },
   );
   ctx.fill();
 
-  drawEvaluationBarCanvas(ctx, options, theme, {
-    padding,
-    axisSize,
-    boardSize,
-    unplayedWidth,
-    headerHeight,
-    boardRadius,
-  });
+  drawEvaluationBarCanvas(ctx, options, theme, dims);
 
   [1, 2].forEach((color) => {
     ctx.save();
     ctx.translate(
       padding + axisSize + boardSize + (color === 2) * squareSize * 0.75,
-      padding + headerHeight + boardSize - squareSize
+      padding + headerHeight + boardSize - squareSize,
     );
     ["flat", "cap"].forEach((type) => {
       const total = board.pieceCounts[color][type];
       const played = board.pieces.played[color][type].length;
       const remaining = total - played;
       const pieces = board.pieces.all[color][type].slice(total - remaining);
-      const isDBS = options.opening === "double black stack";
-      const isSwapOpening = options.opening === "swap" || isDBS;
-      if (type === "flat" && isSwapOpening) {
-        // Swap first pieces
-        if (color === 1) {
-          if (!board.pieces.played[2][type].length) {
-            pieces[0] = board.pieces.all[2][type][0];
-            if (isDBS && board.pieces.all[2][type][1]) {
-              pieces.splice(1, 0, board.pieces.all[2][type][1]);
-            }
-          } else if (
-            isDBS &&
-            board.pieces.played[2][type].length < 2
-          ) {
-            pieces[0] = board.pieces.all[2][type][1];
-          } else if (!played) {
-            pieces.shift();
-          }
-        } else {
-          // Color 2's reserve
-          if (!board.pieces.played[1][type].length) {
-            if (!board.pieces.played[2][type].length) {
-              pieces[0] = board.pieces.all[1][type][0];
-            } else {
-              pieces.unshift(board.pieces.all[1][type][0]);
-            }
-          }
-          if (isDBS) {
-            // Remove DBS piece (index 1) from color 2's reserve
-            const dbs = board.pieces.all[2][type][1];
-            const dbsIdx = pieces.indexOf(dbs);
-            if (dbsIdx >= 0) {
-              pieces.splice(dbsIdx, 1);
-            }
-          }
-        }
-      }
+      applySwapOpeningPieces(pieces, board, options, color, type);
       pieces.reverse().forEach(drawPiece);
     });
     ctx.restore();

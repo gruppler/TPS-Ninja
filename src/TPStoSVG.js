@@ -7,7 +7,11 @@ import { sanitizeOptions } from "./options.js";
 import { parseTheme } from "./parseTheme.js";
 import { SvgBuilder } from "./SvgBuilder.js";
 import { drawHeaderSvg } from "./drawHeaderSvg.js";
-import { drawAxisLabelsSvg, drawBoardSvg, drawUnplayedPiecesSvg } from "./drawBoardSvg.js";
+import {
+  drawAxisLabelsSvg,
+  drawBoardSvg,
+  drawUnplayedPiecesSvg,
+} from "./drawBoardSvg.js";
 import { drawAnalysisSvg } from "./drawAnalysisSvg.js";
 
 export const TPStoSVG = function (args, streamTo = null) {
@@ -68,7 +72,7 @@ export const TPStoSVGString = function (options = {}) {
 
   // Dimensions
   const pieceSize = Math.round(
-    (pieceSizes[options.imageSize] * 5) / board.size
+    (pieceSizes[options.imageSize] * 5) / board.size,
   );
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.3333);
@@ -84,7 +88,7 @@ export const TPStoSVGString = function (options = {}) {
   };
 
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.013
+    theme.vars["piece-border-width"] * squareSize * 0.013,
   );
   const shadowOffset = strokeWidth / 2 + Math.round(squareSize * 0.02);
   const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
@@ -101,7 +105,12 @@ export const TPStoSVGString = function (options = {}) {
     options.turnIndicator && !options.hideTurnIndicator
       ? Math.round(fontSize * 0.5)
       : 0;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+  const moveNumberRowHeight =
+    options.verticalLayout && options.moveNumber && options.unplayedPieces
+      ? Math.round(fontSize * 1.5)
+      : 0;
+  const headerHeight =
+    moveNumberRowHeight + flatCounterHeight + turnIndicatorHeight;
 
   const axisSize =
     options.axisLabels && !options.axisLabelsSmall
@@ -111,23 +120,49 @@ export const TPStoSVGString = function (options = {}) {
   const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * board.size;
-  const unplayedWidth = options.unplayedPieces
-    ? Math.round(squareSize * 1.75)
-    : 0;
+  const unplayedWidth =
+    options.unplayedPieces && !options.verticalLayout
+      ? Math.round(squareSize * 1.75)
+      : 0;
+  const unplayedHeight =
+    options.unplayedPieces && options.verticalLayout ? squareSize : 0;
 
   const canvasWidth = unplayedWidth + axisSize + boardSize + padding * 2;
-  const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
+  const canvasHeight =
+    headerHeight + axisSize + boardSize + unplayedHeight + padding * 2;
 
   if (options.transparent) {
     options.bgAlpha = 0;
   }
 
   const dims = {
-    squareSize, pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize,
-    roadSize, sideCoords, strokeWidth, shadowOffset, shadowBlur, fontSize,
-    stackCountFontSize, axisLabelFontSize, padding, flatCounterHeight, turnIndicatorHeight,
-    headerHeight, axisSize, counterRadius, boardRadius, boardSize,
-    unplayedWidth, squareRadius: 0, squareMargin: 0,
+    squareSize,
+    pieceSize,
+    pieceRadius,
+    pieceSpacing,
+    immovableSize,
+    wallSize,
+    roadSize,
+    sideCoords,
+    strokeWidth,
+    shadowOffset,
+    shadowBlur,
+    fontSize,
+    stackCountFontSize,
+    axisLabelFontSize,
+    padding,
+    flatCounterHeight,
+    turnIndicatorHeight,
+    moveNumberRowHeight,
+    headerHeight,
+    axisSize,
+    counterRadius,
+    boardRadius,
+    boardSize,
+    unplayedWidth,
+    unplayedHeight,
+    squareRadius: 0,
+    squareMargin: 0,
   };
 
   // Board style
@@ -172,7 +207,8 @@ export const TPStoSVGString = function (options = {}) {
   }
 
   // Axis Labels
-  let xAxis = [], yAxis = [];
+  let xAxis = [],
+    yAxis = [];
   if (options.axisLabels) {
     ({ xAxis, yAxis } = drawAxisLabelsSvg(svg, options, board, theme, dims));
   }
