@@ -1,9 +1,4 @@
-import {
-  isArray,
-  isBoolean,
-  isNumber,
-  isString,
-} from "lodash-es";
+import { isArray, isBoolean, isNumber, isString } from "lodash-es";
 
 export const defaults = {
   delay: 1000,
@@ -42,6 +37,7 @@ export const defaults = {
   draws: null,
   wins2: null,
   delayAnalysis: false,
+  verticalLayout: false,
 };
 
 export function sanitizeOptions(options) {

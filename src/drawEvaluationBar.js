@@ -216,6 +216,22 @@ function drawFillSegmentsCanvas(ctx, bar, theme) {
   if (!bar.wdl) {
     return;
   }
+  if (bar.horizontal) {
+    // Horizontal bar: player1 on left, draw in middle, player2 on right
+    const widths = getSegmentHeights(bar.width, bar.wdl);
+    let currentLeft = bar.x;
+    [
+      { size: widths.player1, fill: theme.colors.player1 },
+      { size: widths.draw, fill: theme.colors.board3 },
+      { size: widths.player2, fill: theme.colors.player2 },
+    ].forEach(({ size, fill }) => {
+      if (!size) return;
+      ctx.fillStyle = fill;
+      ctx.fillRect(currentLeft, bar.y, size, bar.height);
+      currentLeft += size;
+    });
+    return;
+  }
   const heights = getSegmentHeights(bar.height, bar.wdl);
   const segments = [
     { height: heights.player1, fill: theme.colors.player1 },
@@ -234,6 +250,20 @@ function drawFillSegmentsCanvas(ctx, bar, theme) {
 }
 
 function drawSingleSegmentCanvas(ctx, bar, theme) {
+  if (bar.horizontal) {
+    const player1Percent = resolvePlayer1Percent(bar);
+    if (player1Percent === null) return;
+    const magnitude = Math.max(0, Math.min(100, Math.abs(player1Percent - 50) * 2));
+    if (magnitude <= 0) return;
+    const segmentWidth = Math.max(0, Math.round((bar.width * magnitude) / 100));
+    if (!segmentWidth) return;
+    const winner = player1Percent > 50 ? "player1" : "player2";
+    ctx.fillStyle =
+      winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+    const x = winner === "player1" ? bar.x : bar.x + bar.width - segmentWidth;
+    ctx.fillRect(x, bar.y, segmentWidth, bar.height);
+    return;
+  }
   const segment = getSingleSegmentRect(bar);
   if (!segment) {
     return;
@@ -245,6 +275,20 @@ function drawSingleSegmentCanvas(ctx, bar, theme) {
 
 function drawFillSegmentsSvg(svg, bar, theme) {
   if (!bar.wdl) {
+    return;
+  }
+  if (bar.horizontal) {
+    const widths = getSegmentHeights(bar.width, bar.wdl);
+    let currentLeft = bar.x;
+    [
+      { size: widths.player1, fill: theme.colors.player1 },
+      { size: widths.draw, fill: theme.colors.board3 },
+      { size: widths.player2, fill: theme.colors.player2 },
+    ].forEach(({ size, fill }) => {
+      if (!size) return;
+      svg.rect(currentLeft, bar.y, size, bar.height, { fill, opacity: 0.3 });
+      currentLeft += size;
+    });
     return;
   }
   const heights = getSegmentHeights(bar.height, bar.wdl);
@@ -267,6 +311,20 @@ function drawFillSegmentsSvg(svg, bar, theme) {
 }
 
 function drawSingleSegmentSvg(svg, bar, theme) {
+  if (bar.horizontal) {
+    const player1Percent = resolvePlayer1Percent(bar);
+    if (player1Percent === null) return;
+    const magnitude = Math.max(0, Math.min(100, Math.abs(player1Percent - 50) * 2));
+    if (magnitude <= 0) return;
+    const segmentWidth = Math.max(0, Math.round((bar.width * magnitude) / 100));
+    if (!segmentWidth) return;
+    const winner = player1Percent > 50 ? "player1" : "player2";
+    const fill =
+      winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+    const x = winner === "player1" ? bar.x : bar.x + bar.width - segmentWidth;
+    svg.rect(x, bar.y, segmentWidth, bar.height, { fill, opacity: 0.3 });
+    return;
+  }
   const segment = getSingleSegmentRect(bar);
   if (!segment) {
     return;
@@ -292,7 +350,21 @@ export function getEvaluationBarRect(options, dims) {
     return null;
   }
 
-  const { padding, axisSize, boardSize, unplayedWidth, headerHeight } = dims;
+  const { padding, axisSize, boardSize, unplayedWidth, unplayedHeight, headerHeight } = dims;
+
+  if (options.verticalLayout) {
+    return {
+      x: padding + axisSize,
+      y: padding + headerHeight + boardSize,
+      width: boardSize,
+      height: unplayedHeight,
+      wdl,
+      evaluation,
+      showWdlSegments,
+      horizontal: true,
+    };
+  }
+
   return {
     x: padding + axisSize + boardSize,
     y: padding + headerHeight,
@@ -301,6 +373,7 @@ export function getEvaluationBarRect(options, dims) {
     wdl,
     evaluation,
     showWdlSegments,
+    horizontal: false,
   };
 }
 
@@ -311,12 +384,12 @@ export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   }
 
   const radius = Math.min(dims.boardRadius || 0, bar.width, bar.height);
+  const corners = bar.horizontal
+    ? { bl: radius, br: radius }
+    : { tr: radius, br: radius };
 
   ctx.save();
-  roundRect(ctx, bar.x, bar.y, bar.width, bar.height, {
-    tr: radius,
-    br: radius,
-  });
+  roundRect(ctx, bar.x, bar.y, bar.width, bar.height, corners);
   ctx.clip();
   ctx.globalAlpha = 0.3;
   if (bar.showWdlSegments) {
@@ -331,10 +404,16 @@ export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
     ctx.strokeStyle = markerColor(theme, bar);
     ctx.globalAlpha = 0.35;
     ctx.lineWidth = 1;
-    const midY = bar.y + bar.height / 2;
     ctx.beginPath();
-    ctx.moveTo(bar.x, midY);
-    ctx.lineTo(bar.x + bar.width, midY);
+    if (bar.horizontal) {
+      const midX = bar.x + bar.width / 2;
+      ctx.moveTo(midX, bar.y);
+      ctx.lineTo(midX, bar.y + bar.height);
+    } else {
+      const midY = bar.y + bar.height / 2;
+      ctx.moveTo(bar.x, midY);
+      ctx.lineTo(bar.x + bar.width, midY);
+    }
     ctx.stroke();
     ctx.restore();
   }
@@ -347,6 +426,9 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
   }
 
   const radius = Math.min(dims.boardRadius || 0, bar.width, bar.height);
+  const corners = bar.horizontal
+    ? { bl: radius, br: radius }
+    : { tr: radius, br: radius };
   const clipId = "evalBarClip";
   svg.addDef(
     clipId,
@@ -355,7 +437,7 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
       bar.y,
       bar.width,
       bar.height,
-      { tr: radius, br: radius },
+      corners,
     )}"/></clipPath>`,
   );
 
@@ -368,11 +450,20 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
   svg.closeGroup();
 
   if (bar.showWdlSegments) {
-    const midY = bar.y + bar.height / 2;
-    svg.line(bar.x, midY, bar.x + bar.width, midY, {
-      stroke: markerColor(theme, bar),
-      strokeWidth: 1,
-      opacity: 0.35,
-    });
+    if (bar.horizontal) {
+      const midX = bar.x + bar.width / 2;
+      svg.line(midX, bar.y, midX, bar.y + bar.height, {
+        stroke: markerColor(theme, bar),
+        strokeWidth: 1,
+        opacity: 0.35,
+      });
+    } else {
+      const midY = bar.y + bar.height / 2;
+      svg.line(bar.x, midY, bar.x + bar.width, midY, {
+        stroke: markerColor(theme, bar),
+        strokeWidth: 1,
+        opacity: 0.35,
+      });
+    }
   }
 }
