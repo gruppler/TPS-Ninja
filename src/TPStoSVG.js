@@ -1,21 +1,26 @@
-const fs = require("fs");
-const { Board } = require("./Board");
-const { Ply } = require("./Ply");
-const { isArray, isString, last } = require("lodash");
-const { pieceSizes, textSizes } = require("./drawUtils");
-const { sanitizeOptions } = require("./options");
-const { parseTheme } = require("./parseTheme");
-const { SvgBuilder } = require("./SvgBuilder");
-const { drawHeaderSvg } = require("./drawHeaderSvg");
-const { drawAxisLabelsSvg, drawBoardSvg, drawUnplayedPiecesSvg } = require("./drawBoardSvg");
+import fs from "fs";
+import { Board } from "./Board.js";
+import { Ply } from "./Ply.js";
+import { isArray, isString, last } from "lodash-es";
+import { pieceSizes, textSizes } from "./drawUtils.js";
+import { sanitizeOptions } from "./options.js";
+import { parseTheme } from "./parseTheme.js";
+import { SvgBuilder } from "./SvgBuilder.js";
+import { drawHeaderSvg } from "./drawHeaderSvg.js";
+import {
+  drawAxisLabelsSvg,
+  drawBoardSvg,
+  drawUnplayedPiecesSvg,
+} from "./drawBoardSvg.js";
+import { drawAnalysisSvg } from "./drawAnalysisSvg.js";
 
-function TPStoSVG(args, streamTo) {
+export const TPStoSVG = function (args, streamTo = null) {
   let options;
   if (isArray(args)) {
     options = { tps: args[0] || "" };
-    args.slice(1).forEach(function (arg) {
-      const parts = arg.split("=");
-      options[parts[0]] = parts[1];
+    args.slice(1).forEach((arg) => {
+      const [key, value] = arg.split("=");
+      options[key] = value;
     });
   } else {
     options = args;
@@ -35,10 +40,9 @@ function TPStoSVG(args, streamTo) {
   }
 
   return svgString;
-}
+};
 
-function TPStoSVGString(options) {
-  options = options || {};
+export const TPStoSVGString = function (options = {}) {
   sanitizeOptions(options);
   const theme = parseTheme(options.theme);
 
@@ -50,25 +54,25 @@ function TPStoSVGString(options) {
   let hlSquares = [];
   let evalText = "";
   if (options.plies && options.plies.length) {
-    const plies = options.plies.map(function (ply) { return board.doPly(ply); });
-    var ply = last(plies);
+    const plies = options.plies.map((ply) => board.doPly(ply));
+    let ply = last(plies);
     hlSquares = ply.squares;
     evalText = ply.evalText || "";
     options.plyIsDone = true;
   } else if (options.ply) {
-    var ply = board.doPly(options.ply);
+    const ply = board.doPly(options.ply);
     hlSquares = ply.squares;
     evalText = ply.evalText || "";
     options.plyIsDone = true;
   } else if (options.hl) {
-    var ply = new Ply(options.hl);
+    let ply = new Ply(options.hl);
     ply = ply.transform(board.size, options.transform);
     hlSquares = ply.squares;
   }
 
   // Dimensions
   const pieceSize = Math.round(
-    (pieceSizes[options.imageSize] * 5) / board.size
+    (pieceSizes[options.imageSize] * 5) / board.size,
   );
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.3333);
@@ -84,7 +88,7 @@ function TPStoSVGString(options) {
   };
 
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.013
+    theme.vars["piece-border-width"] * squareSize * 0.013,
   );
   const shadowOffset = strokeWidth / 2 + Math.round(squareSize * 0.02);
   const shadowBlur = strokeWidth + Math.round(squareSize * 0.03);
@@ -101,7 +105,12 @@ function TPStoSVGString(options) {
     options.turnIndicator && !options.hideTurnIndicator
       ? Math.round(fontSize * 0.5)
       : 0;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+  const moveNumberRowHeight =
+    options.verticalLayout && options.moveNumber && options.unplayedPieces
+      ? Math.round(fontSize * 1.5)
+      : 0;
+  const headerHeight =
+    moveNumberRowHeight + flatCounterHeight + turnIndicatorHeight;
 
   const axisSize =
     options.axisLabels && !options.axisLabelsSmall
@@ -111,37 +120,47 @@ function TPStoSVGString(options) {
   const counterRadius = Math.round(flatCounterHeight / 4);
   const boardRadius = Math.round(squareSize / 10);
   const boardSize = squareSize * board.size;
-  const unplayedWidth = options.unplayedPieces
-    ? Math.round(squareSize * 1.75)
-    : 0;
+  const unplayedWidth =
+    options.unplayedPieces && !options.verticalLayout
+      ? Math.round(squareSize * 1.75)
+      : 0;
+  const unplayedHeight =
+    options.unplayedPieces && options.verticalLayout ? squareSize : 0;
 
   const canvasWidth = unplayedWidth + axisSize + boardSize + padding * 2;
-  const canvasHeight = headerHeight + axisSize + boardSize + padding * 2;
+  const canvasHeight =
+    headerHeight + axisSize + boardSize + unplayedHeight + padding * 2;
+
+  if (options.transparent) {
+    options.bgAlpha = 0;
+  }
 
   const dims = {
-    squareSize: squareSize,
-    pieceSize: pieceSize,
-    pieceRadius: pieceRadius,
-    pieceSpacing: pieceSpacing,
-    immovableSize: immovableSize,
-    wallSize: wallSize,
-    roadSize: roadSize,
-    sideCoords: sideCoords,
-    strokeWidth: strokeWidth,
-    shadowOffset: shadowOffset,
-    shadowBlur: shadowBlur,
-    fontSize: fontSize,
-    stackCountFontSize: stackCountFontSize,
-    axisLabelFontSize: axisLabelFontSize,
-    padding: padding,
-    flatCounterHeight: flatCounterHeight,
-    turnIndicatorHeight: turnIndicatorHeight,
-    headerHeight: headerHeight,
-    axisSize: axisSize,
-    counterRadius: counterRadius,
-    boardRadius: boardRadius,
-    boardSize: boardSize,
-    unplayedWidth: unplayedWidth,
+    squareSize,
+    pieceSize,
+    pieceRadius,
+    pieceSpacing,
+    immovableSize,
+    wallSize,
+    roadSize,
+    sideCoords,
+    strokeWidth,
+    shadowOffset,
+    shadowBlur,
+    fontSize,
+    stackCountFontSize,
+    axisLabelFontSize,
+    padding,
+    flatCounterHeight,
+    turnIndicatorHeight,
+    moveNumberRowHeight,
+    headerHeight,
+    axisSize,
+    counterRadius,
+    boardRadius,
+    boardSize,
+    unplayedWidth,
+    unplayedHeight,
     squareRadius: 0,
     squareMargin: 0,
   };
@@ -171,7 +190,7 @@ function TPStoSVGString(options) {
 
   // Build SVG
   const svg = new SvgBuilder(canvasWidth, canvasHeight);
-  svg.setFont(fontSize + "px " + options.font);
+  svg.setFont(`${fontSize}px ${options.font}`);
 
   // Background
   if (options.bgAlpha > 0) {
@@ -188,15 +207,19 @@ function TPStoSVGString(options) {
   }
 
   // Axis Labels
-  let xAxis = [], yAxis = [];
+  let xAxis = [],
+    yAxis = [];
   if (options.axisLabels) {
-    var result = drawAxisLabelsSvg(svg, options, board, theme, dims);
-    xAxis = result.xAxis;
-    yAxis = result.yAxis;
+    ({ xAxis, yAxis } = drawAxisLabelsSvg(svg, options, board, theme, dims));
   }
 
   // Board Squares & Pieces
   drawBoardSvg(svg, options, board, theme, hlSquares, xAxis, yAxis, dims);
+
+  // Analysis Suggestions
+  if (options.suggestions && isArray(options.suggestions)) {
+    drawAnalysisSvg(svg, options, board, theme, dims);
+  }
 
   // Unplayed Pieces
   if (options.unplayedPieces) {
@@ -204,7 +227,4 @@ function TPStoSVGString(options) {
   }
 
   return svg.toString();
-}
-
-exports.TPStoSVG = TPStoSVG;
-exports.TPStoSVGString = TPStoSVGString;
+};
