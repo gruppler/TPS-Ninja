@@ -1,11 +1,7 @@
-const {
-  isArray,
-  isBoolean,
-  isNumber,
-  isString,
-} = require("lodash");
+import { isArray, isBoolean, isNumber, isString } from "lodash-es";
 
-const defaults = {
+export const defaults = {
+  delay: 1000,
   imageSize: "md",
   textSize: "md",
   axisLabels: true,
@@ -21,26 +17,38 @@ const defaults = {
   evalText: true,
   opening: "swap",
   ply: "",
+  tps: "",
   plies: [],
   showRoads: true,
   unplayedPieces: true,
   padding: true,
   bgAlpha: 1,
+  transparent: false,
   hlSquares: true,
   highlighter: null,
   transform: [0, 0],
   plyIsDone: true,
   font: "sans",
+  suggestions: null,
   boardEvalBar: false,
   evaluation: null,
   wdl: null,
   wins1: null,
   draws: null,
   wins2: null,
+  delayAnalysis: false,
+  verticalLayout: false,
 };
 
-function sanitizeOptions(options) {
-  for (let key in defaults) {
+export function sanitizeOptions(options) {
+  if (
+    options.delayAnalysisByFrame !== undefined &&
+    options.delayAnalysis === undefined
+  ) {
+    options.delayAnalysis = options.delayAnalysisByFrame;
+  }
+
+  for (const key in defaults) {
     if (options.hasOwnProperty(key)) {
       if (key === "highlighter" && isString(options[key])) {
         try {
@@ -52,7 +60,7 @@ function sanitizeOptions(options) {
       } else if (key === "moveNumber" && !isBoolean(options[key])) {
         const number = parseInt(options[key], 10);
         if (isNaN(number)) {
-          options[key] !== "false";
+          options[key] = options[key] !== "false";
         } else {
           options[key] = number;
         }
@@ -72,9 +80,13 @@ function sanitizeOptions(options) {
         } else {
           options[key] = defaults[key];
         }
-      } else if (key === "plies") {
+      } else if (key === "suggestions") {
         if (isString(options[key])) {
-          options[key] = options[key].split(/[\s,]+/);
+          try {
+            options[key] = JSON.parse(options[key]);
+          } catch (err) {
+            options[key] = null;
+          }
         }
       } else if (key === "wdl") {
         if (isString(options[key])) {
@@ -108,6 +120,10 @@ function sanitizeOptions(options) {
           const value = Number(options[key]);
           options[key] = isNaN(value) ? null : Math.max(0, value);
         }
+      } else if (key === "plies") {
+        if (isString(options[key])) {
+          options[key] = options[key].split(/[\s,]+/);
+        }
       } else if (isBoolean(defaults[key])) {
         options[key] = options[key] !== false && options[key] !== "false";
       } else if (isNumber(defaults[key])) {
@@ -117,7 +133,10 @@ function sanitizeOptions(options) {
       options[key] = defaults[key];
     }
   }
-  if (isString(options.tps) && options.tps.length === 1) {
+  if (options.size) {
+    options.size = Number(options.size);
+  }
+  if (isString(options.tps) && options.tps && options.tps.length === 1) {
     options.tps = Number(options.tps);
   }
   if (options.axisLabels && options.axisLabelsSmall) {
@@ -125,6 +144,3 @@ function sanitizeOptions(options) {
   }
   return options;
 }
-
-exports.defaults = defaults;
-exports.sanitizeOptions = sanitizeOptions;

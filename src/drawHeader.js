@@ -1,15 +1,29 @@
-const { roundRect, limitText } = require("./drawUtils");
+import { roundRect, limitText, withAlpha } from "./drawUtils.js";
 
-function drawHeader(
+export function drawHeader(
   ctx,
   options,
   board,
   theme,
-  { fontSize, squareSize, padding, axisSize, boardSize, unplayedWidth, flatCounterHeight, turnIndicatorHeight, counterRadius }
+  {
+    fontSize,
+    squareSize,
+    padding,
+    axisSize,
+    boardSize,
+    unplayedWidth,
+    flatCounterHeight,
+    turnIndicatorHeight,
+    moveNumberRowHeight,
+    counterRadius,
+  },
 ) {
   const flats = board.flats.concat();
   const komi = options.komi;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+
+  // In vertical layout with moveNumber, the move number occupies its own row
+  // above the flat bars. flatTop is the y-coordinate where flat bars begin.
+  const flatTop = padding + moveNumberRowHeight;
 
   const totalFlats = flats[0] + flats[1];
   const flats1Width = Math.round(
@@ -18,16 +32,16 @@ function drawHeader(
       Math.max(
         squareSize,
         (options.flatCounts && totalFlats ? flats[0] / totalFlats : 0.5) *
-          boardSize
-      )
-    )
+          boardSize,
+      ),
+    ),
   );
   const flats2Width = Math.round(boardSize - flats1Width);
   const komiWidth = options.flatCounts
     ? Math.round(
         komi < 0
           ? flats1Width * (-komi / flats[0])
-          : flats2Width * (komi / flats[1])
+          : flats2Width * (komi / flats[1]),
       )
     : 0;
   if (options.flatCounts) {
@@ -35,8 +49,7 @@ function drawHeader(
       flats[0] =
         flats[0] + komi + " +" + (-komi).toString().replace(/0?\.5/, "½");
     } else if (komi > 0) {
-      flats[1] =
-        flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
+      flats[1] = flats[1] - komi + " +" + komi.toString().replace(/0?\.5/, "½");
     }
   } else {
     flats[0] = "";
@@ -50,24 +63,19 @@ function drawHeader(
 
   // Flat Bars
   ctx.fillStyle = theme.colors.player1;
-  roundRect(
-    ctx,
-    padding + axisSize,
-    padding,
-    flats1Width,
-    flatCounterHeight,
-    { tl: counterRadius }
-  );
+  roundRect(ctx, padding + axisSize, flatTop, flats1Width, flatCounterHeight, {
+    tl: counterRadius,
+  });
   ctx.fill();
 
   ctx.fillStyle = theme.colors.player2;
   roundRect(
     ctx,
     padding + axisSize + flats1Width,
-    padding,
+    flatTop,
     flats2Width,
     flatCounterHeight,
-    { tr: counterRadius }
+    { tr: counterRadius },
   );
   ctx.fill();
 
@@ -80,22 +88,24 @@ function drawHeader(
       roundRect(
         ctx,
         padding + axisSize + (komi > 0) * flats1Width,
-        padding,
+        flatTop,
         flatWidth,
         flatCounterHeight,
-        { [komi < 0 ? "tl" : "tr"]: counterRadius }
+        { [komi < 0 ? "tl" : "tr"]: counterRadius },
       );
       ctx.fill();
     } else {
       ctx.fillRect(
         padding + axisSize + flats1Width - (komi < 0) * komiWidth,
-        padding,
+        flatTop,
         komiWidth,
-        flatCounterHeight
+        flatCounterHeight,
       );
     }
     ctx.globalAlpha = 1;
   }
+
+  const flatMidY = flatTop + flatCounterHeight / 2;
 
   // Flat Counts
   ctx.fillStyle = theme.player1Dark
@@ -106,17 +116,13 @@ function drawHeader(
   if (options.player1) {
     ctx.textDrawingMode = "glyph";
     const flatCount1Width = ctx.measureText(flats[0]).width;
-    options.player1 = limitText(
+    const player1 = limitText(
       ctx,
       options.player1,
-      flats1Width - flatCount1Width - fontSize * 1.2
+      flats1Width - flatCount1Width - fontSize * 1.2,
     );
     ctx.textAlign = "start";
-    ctx.fillText(
-      options.player1,
-      padding + axisSize + fontSize / 2,
-      padding + flatCounterHeight / 2
-    );
+    ctx.fillText(player1, padding + axisSize + fontSize / 2, flatMidY);
     ctx.textDrawingMode = "path";
   }
   // Player 1 Flat Count
@@ -126,7 +132,7 @@ function drawHeader(
     ctx.fillText(
       flats[0][0],
       padding + axisSize + flats1Width - fontSize / 2,
-      padding + flatCounterHeight / 2
+      flatMidY,
     );
     if (flats[0][1]) {
       // Komi
@@ -139,7 +145,7 @@ function drawHeader(
           flats1Width -
           fontSize / 2 -
           ctx.measureText(flats[0][0] + " ").width,
-        padding + flatCounterHeight / 2
+        flatMidY,
       );
       ctx.globalAlpha = 1;
     }
@@ -153,16 +159,16 @@ function drawHeader(
   if (options.player2) {
     ctx.textDrawingMode = "glyph";
     const flatCount2Width = ctx.measureText(flats[1]).width;
-    options.player2 = limitText(
+    const player2 = limitText(
       ctx,
       options.player2,
-      flats2Width - flatCount2Width - fontSize * 1.2
+      flats2Width - flatCount2Width - fontSize * 1.2,
     );
     ctx.textAlign = "end";
     ctx.fillText(
-      options.player2,
+      player2,
       padding + axisSize + boardSize - fontSize / 2,
-      padding + flatCounterHeight / 2
+      flatMidY,
     );
     ctx.textDrawingMode = "path";
   }
@@ -173,7 +179,7 @@ function drawHeader(
     ctx.fillText(
       flats[1][0],
       padding + axisSize + flats1Width + fontSize / 2,
-      padding + flatCounterHeight / 2
+      flatMidY,
     );
     if (flats[1][1]) {
       // Komi
@@ -185,7 +191,7 @@ function drawHeader(
           flats1Width +
           fontSize / 2 +
           ctx.measureText(flats[1][0] + " ").width,
-        padding + flatCounterHeight / 2
+        flatMidY,
       );
       ctx.globalAlpha = 1;
     }
@@ -196,13 +202,22 @@ function drawHeader(
     ctx.fillStyle = theme.colors.primary;
     ctx.fillRect(
       padding + axisSize + (board.player === 1 ? 0 : boardSize / 2),
-      padding + flatCounterHeight,
+      flatTop + flatCounterHeight,
       boardSize / 2,
-      turnIndicatorHeight
+      turnIndicatorHeight,
     );
   }
 
-  // Move number
+  // Move number / eval text
+  // In vertical layout, these go in the dedicated top row (moveNumberRowHeight > 0).
+  // In horizontal layout, they go in the flat counter bar to the right of the board.
+  const textCenterX = options.verticalLayout
+    ? padding + axisSize + boardSize / 2
+    : padding + axisSize + boardSize + unplayedWidth / 2;
+  const textCenterY = options.verticalLayout
+    ? (padding + moveNumberRowHeight) / 2
+    : flatMidY;
+
   let moveNumberWidth = 0;
   if (options.moveNumber && options.unplayedPieces) {
     let moveNumber;
@@ -229,11 +244,7 @@ function drawHeader(
       theme.secondaryDark || options.bgAlpha < 0.5
         ? theme.colors.textLight
         : theme.colors.textDark;
-    ctx.fillText(
-      moveNumber,
-      padding + axisSize + boardSize + unplayedWidth / 2,
-      padding + flatCounterHeight / 2
-    );
+    ctx.fillText(moveNumber, textCenterX, textCenterY);
     let { width } = ctx.measureText(moveNumber);
     moveNumberWidth = width;
     ctx.restore();
@@ -256,17 +267,7 @@ function drawHeader(
         : theme.colors.textLight;
     ctx.fillStyle = theme.colors.primary;
     ctx.font = `bold ${fontSize}px ${options.font}`;
-    ctx.fillText(
-      evalText,
-      padding +
-        axisSize +
-        boardSize +
-        unplayedWidth / 2 +
-        moveNumberWidth / 2,
-      padding + flatCounterHeight / 2
-    );
+    ctx.fillText(evalText, textCenterX + moveNumberWidth / 2, textCenterY);
     ctx.restore();
   }
 }
-
-exports.drawHeader = drawHeader;

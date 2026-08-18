@@ -1,4 +1,5 @@
-const { roundRect } = require("./drawUtils");
+import { roundRect } from "./drawUtils.js";
+import { isDark } from "./colors.js";
 
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === "") {
@@ -12,69 +13,16 @@ function clampPercent(value) {
   return Math.max(0, Math.min(100, value));
 }
 
-function parseColorRgb(color) {
-  if (typeof color !== "string") {
-    return null;
-  }
-
-  const value = color.trim();
-  if (!value) {
-    return null;
-  }
-
-  if (value[0] === "#") {
-    let hex = value.slice(1);
-    if (hex.length === 3 || hex.length === 4) {
-      hex = hex
-        .split("")
-        .map((c) => c + c)
-        .join("");
-    }
-    if (hex.length !== 6 && hex.length !== 8) {
-      return null;
-    }
-    return {
-      r: Number.parseInt(hex.slice(0, 2), 16),
-      g: Number.parseInt(hex.slice(2, 4), 16),
-      b: Number.parseInt(hex.slice(4, 6), 16),
-    };
-  }
-
-  const rgb = value.match(/^rgba?\(([^)]+)\)$/i);
-  if (!rgb) {
-    return null;
-  }
-  const channels = rgb[1].split(",").map((part) => Number(part.trim()));
-  if (channels.length < 3 || channels.some((n, i) => i < 3 && !Number.isFinite(n))) {
-    return null;
-  }
-  return {
-    r: channels[0],
-    g: channels[1],
-    b: channels[2],
-  };
-}
-
-function isDarkColor(color) {
-  const rgb = parseColorRgb(color);
-  if (!rgb) {
-    return null;
-  }
-  const luminance =
-    (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
-  return luminance <= 0.4;
-}
-
-function pickDefined() {
-  for (let i = 0; i < arguments.length; i++) {
-    if (arguments[i] !== null && arguments[i] !== undefined) {
-      return arguments[i];
+function pickDefined(...values) {
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] !== null && values[i] !== undefined) {
+      return values[i];
     }
   }
   return undefined;
 }
 
-function normalizeWDL(wdl, evaluation) {
+function normalizeWDL(wdl = null, evaluation = null) {
   let player1 = null;
   let draw = null;
   let player2 = null;
@@ -86,7 +34,14 @@ function normalizeWDL(wdl, evaluation) {
       player2 = toFiniteNumber(wdl[2]);
     } else {
       player1 = toFiniteNumber(
-        pickDefined(wdl.player1, wdl.p1, wdl.win1, wdl.wins1, wdl.white, wdl.win)
+        pickDefined(
+          wdl.player1,
+          wdl.p1,
+          wdl.win1,
+          wdl.wins1,
+          wdl.white,
+          wdl.win,
+        ),
       );
       draw = toFiniteNumber(pickDefined(wdl.draw, wdl.draws, wdl.d));
       player2 = toFiniteNumber(
@@ -96,8 +51,8 @@ function normalizeWDL(wdl, evaluation) {
           wdl.win2,
           wdl.wins2,
           wdl.black,
-          wdl.loss !== undefined ? wdl.loss : wdl.win2
-        )
+          wdl.loss !== undefined ? wdl.loss : wdl.win2,
+        ),
       );
     }
   }
@@ -137,11 +92,7 @@ function resolveWDL(options) {
     return options.wdl;
   }
 
-  if (
-    options.wins1 != null ||
-    options.draws != null ||
-    options.wins2 != null
-  ) {
+  if (options.wins1 != null || options.draws != null || options.wins2 != null) {
     return {
       player1: options.wins1,
       draw: options.draws,
@@ -239,9 +190,8 @@ function markerColor(theme, bar) {
     if (flag === true || flag === false) {
       return flag;
     }
-    const computed = isDarkColor(color);
-    if (computed === true || computed === false) {
-      return computed;
+    if (color) {
+      return isDark(color);
     }
     return false;
   };
@@ -254,7 +204,7 @@ function markerColor(theme, bar) {
       currentTheme.board3Dark !== undefined
         ? currentTheme.board3Dark
         : currentTheme.secondaryDark,
-      colors.board3
+      colors.board3,
     ),
   };
   const segmentIsDark = isDarkBySegment[segment];
@@ -264,6 +214,22 @@ function markerColor(theme, bar) {
 
 function drawFillSegmentsCanvas(ctx, bar, theme) {
   if (!bar.wdl) {
+    return;
+  }
+  if (bar.horizontal) {
+    // Horizontal bar: player1 on left, draw in middle, player2 on right
+    const widths = getSegmentHeights(bar.width, bar.wdl);
+    let currentLeft = bar.x;
+    [
+      { size: widths.player1, fill: theme.colors.player1 },
+      { size: widths.draw, fill: theme.colors.board3 },
+      { size: widths.player2, fill: theme.colors.player2 },
+    ].forEach(({ size, fill }) => {
+      if (!size) return;
+      ctx.fillStyle = fill;
+      ctx.fillRect(currentLeft, bar.y, size, bar.height);
+      currentLeft += size;
+    });
     return;
   }
   const heights = getSegmentHeights(bar.height, bar.wdl);
@@ -284,6 +250,20 @@ function drawFillSegmentsCanvas(ctx, bar, theme) {
 }
 
 function drawSingleSegmentCanvas(ctx, bar, theme) {
+  if (bar.horizontal) {
+    const player1Percent = resolvePlayer1Percent(bar);
+    if (player1Percent === null) return;
+    const magnitude = Math.max(0, Math.min(100, Math.abs(player1Percent - 50) * 2));
+    if (magnitude <= 0) return;
+    const segmentWidth = Math.max(0, Math.round((bar.width * magnitude) / 100));
+    if (!segmentWidth) return;
+    const winner = player1Percent > 50 ? "player1" : "player2";
+    ctx.fillStyle =
+      winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+    const x = winner === "player1" ? bar.x : bar.x + bar.width - segmentWidth;
+    ctx.fillRect(x, bar.y, segmentWidth, bar.height);
+    return;
+  }
   const segment = getSingleSegmentRect(bar);
   if (!segment) {
     return;
@@ -295,6 +275,20 @@ function drawSingleSegmentCanvas(ctx, bar, theme) {
 
 function drawFillSegmentsSvg(svg, bar, theme) {
   if (!bar.wdl) {
+    return;
+  }
+  if (bar.horizontal) {
+    const widths = getSegmentHeights(bar.width, bar.wdl);
+    let currentLeft = bar.x;
+    [
+      { size: widths.player1, fill: theme.colors.player1 },
+      { size: widths.draw, fill: theme.colors.board3 },
+      { size: widths.player2, fill: theme.colors.player2 },
+    ].forEach(({ size, fill }) => {
+      if (!size) return;
+      svg.rect(currentLeft, bar.y, size, bar.height, { fill, opacity: 0.3 });
+      currentLeft += size;
+    });
     return;
   }
   const heights = getSegmentHeights(bar.height, bar.wdl);
@@ -317,6 +311,20 @@ function drawFillSegmentsSvg(svg, bar, theme) {
 }
 
 function drawSingleSegmentSvg(svg, bar, theme) {
+  if (bar.horizontal) {
+    const player1Percent = resolvePlayer1Percent(bar);
+    if (player1Percent === null) return;
+    const magnitude = Math.max(0, Math.min(100, Math.abs(player1Percent - 50) * 2));
+    if (magnitude <= 0) return;
+    const segmentWidth = Math.max(0, Math.round((bar.width * magnitude) / 100));
+    if (!segmentWidth) return;
+    const winner = player1Percent > 50 ? "player1" : "player2";
+    const fill =
+      winner === "player1" ? theme.colors.player1 : theme.colors.player2;
+    const x = winner === "player1" ? bar.x : bar.x + bar.width - segmentWidth;
+    svg.rect(x, bar.y, segmentWidth, bar.height, { fill, opacity: 0.3 });
+    return;
+  }
   const segment = getSingleSegmentRect(bar);
   if (!segment) {
     return;
@@ -329,7 +337,7 @@ function drawSingleSegmentSvg(svg, bar, theme) {
   });
 }
 
-function getEvaluationBarRect(options, dims) {
+export function getEvaluationBarRect(options, dims) {
   if (!options.boardEvalBar || !options.unplayedPieces) {
     return null;
   }
@@ -342,7 +350,21 @@ function getEvaluationBarRect(options, dims) {
     return null;
   }
 
-  const { padding, axisSize, boardSize, unplayedWidth, headerHeight } = dims;
+  const { padding, axisSize, boardSize, unplayedWidth, unplayedHeight, headerHeight } = dims;
+
+  if (options.verticalLayout) {
+    return {
+      x: padding + axisSize,
+      y: padding + headerHeight + boardSize,
+      width: boardSize,
+      height: unplayedHeight,
+      wdl,
+      evaluation,
+      showWdlSegments,
+      horizontal: true,
+    };
+  }
+
   return {
     x: padding + axisSize + boardSize,
     y: padding + headerHeight,
@@ -351,22 +373,23 @@ function getEvaluationBarRect(options, dims) {
     wdl,
     evaluation,
     showWdlSegments,
+    horizontal: false,
   };
 }
 
-function drawEvaluationBarCanvas(ctx, options, theme, dims) {
+export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   const bar = getEvaluationBarRect(options, dims);
   if (!bar) {
     return;
   }
 
   const radius = Math.min(dims.boardRadius || 0, bar.width, bar.height);
+  const corners = bar.horizontal
+    ? { bl: radius, br: radius }
+    : { tr: radius, br: radius };
 
   ctx.save();
-  roundRect(ctx, bar.x, bar.y, bar.width, bar.height, {
-    tr: radius,
-    br: radius,
-  });
+  roundRect(ctx, bar.x, bar.y, bar.width, bar.height, corners);
   ctx.clip();
   ctx.globalAlpha = 0.3;
   if (bar.showWdlSegments) {
@@ -381,22 +404,31 @@ function drawEvaluationBarCanvas(ctx, options, theme, dims) {
     ctx.strokeStyle = markerColor(theme, bar);
     ctx.globalAlpha = 0.35;
     ctx.lineWidth = 1;
-    const midY = bar.y + bar.height / 2;
     ctx.beginPath();
-    ctx.moveTo(bar.x, midY);
-    ctx.lineTo(bar.x + bar.width, midY);
+    if (bar.horizontal) {
+      const midX = bar.x + bar.width / 2;
+      ctx.moveTo(midX, bar.y);
+      ctx.lineTo(midX, bar.y + bar.height);
+    } else {
+      const midY = bar.y + bar.height / 2;
+      ctx.moveTo(bar.x, midY);
+      ctx.lineTo(bar.x + bar.width, midY);
+    }
     ctx.stroke();
     ctx.restore();
   }
 }
 
-function drawEvaluationBarSvg(svg, options, theme, dims) {
+export function drawEvaluationBarSvg(svg, options, theme, dims) {
   const bar = getEvaluationBarRect(options, dims);
   if (!bar) {
     return;
   }
 
   const radius = Math.min(dims.boardRadius || 0, bar.width, bar.height);
+  const corners = bar.horizontal
+    ? { bl: radius, br: radius }
+    : { tr: radius, br: radius };
   const clipId = "evalBarClip";
   svg.addDef(
     clipId,
@@ -405,8 +437,8 @@ function drawEvaluationBarSvg(svg, options, theme, dims) {
       bar.y,
       bar.width,
       bar.height,
-      { tr: radius, br: radius }
-    )}"/></clipPath>`
+      corners,
+    )}"/></clipPath>`,
   );
 
   svg.openGroup({ clipPath: clipId });
@@ -418,15 +450,20 @@ function drawEvaluationBarSvg(svg, options, theme, dims) {
   svg.closeGroup();
 
   if (bar.showWdlSegments) {
-    const midY = bar.y + bar.height / 2;
-    svg.line(bar.x, midY, bar.x + bar.width, midY, {
-      stroke: markerColor(theme, bar),
-      strokeWidth: 1,
-      opacity: 0.35,
-    });
+    if (bar.horizontal) {
+      const midX = bar.x + bar.width / 2;
+      svg.line(midX, bar.y, midX, bar.y + bar.height, {
+        stroke: markerColor(theme, bar),
+        strokeWidth: 1,
+        opacity: 0.35,
+      });
+    } else {
+      const midY = bar.y + bar.height / 2;
+      svg.line(bar.x, midY, bar.x + bar.width, midY, {
+        stroke: markerColor(theme, bar),
+        strokeWidth: 1,
+        opacity: 0.35,
+      });
+    }
   }
 }
-
-exports.getEvaluationBarRect = getEvaluationBarRect;
-exports.drawEvaluationBarCanvas = drawEvaluationBarCanvas;
-exports.drawEvaluationBarSvg = drawEvaluationBarSvg;
