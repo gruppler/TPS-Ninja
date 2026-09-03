@@ -58,6 +58,8 @@ flats2         Override number of flat stones for Player 2
 ```
 theme           [ID|JSON] Theme
 imageSize       [xs|sm|md|lg|xl] Image size
+imageWidth      [number] Maximum image width in pixels (overrides imageSize)
+imageHeight     [number] Maximum image height in pixels (overrides imageSize)
 textSize        [xs|sm|md|lg|xl] Text size
 bgAlpha         [0, 1] Background opacity
 hlSquares       [true|false] Highlight last ply's squares
@@ -91,4 +93,111 @@ caps1          Override number of cap stones for player 1
 flats1         Override number of flat stones for player 1
 caps2          Override number of cap stones for player 2
 flats2         Override number of flat stones for player 2
+```
+
+## TPS to GIF
+
+_Tak Positional System to Graphics Interchange Format_
+
+### JS Usage:
+
+```js
+const stream = TPStoGIF(args, (streamTo = null));
+```
+
+The `args` argument is a map of options, of which `size` or `tps` are required.
+
+If `streamTo` is defined, the image will be piped to the specified write stream. Otherwise, in a node environment, it will be output to `./takboard.gif`. The read stream is returned either way.
+
+### CLI Usage:
+
+```bash
+TPStoGIF <TPS|board size> [OPTION=VALUE ...]
+```
+
+### Examples:
+
+```js
+TPStoGIF({
+  size: 3,
+  plies: ["a1", "b1", "b2", "b3", "c2", "b3-", "b3", "2b2-", "c1", "c3", "b2"],
+  theme: "discord",
+  imageSize: "sm",
+  name: "example3",
+});
+```
+
+OR
+
+```bash
+$ TPStoGIF 3 plies="a1 b1 b2 b3 c2 b3- b3 2b2- c1 c3 b2" theme=discord imageSize=sm name=example3
+```
+
+![Example 1](/example3.gif)
+
+_Output: example3.gif_
+
+### Options:
+
+```
+delay          [integer] Milliseconds between frames (default 1000)
+theme          [ID|JSON] Theme
+imageSize      [xs|sm|md|lg|xl] Image size
+imageWidth     [number] Maximum image width in pixels (overrides imageSize)
+imageHeight    [number] Maximum image height in pixels (overrides imageSize)
+textSize       [xs|sm|md|lg|xl] Text size
+transparent    [true|false] Transparent background
+hlSquares      [true|false] Highlight last ply's squares
+axisLabels     [true|false] Show board coordinate labels
+turnIndicator  [true|false] Show turn indicator and player names
+hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header
+hideFlatWinHighlights [true|false] Hide the highlighted squares of a flat win
+flatCounts     [true|false] Show flat counts
+stackCounts    [true|false] Show stack counts
+centerStackCounts [true|false] Show stack counts in piece center instead of corner
+               Forced true when axisLabels and axisLabelsSmall are both true
+moveNumber     [true|false|<number>] Show current move number
+evalText       [true|false] Show current ply eval notation
+komi           [half-integer] Bonus points awarded to Player 2
+opening        [swap|no-swap] Opening variations
+showRoads      [true|false] Show partial roads
+unplayedPieces [true|false] Show unplayed pieces
+padding        [true|false] Pad the image
+boardEvalBar   [true|false] Show evaluation bar in unplayed area
+evaluation     [number] Position evaluation from -100 to 100
+highlighter    [JSON] Square coordinates mapped to color, overrides highlight
+suggestions    [JSON] Array of analysis suggestions to overlay on the board
+               Each element can be a PTN string or an object with:
+                 ptn|ply       PTN string of the suggested move
+                 evaluation    Engine evaluation score
+                 depth         Search depth
+                 nodes         Number of nodes searched
+                 totalGames    Total games (for opening book suggestions)
+                 wins1         Player 1 wins (for opening book suggestions)
+                 wins2         Player 2 wins (for opening book suggestions)
+                 draws         Draws (for opening book suggestions)
+               Placements render as ghost pieces; movements render as arrows
+suggestionsByFrame [JSON] Per-frame suggestions for animated GIFs
+               Array where index 0 applies to the initial frame and each
+               subsequent index applies to each ply frame in order.
+               Each frame value uses the same format as `suggestions`.
+evaluationsByFrame [JSON] Per-frame evaluation values for animated GIFs
+               Array where index 0 applies to the initial frame and each
+               subsequent index applies to each ply frame in order.
+delayAnalysis  [true|false] Insert a frame without analysis before each
+               frame that has analysis suggestions
+
+name           Filename of exported GIF, defaults to 'takboard.gif'
+player1        Name of Player 1
+player2        Name of Player 2
+hl             PTN of a ply whose affected squares will be highlighted
+ply            PTN of a ply to be executed
+plies          Space- or comma-separated string of plies to be executed
+caps           Override number of cap stones for both players
+flats          Override number of flat stones for both players
+caps1          Override number of cap stones for Player 1
+flats1         Override number of flat stones for Player 1
+caps2          Override number of cap stones for Player 2
+flats2         Override number of flat stones for Player 2
+>>>>>>> c717f4f (docs: add imageWidth and imageHeight to readme)
 ```
