@@ -3,6 +3,8 @@ import { isArray, isBoolean, isNumber, isString } from "lodash-es";
 export const defaults = {
   delay: 1000,
   imageSize: "md",
+  imageWidth: null,
+  imageHeight: null,
   textSize: "md",
   axisLabels: true,
   axisLabelsSmall: false,
@@ -135,6 +137,18 @@ export function sanitizeOptions(options) {
   }
   if (options.size) {
     options.size = Number(options.size);
+  }
+  if (options.imageWidth !== null && options.imageWidth !== undefined) {
+    options.imageWidth = Number(options.imageWidth);
+    if (isNaN(options.imageWidth) || options.imageWidth <= 0) {
+      options.imageWidth = null;
+    }
+  }
+  if (options.imageHeight !== null && options.imageHeight !== undefined) {
+    options.imageHeight = Number(options.imageHeight);
+    if (isNaN(options.imageHeight) || options.imageHeight <= 0) {
+      options.imageHeight = null;
+    }
   }
   if (isString(options.tps) && options.tps && options.tps.length === 1) {
     options.tps = Number(options.tps);

@@ -44,10 +44,12 @@ export function prepareAnalysisData(
       moves.push({
         ply,
         boardSquares: originalPtn ? new Ply(originalPtn).squares : ply.squares,
-        evaluation: suggestion.evaluation != null ? suggestion.evaluation : null,
+        evaluation:
+          suggestion.evaluation != null ? suggestion.evaluation : null,
         nodes: suggestion.nodes != null ? suggestion.nodes : null,
         depth: suggestion.depth != null ? suggestion.depth : null,
-        totalGames: suggestion.totalGames != null ? suggestion.totalGames : null,
+        totalGames:
+          suggestion.totalGames != null ? suggestion.totalGames : null,
         wins1: suggestion.wins1 != null ? suggestion.wins1 : null,
         wins2: suggestion.wins2 != null ? suggestion.wins2 : null,
         draws: suggestion.draws != null ? suggestion.draws : null,
@@ -150,8 +152,9 @@ export function computeArrowGeometry(
 
   const ndx = dx / len;
   const ndy = dy / len;
-  const px = -ndy;
-  const py = ndx;
+  const isVertical = Math.abs(dy) > Math.abs(dx);
+  const px = isVertical ? 1 : 0;
+  const py = isVertical ? 0 : 1;
 
   const groupInfo = arrowGroupMap.get(move);
   let perpOffset = 0;
@@ -255,8 +258,23 @@ export function computeArrowDrops(
   squareSize,
   getStackHeight
 ) {
-  const { ply, squares, boardSquares, from, ndx, ndy, px, py, ox, oy, sourceAdvance, baseX, baseY, finalTipX, finalTipY } =
-    geometry;
+  const {
+    ply,
+    squares,
+    boardSquares,
+    from,
+    ndx,
+    ndy,
+    px,
+    py,
+    ox,
+    oy,
+    sourceAdvance,
+    baseX,
+    baseY,
+    finalTipX,
+    finalTipY,
+  } = geometry;
 
   const dist = ply.distribution;
   if (!dist || squares.length <= 1) {
@@ -410,11 +428,15 @@ function isSuperior(candidate, existing) {
   const cDepth = candidate.depth != null ? candidate.depth : null;
   const eDepth = existing.depth != null ? existing.depth : null;
 
-  if (cNodes !== null && eNodes !== null && cNodes !== eNodes) return cNodes > eNodes;
-  if (cDepth !== null && eDepth !== null && cDepth !== eDepth) return cDepth > eDepth;
+  if (cNodes !== null && eNodes !== null && cNodes !== eNodes)
+    return cNodes > eNodes;
+  if (cDepth !== null && eDepth !== null && cDepth !== eDepth)
+    return cDepth > eDepth;
 
-  const cEval = candidate.evaluation != null ? Math.abs(candidate.evaluation) : null;
-  const eEval = existing.evaluation != null ? Math.abs(existing.evaluation) : null;
+  const cEval =
+    candidate.evaluation != null ? Math.abs(candidate.evaluation) : null;
+  const eEval =
+    existing.evaluation != null ? Math.abs(existing.evaluation) : null;
   if (cEval !== null && eEval !== null) return cEval > eEval;
   return false;
 }
@@ -465,10 +487,7 @@ function computeStrengths(moves, currentPlayer) {
         opacity = MIN_OPACITY;
       } else {
         const rel = commonality / prevCommonality;
-        opacity = Math.max(
-          prevOpacity * rel,
-          prevOpacity - MAX_OPACITY_DIFF
-        );
+        opacity = Math.max(prevOpacity * rel, prevOpacity - MAX_OPACITY_DIFF);
       }
       opacity = Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
       opacities.push(opacity);
