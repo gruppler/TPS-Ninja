@@ -11,6 +11,8 @@ if (!options.length) {
       "  delay          [integer] Milliseconds between frames (default 1000)\n" +
       "  theme          [ID|JSON] Theme\n" +
       "  imageSize      [xs|sm|md|lg|xl] Image size\n" +
+      "  imageWidth     [number] Maximum image width in pixels (overrides imageSize)\n" +
+      "  imageHeight    [number] Maximum image height in pixels (overrides imageSize)\n" +
       "  textSize       [xs|sm|md|lg|xl] Text size\n" +
       "  transparent    [true|false] Transparent background\n" +
       "  hlSquares      [true|false] Highlight last ply's squares\n" +

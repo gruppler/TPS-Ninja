@@ -175,6 +175,8 @@ _Output: example2.png_
 ```
 theme           [ID|JSON] Theme
 imageSize       [xs|sm|md|lg|xl] Image size
+imageWidth      [number] Maximum image width in pixels (overrides imageSize)
+imageHeight     [number] Maximum image height in pixels (overrides imageSize)
 textSize        [xs|sm|md|lg|xl] Text size
 bgAlpha         [0, 1] Background opacity
 hlSquares       [true|false] Highlight last ply's squares
@@ -269,6 +271,8 @@ _Output: example3.gif_
 delay          [integer] Milliseconds between frames (default 1000)
 theme          [ID|JSON] Theme
 imageSize      [xs|sm|md|lg|xl] Image size
+imageWidth     [number] Maximum image width in pixels (overrides imageSize)
+imageHeight    [number] Maximum image height in pixels (overrides imageSize)
 textSize       [xs|sm|md|lg|xl] Text size
 transparent    [true|false] Transparent background
 hlSquares      [true|false] Highlight last ply's squares

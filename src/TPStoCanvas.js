@@ -2,7 +2,7 @@ import { createCanvas } from "canvas";
 import { Board } from "./Board.js";
 import { Ply } from "./Ply.js";
 import { isArray, last } from "lodash-es";
-import { pieceSizes, textSizes } from "./drawUtils.js";
+import { pieceSizes, textSizes, computeCanvasDimensions } from "./drawUtils.js";
 import { sanitizeOptions } from "./options.js";
 import { parseTheme } from "./parseTheme.js";
 import { drawHeader } from "./drawHeader.js";
@@ -42,9 +42,33 @@ export const TPStoCanvas = function (options = {}) {
   }
 
   // Dimensions
-  const pieceSize = Math.round(
-    (pieceSizes[options.imageSize] * 5) / board.size,
-  );
+  let pieceSize;
+  if (options.imageWidth || options.imageHeight) {
+    // Binary search for largest integer pieceSize within constraints
+    let low = 10;
+    let high = 500;
+    let best = low;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const dims = computeCanvasDimensions(mid, board, options, theme);
+      const fitsWidth = !options.imageWidth || dims.width <= options.imageWidth;
+      const fitsHeight = !options.imageHeight || dims.height <= options.imageHeight;
+
+      if (fitsWidth && fitsHeight) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    pieceSize = best;
+  } else {
+    pieceSize = Math.round(
+      (pieceSizes[options.imageSize] * 5) / board.size,
+    );
+  }
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.3333);
   const pieceRadius = Math.round(squareSize * 0.05);

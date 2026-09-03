@@ -16,6 +16,42 @@ export const textSizes = {
   xl: 0.4,
 };
 
+export function computeCanvasDimensions(pieceSize, board, options, theme) {
+  const squareSize = pieceSize * 2;
+  const roadSize = Math.round(squareSize * 0.3333);
+
+  const strokeWidth = Math.round(
+    theme.vars["piece-border-width"] * squareSize * 0.013
+  );
+
+  const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
+  const padding = options.padding ? Math.round(fontSize * 0.5) : 0;
+
+  const flatCounterHeight = options.turnIndicator
+    ? Math.round(fontSize * 2)
+    : 0;
+  const turnIndicatorHeight =
+    options.turnIndicator && !options.hideTurnIndicator
+      ? Math.round(fontSize * 0.5)
+      : 0;
+  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+
+  const axisSize =
+    options.axisLabels && !options.axisLabelsSmall
+      ? Math.round(fontSize * 1.5)
+      : 0;
+
+  const boardSize = squareSize * board.size;
+  const unplayedWidth = options.unplayedPieces
+    ? Math.round(squareSize * 1.75)
+    : 0;
+
+  const width = unplayedWidth + axisSize + boardSize + padding * 2;
+  const height = headerHeight + axisSize + boardSize + padding * 2;
+
+  return { width, height };
+}
+
 export function coordToCanvas(coord, { size, transform, squareSize, padding, axisSize, headerHeight }) {
   const bx = "abcdefgh".indexOf(coord[0]);
   const by = parseInt(coord.slice(1), 10) - 1;
