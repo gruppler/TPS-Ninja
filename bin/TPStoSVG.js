@@ -10,6 +10,8 @@ if (!options.length) {
       "Options:\n" +
       "  theme           [ID|JSON] Theme\n" +
       "  imageSize       [xs|sm|md|lg|xl] Image size\n" +
+      "  imageWidth      [number] Maximum image width in pixels (overrides imageSize)\n" +
+      "  imageHeight     [number] Maximum image height in pixels (overrides imageSize)\n" +
       "  textSize        [xs|sm|md|lg|xl] Text size\n" +
       "  bgAlpha         [0, 1] Background opacity\n" +
       "  axisLabels      [true|false] Show board coordinate labels\n" +
