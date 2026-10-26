@@ -50,6 +50,7 @@ class SvgBuilder {
     if (opts.rx) s += ` rx="${opts.rx}"`;
     if (opts.ry) s += ` ry="${opts.ry || opts.rx}"`;
     if (opts.opacity != null && opts.opacity !== 1) s += ` opacity="${opts.opacity}"`;
+    if (opts.crisp) s += ` shape-rendering="crispEdges"`;
     s += `/>`;
     this.elements.push(s);
   }

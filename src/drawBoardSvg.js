@@ -241,6 +241,25 @@ export function drawBoardSvg(
     });
   }
 
+  // Square edges are axis-aligned and meet exactly, but once the SVG is scaled
+  // to a fractional pixel size, anti-aliasing blends each edge pixel with
+  // whatever is behind it instead of with the neighboring square, leaving a
+  // faint seam. The squares are drawn with crisp edges so neighbors snap to
+  // the same pixel boundary, and over a backing in the board's own color so
+  // any seam that survives is board-colored.
+  svg.rect(
+    padding + axisSize,
+    padding + headerHeight,
+    squareSize * board.size,
+    squareSize * board.size,
+    {
+      fill: theme.colors[
+        !theme.boardStyle || theme.boardStyle === "blank" ? "board1" : "board2"
+      ],
+      crisp: true,
+    },
+  );
+
   // Draw squares
   board.squares
     .concat()
@@ -251,20 +270,36 @@ export function drawBoardSvg(
         const sx = squareOriginX(square);
         const sy = squareOriginY(square);
 
+        // Squares that fill their cell are flattened into a single opaque
+        // rect: the translucent overlays (rings, highlights) would otherwise
+        // be anti-aliased separately on either side of every shared edge,
+        // leaving a faint seam between squares when the SVG is scaled.
+        const isPlain = !squareMargin && !squareRadius;
+        let plainFill = null;
+        const paint = (fill, opacity) => {
+          if (isPlain) {
+            plainFill = compositeColors(plainFill, fill, opacity);
+          } else {
+            drawSquareHighlightEl(sx, sy, fill, opacity);
+          }
+        };
+
         // Base square
         if (!theme.boardStyle || theme.boardStyle === "blank") {
-          svg.rect(sx, sy, squareSize, squareSize, {
-            fill: theme.colors["board" + (isDark ? 2 : 1)],
-          });
+          const fill = theme.colors["board" + (isDark ? 2 : 1)];
+          if (isPlain) {
+            plainFill = fill;
+          } else {
+            svg.rect(sx, sy, squareSize, squareSize, { fill, crisp: true });
+          }
         } else {
-          svg.rect(sx, sy, squareSize, squareSize, {
-            fill: theme.colors["board" + (isDark ? 1 : 2)],
-          });
-          drawSquareHighlightEl(
-            sx,
-            sy,
-            theme.colors["board" + (isDark ? 2 : 1)],
-          );
+          const fill = theme.colors["board" + (isDark ? 1 : 2)];
+          if (isPlain) {
+            plainFill = fill;
+          } else {
+            svg.rect(sx, sy, squareSize, squareSize, { fill, crisp: true });
+          }
+          paint(theme.colors["board" + (isDark ? 2 : 1)]);
         }
 
         // Rings
@@ -274,28 +309,17 @@ export function drawBoardSvg(
             ring = Math.round(board.size / 2) - ring + 1;
           }
           if (ring <= theme.rings) {
-            drawSquareHighlightEl(
-              sx,
-              sy,
-              theme.colors["ring" + ring],
-              theme.vars["rings-opacity"],
-            );
+            paint(theme.colors["ring" + ring], theme.vars["rings-opacity"]);
           }
         }
 
         // Highlighter
         if (options.highlighter && square.coord in options.highlighter) {
-          drawSquareHighlightEl(
-            sx,
-            sy,
-            withAlpha(options.highlighter[square.coord], 0.75),
-          );
+          paint(withAlpha(options.highlighter[square.coord], 0.75));
         } else if (options.hlSquares && hlSquares.includes(square.coord)) {
           const alphas = [0.4, 0.75];
           if (!options.plyIsDone) alphas.reverse();
-          drawSquareHighlightEl(
-            sx,
-            sy,
+          paint(
             withAlpha(
               theme.colors.primary,
               hlSquares.length > 1 && square.coord === hlSquares[0]
@@ -303,6 +327,13 @@ export function drawBoardSvg(
                 : alphas[1],
             ),
           );
+        }
+
+        if (isPlain) {
+          svg.rect(sx, sy, squareSize, squareSize, {
+            fill: plainFill,
+            crisp: true,
+          });
         }
 
         // Roads
