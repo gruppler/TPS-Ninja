@@ -48,12 +48,13 @@ export class SvgBuilder {
   }
 
   // --- Shape primitives ---
-  rect(x, y, w, h, { fill, opacity, rx, ry } = {}) {
+  rect(x, y, w, h, { fill, opacity, rx, ry, crisp } = {}) {
     let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}"`;
     if (rx) s += ` rx="${rx}"`;
     if (ry) s += ` ry="${ry || rx}"`;
     if (fill) s += ` fill="${fill}"`;
     if (opacity != null && opacity !== 1) s += ` opacity="${opacity}"`;
+    if (crisp) s += ` shape-rendering="crispEdges"`;
     s += `/>`;
     this.elements.push(s);
   }
