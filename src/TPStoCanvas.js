@@ -1,7 +1,8 @@
 import { createCanvas } from "canvas";
 import { Board } from "./Board.js";
 import { Ply } from "./Ply.js";
-import { isArray, last } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
+import last from "lodash-es/last.js";
 import { pieceSizes, textSizes, computeCanvasDimensions } from "./drawUtils.js";
 import { sanitizeOptions } from "./options.js";
 import { parseTheme } from "./parseTheme.js";
@@ -53,7 +54,8 @@ export const TPStoCanvas = function (options = {}) {
       const mid = Math.floor((low + high) / 2);
       const dims = computeCanvasDimensions(mid, board, options, theme);
       const fitsWidth = !options.imageWidth || dims.width <= options.imageWidth;
-      const fitsHeight = !options.imageHeight || dims.height <= options.imageHeight;
+      const fitsHeight =
+        !options.imageHeight || dims.height <= options.imageHeight;
 
       if (fitsWidth && fitsHeight) {
         best = mid;
@@ -65,9 +67,7 @@ export const TPStoCanvas = function (options = {}) {
 
     pieceSize = best;
   } else {
-    pieceSize = Math.round(
-      (pieceSizes[options.imageSize] * 5) / board.size,
-    );
+    pieceSize = Math.round((pieceSizes[options.imageSize] * 5) / board.size);
   }
   const squareSize = pieceSize * 2;
   const roadSize = Math.round(squareSize * 0.3333);

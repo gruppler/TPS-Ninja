@@ -3,7 +3,11 @@ import { Piece } from "./Piece.js";
 import { Ply } from "./Ply.js";
 import { findRoads } from "./Roads.js";
 
-import { cloneDeep, isNumber, isString, times, zip } from "lodash-es";
+import cloneDeep from "lodash-es/cloneDeep.js";
+import isNumber from "lodash-es/isNumber.js";
+import isString from "lodash-es/isString.js";
+import times from "lodash-es/times.js";
+import zip from "lodash-es/zip.js";
 
 const pieceCounts = {
   3: { flat: 10, cap: 0 },
@@ -46,7 +50,7 @@ export const parseTPS = function (tps) {
   if (
     result.grid.find(
       (row) =>
-        row.length !== result.size || row.find((cell) => !validCell.test(cell))
+        row.length !== result.size || row.find((cell) => !validCell.test(cell)),
     )
   ) {
     result.error = "Invalid TPS notation";
@@ -268,7 +272,7 @@ export const Board = class {
         (player) =>
           this.pieces.played[player].flat.length +
             this.pieces.played[player].cap.length ===
-          this.pieceCounts[player].total
+          this.pieceCounts[player].total,
       ) ||
       !this.squares.find((row) => row.find((square) => !square.pieces.length))
     ) {
@@ -325,9 +329,7 @@ export const Board = class {
     const isSwapOpening = this.options.opening === "swap" || isDBS;
     const isFirstMove =
       this.linenum === 1 &&
-      !(
-        this.pieces.played[1].flat.length && this.pieces.played[2].flat.length
-      );
+      !(this.pieces.played[1].flat.length && this.pieces.played[2].flat.length);
     if (isFirstMove && isSwapOpening && (ply.specialPiece || ply.movement)) {
       throw new Error("Invalid first move");
     }

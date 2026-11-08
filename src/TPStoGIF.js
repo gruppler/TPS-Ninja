@@ -1,6 +1,8 @@
 import fs from "fs";
 import GIFEncoder from "gif-encoder-2";
-import { isArray, isFunction, isString } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
+import isFunction from "lodash-es/isFunction.js";
+import isString from "lodash-es/isString.js";
 import { sanitizeOptions } from "./options.js";
 import { TPStoCanvas } from "./TPStoCanvas.js";
 
@@ -64,9 +66,7 @@ export const TPStoGIF = function (args, streamTo = null) {
       return null;
     }
     const evaluation = Number(value);
-    return isNaN(evaluation)
-      ? null
-      : Math.max(-100, Math.min(100, evaluation));
+    return isNaN(evaluation) ? null : Math.max(-100, Math.min(100, evaluation));
   }
 
   // Set initial suggestions
@@ -107,7 +107,7 @@ export const TPStoGIF = function (args, streamTo = null) {
     canvas.height,
     "neuquant",
     false,
-    totalFrames
+    totalFrames,
   );
   const stream = encoder.createReadStream();
   if (streamTo) {
@@ -158,7 +158,9 @@ export const TPStoGIF = function (args, streamTo = null) {
     const frameEvaluation = evaluationsByFrame
       ? normalizeEvaluation(evaluationsByFrame[frameIndex])
       : options.evaluation;
-    const frameWdl = wdlsByFrame ? wdlsByFrame[frameIndex] || null : options.wdl;
+    const frameWdl = wdlsByFrame
+      ? wdlsByFrame[frameIndex] || null
+      : options.wdl;
     options.evaluation = frameEvaluation;
     options.wdl = frameWdl;
 

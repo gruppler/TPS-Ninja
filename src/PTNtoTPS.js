@@ -1,4 +1,4 @@
-import { isArray } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
 import { Board } from "./Board.js";
 import { Ply } from "./Ply.js";
 import { sanitizeOptions } from "./options.js";

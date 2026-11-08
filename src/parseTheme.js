@@ -1,4 +1,4 @@
-import { isString } from "lodash-es";
+import isString from "lodash-es/isString.js";
 import themes, { computeThemeBooleans } from "./themes.js";
 
 export const parseTheme = function (theme) {
@@ -25,7 +25,7 @@ export const parseTheme = function (theme) {
         for (let ring = 1; ring <= theme.rings; ring++) {
           if (!theme.colors[`ring${ring}`]) {
             throw new Error(
-              `Expected ${theme.rings} ring(s) but found ${ring - 1}`
+              `Expected ${theme.rings} ring(s) but found ${ring - 1}`,
             );
           }
         }

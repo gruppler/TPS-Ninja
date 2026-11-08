@@ -1,4 +1,6 @@
-import { cloneDeep, compact, isEmpty } from "lodash-es";
+import cloneDeep from "lodash-es/cloneDeep.js";
+import compact from "lodash-es/compact.js";
+import isEmpty from "lodash-es/isEmpty.js";
 
 export const findRoads = function (squares, player) {
   const players = player ? [player] : [1, 2];
@@ -57,12 +59,12 @@ export const findRoads = function (squares, player) {
       } else {
         connections[square.coord] = [];
       }
-    })
+    }),
   );
 
   // Remove dead ends not connected to edges
   players.forEach((player) =>
-    removeDeadEnds(deadEnds, possibleRoads[player], connections)
+    removeDeadEnds(deadEnds, possibleRoads[player], connections),
   );
 
   // Find roads that actually bridge opposite edges
@@ -72,7 +74,7 @@ export const findRoads = function (squares, player) {
       road = followRoad(
         possibleRoads[player][Object.keys(possibleRoads[player])[0]],
         possibleRoads,
-        connections
+        connections,
       );
 
       // Find connected opposite edge pair(s)
@@ -86,7 +88,7 @@ export const findRoads = function (squares, player) {
             possibleDeadEnds[player],
             road.squares,
             connections,
-            road.edges.NS ? "NS" : "EW"
+            road.edges.NS ? "NS" : "EW",
           );
           addRoad(roads, road, player);
         } else {
@@ -98,13 +100,13 @@ export const findRoads = function (squares, player) {
             possibleDeadEnds[player],
             road.squares,
             connections,
-            "NS"
+            "NS",
           );
           removeDeadEnds(
             possibleDeadEnds[player],
             road2.squares,
             connections,
-            "EW"
+            "EW",
           );
           addRoad(roads, road, player);
           addRoad(roads, road2, player);

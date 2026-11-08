@@ -1,4 +1,7 @@
-import { isArray, isBoolean, isNumber, isString } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
+import isBoolean from "lodash-es/isBoolean.js";
+import isNumber from "lodash-es/isNumber.js";
+import isString from "lodash-es/isString.js";
 
 export const defaults = {
   delay: 1000,
