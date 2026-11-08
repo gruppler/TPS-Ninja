@@ -1,7 +1,9 @@
 import fs from "fs";
 import { Board } from "./Board.js";
 import { Ply } from "./Ply.js";
-import { isArray, isString, last } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
+import isString from "lodash-es/isString.js";
+import last from "lodash-es/last.js";
 import { pieceSizes, textSizes } from "./drawUtils.js";
 import { sanitizeOptions } from "./options.js";
 import { parseTheme } from "./parseTheme.js";

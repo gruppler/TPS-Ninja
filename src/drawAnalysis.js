@@ -1,11 +1,11 @@
-import { isString } from "lodash-es";
+import isString from "lodash-es/isString.js";
 import { Ply } from "./Ply.js";
 import { coordToCanvas } from "./drawUtils.js";
 
 export function prepareAnalysisData(
   options,
   board,
-  { squareSize, padding, axisSize, headerHeight }
+  { squareSize, padding, axisSize, headerHeight },
 ) {
   const suggestions = options.suggestions;
   if (!suggestions || !suggestions.length) return null;
@@ -135,7 +135,7 @@ export function computeArrowGeometry(
   layoutParams,
   squareSize,
   getStackInfo,
-  boardSize
+  boardSize,
 ) {
   const ply = move.ply;
   const squares = ply.squares;
@@ -256,7 +256,7 @@ export function computeArrowDrops(
   geometry,
   layoutParams,
   squareSize,
-  getStackHeight
+  getStackHeight,
 ) {
   const {
     ply,

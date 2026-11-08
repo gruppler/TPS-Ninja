@@ -1,5 +1,6 @@
 import fs from "fs";
-import { isArray, isFunction } from "lodash-es";
+import isArray from "lodash-es/isArray.js";
+import isFunction from "lodash-es/isFunction.js";
 import { sanitizeOptions } from "./options.js";
 import { TPStoCanvas } from "./TPStoCanvas.js";
 
