@@ -1,12 +1,13 @@
 const { createCanvas } = require("canvas");
 const { Board } = require("./Board");
 const { Ply } = require("./Ply");
-const { last } = require("lodash");
+const { isArray, last } = require("lodash");
 const { pieceSizes, textSizes, computeCanvasDimensions } = require("./drawUtils");
 const { sanitizeOptions } = require("./options");
 const { parseTheme } = require("./parseTheme");
 const { drawHeader } = require("./drawHeader");
 const { drawAxisLabels, createSquareDrawer, drawUnplayedPieces } = require("./drawBoard");
+const { drawAnalysis } = require("./drawAnalysisPNG");
 
 const TPStoCanvas = function (options = {}) {
   sanitizeOptions(options);
