@@ -146,6 +146,7 @@ function roundRect(ctx, x, y, width, height, radius) {
 
 exports.pieceSizes = pieceSizes;
 exports.textSizes = textSizes;
+exports.computeCanvasDimensions = computeCanvasDimensions;
 exports.coordToCanvas = coordToCanvas;
 exports.getStackOffset = getStackOffset;
 exports.getPieceOutlineWidth = getPieceOutlineWidth;
