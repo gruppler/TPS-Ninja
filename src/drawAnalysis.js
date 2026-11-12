@@ -1,8 +1,8 @@
-import { isString } from "lodash-es";
-import { Ply } from "./Ply.js";
-import { coordToCanvas } from "./drawUtils.js";
+const { isString } = require("lodash");
+const { Ply } = require("./Ply");
+const { coordToCanvas } = require("./drawUtils");
 
-export function prepareAnalysisData(
+function prepareAnalysisData(
   options,
   board,
   { squareSize, padding, axisSize, headerHeight }
@@ -94,7 +94,7 @@ export function prepareAnalysisData(
   };
 }
 
-export function groupPlacementsByCoord(placements) {
+function groupPlacementsByCoord(placements) {
   const placementGroups = {};
 
   placements.forEach((placement) => {
@@ -106,7 +106,7 @@ export function groupPlacementsByCoord(placements) {
   return placementGroups;
 }
 
-export function getStrengthScale(strength) {
+function getStrengthScale(strength) {
   const minOpacity = 0.2;
   const maxOpacity = 1.0;
   const minScale = 0.55;
@@ -117,7 +117,7 @@ export function getStrengthScale(strength) {
   return minScale + (maxScale - minScale) * eased;
 }
 
-export function getPlayerFlatOpaqueColor(theme, plyColor) {
+function getPlayerFlatOpaqueColor(theme, plyColor) {
   const opaqueKey = `player${plyColor}flatOpaque`;
   const opaqueColor = theme.colors[opaqueKey];
   if (opaqueColor) return opaqueColor;
@@ -129,7 +129,7 @@ export function getPlayerFlatOpaqueColor(theme, plyColor) {
   return flatColor;
 }
 
-export function computeArrowGeometry(
+function computeArrowGeometry(
   move,
   arrowGroupMap,
   layoutParams,
@@ -252,7 +252,7 @@ export function computeArrowGeometry(
   };
 }
 
-export function computeArrowDrops(
+function computeArrowDrops(
   geometry,
   layoutParams,
   squareSize,
@@ -545,7 +545,7 @@ function computeScales(moves, currentPlayer) {
   });
 }
 
-export function groupOverlappingArrows(arrows) {
+function groupOverlappingArrows(arrows) {
   const result = new Map();
 
   function getEdges(ply) {
@@ -604,7 +604,7 @@ export function groupOverlappingArrows(arrows) {
   return result;
 }
 
-export function getGroupOffsets(count, squareSize) {
+function getGroupOffsets(count, squareSize) {
   if (count === 1) return [{ dx: 0, dy: 0 }];
 
   const perRow = 2;
@@ -625,3 +625,12 @@ export function getGroupOffsets(count, squareSize) {
 
   return offsets;
 }
+
+exports.prepareAnalysisData = prepareAnalysisData;
+exports.groupPlacementsByCoord = groupPlacementsByCoord;
+exports.getStrengthScale = getStrengthScale;
+exports.getPlayerFlatOpaqueColor = getPlayerFlatOpaqueColor;
+exports.computeArrowGeometry = computeArrowGeometry;
+exports.computeArrowDrops = computeArrowDrops;
+exports.groupOverlappingArrows = groupOverlappingArrows;
+exports.getGroupOffsets = getGroupOffsets;

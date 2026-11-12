@@ -1,13 +1,13 @@
-import {
+const {
   getPieceOutlineWidth,
   getStackOffset,
   roundRect,
   withAlpha,
-} from "./drawUtils.js";
-import { isDark, compositeColors } from "./colors.js";
-import { drawEvaluationBarCanvas } from "./drawEvaluationBar.js";
+} = require("./drawUtils");
+const { isDark, compositeColors } = require("./colors");
+const { drawEvaluationBarCanvas } = require("./drawEvaluationBar");
 
-export function drawAxisLabels(
+function drawAxisLabels(
   ctx,
   options,
   board,
@@ -84,7 +84,7 @@ export function drawAxisLabels(
   return { xAxis, yAxis };
 }
 
-export function createSquareDrawer(
+function createSquareDrawer(
   ctx,
   options,
   board,
@@ -583,7 +583,7 @@ function applySwapOpeningPieces(pieces, board, options, color, type) {
   }
 }
 
-export function drawUnplayedPieces(
+function drawUnplayedPieces(
   ctx,
   options,
   board,
@@ -754,3 +754,7 @@ export function drawUnplayedPieces(
     ctx.restore();
   });
 }
+
+exports.drawAxisLabels = drawAxisLabels;
+exports.createSquareDrawer = createSquareDrawer;
+exports.drawUnplayedPieces = drawUnplayedPieces;

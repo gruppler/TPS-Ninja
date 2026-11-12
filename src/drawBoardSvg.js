@@ -1,12 +1,12 @@
-import {
+const {
   getPieceOutlineWidth,
   getStackOffset,
   withAlpha,
-} from "./drawUtils.js";
-import { isDark, compositeColors } from "./colors.js";
-import { drawEvaluationBarSvg } from "./drawEvaluationBar.js";
+} = require("./drawUtils");
+const { isDark, compositeColors } = require("./colors");
+const { drawEvaluationBarSvg } = require("./drawEvaluationBar");
 
-export function drawAxisLabelsSvg(
+function drawAxisLabelsSvg(
   svg,
   options,
   board,
@@ -97,7 +97,7 @@ export function drawAxisLabelsSvg(
   return { xAxis, yAxis };
 }
 
-export function drawBoardSvg(
+function drawBoardSvg(
   svg,
   options,
   board,
@@ -701,7 +701,7 @@ function applySwapOpeningPiecesSvg(pieces, board, options, color, type) {
 // scaled to a fractional size the two can land on different sides of a pixel,
 // leaving a line of background between them. The panel is drawn before the
 // board and runs underneath it, so the board's own edge is the only one there.
-export function drawUnplayedPanelSvg(svg, options, theme, dims) {
+function drawUnplayedPanelSvg(svg, options, theme, dims) {
   const {
     padding,
     axisSize,
@@ -728,7 +728,7 @@ export function drawUnplayedPanelSvg(svg, options, theme, dims) {
   drawEvaluationBarSvg(svg, options, theme, dims);
 }
 
-export function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
+function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
   const {
     squareSize,
     pieceSize,
@@ -876,3 +876,8 @@ export function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
     });
   });
 }
+
+exports.drawAxisLabelsSvg = drawAxisLabelsSvg;
+exports.drawBoardSvg = drawBoardSvg;
+exports.drawUnplayedPanelSvg = drawUnplayedPanelSvg;
+exports.drawUnplayedPiecesSvg = drawUnplayedPiecesSvg;

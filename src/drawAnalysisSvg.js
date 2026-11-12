@@ -1,5 +1,5 @@
-import { coordToCanvas } from "./drawUtils.js";
-import {
+const { coordToCanvas } = require("./drawUtils");
+const {
   computeArrowDrops,
   computeArrowGeometry,
   getPlayerFlatOpaqueColor,
@@ -8,9 +8,9 @@ import {
   groupOverlappingArrows,
   groupPlacementsByCoord,
   prepareAnalysisData,
-} from "./drawAnalysis.js";
+} = require("./drawAnalysis");
 
-export function drawAnalysisSvg(
+function drawAnalysisSvg(
   svg,
   options,
   board,
@@ -251,3 +251,5 @@ export function drawAnalysisSvg(
     svg.closeGroup();
   });
 }
+
+exports.drawAnalysisSvg = drawAnalysisSvg;

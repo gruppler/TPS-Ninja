@@ -1,6 +1,6 @@
-import { createCanvas } from "canvas";
-import { roundRect, coordToCanvas } from "./drawUtils.js";
-import {
+const { createCanvas } = require("canvas");
+const { roundRect, coordToCanvas } = require("./drawUtils");
+const {
   computeArrowDrops,
   computeArrowGeometry,
   getPlayerFlatOpaqueColor,
@@ -9,9 +9,9 @@ import {
   groupOverlappingArrows,
   groupPlacementsByCoord,
   prepareAnalysisData,
-} from "./drawAnalysis.js";
+} = require("./drawAnalysis");
 
-export function drawAnalysis(
+function drawAnalysis(
   ctx,
   options,
   board,
@@ -287,3 +287,5 @@ export function drawAnalysis(
     ctx.restore();
   });
 }
+
+exports.drawAnalysis = drawAnalysis;
