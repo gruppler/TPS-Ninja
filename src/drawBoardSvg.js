@@ -657,6 +657,38 @@ function applySwapOpeningPiecesSvg(pieces, board, options, color, type) {
   }
 }
 
+// The panel behind the unplayed pieces shares an edge with the board. The
+// board's edge is crisp and the panel's is anti-aliased, so once the SVG is
+// scaled to a fractional size the two can land on different sides of a pixel,
+// leaving a line of background between them. The panel is drawn before the
+// board and runs underneath it, so the board's own edge is the only one there.
+export function drawUnplayedPanelSvg(svg, options, theme, dims) {
+  const {
+    padding,
+    axisSize,
+    headerHeight,
+    boardSize,
+    boardRadius,
+    unplayedWidth,
+    unplayedHeight,
+  } = dims;
+
+  svg.path(
+    svg.roundRectPath(
+      axisSize + padding,
+      headerHeight + padding,
+      boardSize + (options.verticalLayout ? 0 : unplayedWidth),
+      boardSize + (options.verticalLayout ? unplayedHeight : 0),
+      options.verticalLayout
+        ? { bl: boardRadius, br: boardRadius }
+        : { tr: boardRadius, br: boardRadius },
+    ),
+    { fill: theme.colors.board3 },
+  );
+
+  drawEvaluationBarSvg(svg, options, theme, dims);
+}
+
 export function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
   const {
     squareSize,
@@ -672,27 +704,11 @@ export function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
     axisSize,
     headerHeight,
     boardSize,
-    boardRadius,
-    unplayedWidth,
     unplayedHeight,
   } = dims;
   const pieceShadowId = "pieceShadow";
 
   if (options.verticalLayout) {
-    // Panel below the board
-    svg.path(
-      svg.roundRectPath(
-        axisSize + padding,
-        headerHeight + padding + boardSize,
-        boardSize,
-        unplayedHeight,
-        { bl: boardRadius, br: boardRadius },
-      ),
-      { fill: theme.colors.board3 },
-    );
-
-    drawEvaluationBarSvg(svg, options, theme, dims);
-
     const isDBS = options.opening === "double black stack";
     const panelCenterY = Math.round(
       padding + headerHeight + boardSize + unplayedHeight / 2,
@@ -789,19 +805,6 @@ export function drawUnplayedPiecesSvg(svg, options, board, theme, dims) {
   }
 
   // Horizontal layout (original)
-  svg.path(
-    svg.roundRectPath(
-      axisSize + padding + boardSize,
-      headerHeight + padding,
-      unplayedWidth,
-      boardSize,
-      { tr: boardRadius, br: boardRadius },
-    ),
-    { fill: theme.colors.board3 },
-  );
-
-  drawEvaluationBarSvg(svg, options, theme, dims);
-
   [1, 2].forEach((color) => {
     const baseX =
       padding +

@@ -429,23 +429,37 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
   const corners = bar.horizontal
     ? { bl: radius, br: radius }
     : { tr: radius, br: radius };
+
+  // The bar tints the panel behind the unplayed pieces, and like that panel
+  // it's drawn before the board and runs underneath it, so that no line of
+  // bare panel shows between the two once the SVG is scaled to a fractional
+  // size (see drawUnplayedPanelSvg).
+  const fill = { ...bar };
+  if (bar.horizontal) {
+    fill.y -= dims.boardSize;
+    fill.height += dims.boardSize;
+  } else {
+    fill.x -= dims.boardSize;
+    fill.width += dims.boardSize;
+  }
+
   const clipId = "evalBarClip";
   svg.addDef(
     clipId,
     `<clipPath id="${clipId}"><path d="${svg.roundRectPath(
-      bar.x,
-      bar.y,
-      bar.width,
-      bar.height,
+      fill.x,
+      fill.y,
+      fill.width,
+      fill.height,
       corners,
     )}"/></clipPath>`,
   );
 
   svg.openGroup({ clipPath: clipId });
   if (bar.showWdlSegments) {
-    drawFillSegmentsSvg(svg, bar, theme);
+    drawFillSegmentsSvg(svg, fill, theme);
   } else {
-    drawSingleSegmentSvg(svg, bar, theme);
+    drawSingleSegmentSvg(svg, fill, theme);
   }
   svg.closeGroup();
 

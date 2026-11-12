@@ -12,6 +12,7 @@ import { drawHeaderSvg } from "./drawHeaderSvg.js";
 import {
   drawAxisLabelsSvg,
   drawBoardSvg,
+  drawUnplayedPanelSvg,
   drawUnplayedPiecesSvg,
 } from "./drawBoardSvg.js";
 import { drawAnalysisSvg } from "./drawAnalysisSvg.js";
@@ -213,6 +214,11 @@ export const TPStoSVGString = function (options = {}) {
     yAxis = [];
   if (options.axisLabels) {
     ({ xAxis, yAxis } = drawAxisLabelsSvg(svg, options, board, theme, dims));
+  }
+
+  // Unplayed Pieces Panel
+  if (options.unplayedPieces) {
+    drawUnplayedPanelSvg(svg, options, theme, dims);
   }
 
   // Board Squares & Pieces
