@@ -1,6 +1,6 @@
-import { roundRect, limitText, withAlpha } from "./drawUtils.js";
+const { roundRect, limitText, withAlpha } = require("./drawUtils");
 
-export function drawHeader(
+function drawHeader(
   ctx,
   options,
   board,
@@ -271,3 +271,5 @@ export function drawHeader(
     ctx.restore();
   }
 }
+
+exports.drawHeader = drawHeader;

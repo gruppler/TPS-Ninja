@@ -1,6 +1,6 @@
-import { isArray, isBoolean, isNumber, isString } from "lodash-es";
+const { isArray, isBoolean, isNumber, isString } = require("lodash");
 
-export const defaults = {
+const defaults = {
   delay: 1000,
   imageSize: "md",
   imageWidth: null,
@@ -43,7 +43,7 @@ export const defaults = {
   verticalLayout: false,
 };
 
-export function sanitizeOptions(options) {
+function sanitizeOptions(options) {
   if (
     options.delayAnalysisByFrame !== undefined &&
     options.delayAnalysis === undefined
@@ -163,3 +163,6 @@ export function sanitizeOptions(options) {
   }
   return options;
 }
+
+exports.defaults = defaults;
+exports.sanitizeOptions = sanitizeOptions;

@@ -1,21 +1,21 @@
-import fs from "fs";
-import { Board } from "./Board.js";
-import { Ply } from "./Ply.js";
-import { isArray, isString, last } from "lodash-es";
-import { pieceSizes, textSizes } from "./drawUtils.js";
-import { sanitizeOptions } from "./options.js";
-import { parseTheme } from "./parseTheme.js";
-import { SvgBuilder } from "./SvgBuilder.js";
-import { drawHeaderSvg } from "./drawHeaderSvg.js";
-import {
+const fs = require("fs");
+const { Board } = require("./Board");
+const { Ply } = require("./Ply");
+const { isArray, isString, last } = require("lodash");
+const { pieceSizes, textSizes } = require("./drawUtils");
+const { sanitizeOptions } = require("./options");
+const { parseTheme } = require("./parseTheme");
+const { SvgBuilder } = require("./SvgBuilder");
+const { drawHeaderSvg } = require("./drawHeaderSvg");
+const {
   drawAxisLabelsSvg,
   drawBoardSvg,
   drawUnplayedPanelSvg,
   drawUnplayedPiecesSvg,
-} from "./drawBoardSvg.js";
-import { drawAnalysisSvg } from "./drawAnalysisSvg.js";
+} = require("./drawBoardSvg");
+const { drawAnalysisSvg } = require("./drawAnalysisSvg");
 
-export const TPStoSVG = function (args, streamTo = null) {
+const TPStoSVG = function (args, streamTo = null) {
   let options;
   if (isArray(args)) {
     options = { tps: args[0] || "" };
@@ -43,7 +43,7 @@ export const TPStoSVG = function (args, streamTo = null) {
   return svgString;
 };
 
-export const TPStoSVGString = function (options = {}) {
+const TPStoSVGString = function (options = {}) {
   sanitizeOptions(options);
   const theme = parseTheme(options.theme);
 
@@ -248,3 +248,6 @@ export const TPStoSVGString = function (options = {}) {
 
   return svg.toString();
 };
+
+exports.TPStoSVG = TPStoSVG;
+exports.TPStoSVGString = TPStoSVGString;

@@ -1,4 +1,4 @@
-import { withAlpha } from "./drawUtils.js";
+const { withAlpha } = require("./drawUtils");
 
 function limitTextSvg(svg, text, width) {
   const suffix = "…";
@@ -10,7 +10,7 @@ function limitTextSvg(svg, text, width) {
   return text + suffix;
 }
 
-export function drawHeaderSvg(
+function drawHeaderSvg(
   svg,
   options,
   board,
@@ -312,3 +312,5 @@ export function drawHeaderSvg(
     });
   }
 }
+
+exports.drawHeaderSvg = drawHeaderSvg;

@@ -1,5 +1,5 @@
-import { roundRect } from "./drawUtils.js";
-import { isDark } from "./colors.js";
+const { roundRect } = require("./drawUtils");
+const { isDark } = require("./colors");
 
 function toFiniteNumber(value) {
   if (value === null || value === undefined || value === "") {
@@ -337,7 +337,7 @@ function drawSingleSegmentSvg(svg, bar, theme) {
   });
 }
 
-export function getEvaluationBarRect(options, dims) {
+function getEvaluationBarRect(options, dims) {
   if (!options.boardEvalBar || !options.unplayedPieces) {
     return null;
   }
@@ -377,7 +377,7 @@ export function getEvaluationBarRect(options, dims) {
   };
 }
 
-export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
+function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   const bar = getEvaluationBarRect(options, dims);
   if (!bar) {
     return;
@@ -419,7 +419,7 @@ export function drawEvaluationBarCanvas(ctx, options, theme, dims) {
   }
 }
 
-export function drawEvaluationBarSvg(svg, options, theme, dims) {
+function drawEvaluationBarSvg(svg, options, theme, dims) {
   const bar = getEvaluationBarRect(options, dims);
   if (!bar) {
     return;
@@ -481,3 +481,7 @@ export function drawEvaluationBarSvg(svg, options, theme, dims) {
     }
   }
 }
+
+exports.getEvaluationBarRect = getEvaluationBarRect;
+exports.drawEvaluationBarCanvas = drawEvaluationBarCanvas;
+exports.drawEvaluationBarSvg = drawEvaluationBarSvg;

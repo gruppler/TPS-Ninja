@@ -8,7 +8,7 @@ const { parseTheme } = require("./parseTheme");
 const { drawHeader } = require("./drawHeader");
 const { drawAxisLabels, createSquareDrawer, drawUnplayedPieces } = require("./drawBoard");
 
-export const TPStoCanvas = function (options = {}) {
+const TPStoCanvas = function (options = {}) {
   sanitizeOptions(options);
   const theme = parseTheme(options.theme);
 
@@ -241,3 +241,5 @@ export const TPStoCanvas = function (options = {}) {
   canvas.id = board.result || canvas.tps;
   return canvas;
 };
+
+exports.TPStoCanvas = TPStoCanvas;
