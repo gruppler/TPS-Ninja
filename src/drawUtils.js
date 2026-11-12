@@ -34,7 +34,14 @@ function computeCanvasDimensions(pieceSize, board, options, theme) {
     options.turnIndicator && !options.hideTurnIndicator
       ? Math.round(fontSize * 0.5)
       : 0;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+  // In vertical layout the move number gets a row of its own above the
+  // header, and the unplayed pieces sit below the board instead of beside it
+  const moveNumberRowHeight =
+    options.verticalLayout && options.moveNumber && options.unplayedPieces
+      ? Math.round(fontSize * 1.5)
+      : 0;
+  const headerHeight =
+    moveNumberRowHeight + flatCounterHeight + turnIndicatorHeight;
 
   const axisSize =
     options.axisLabels && !options.axisLabelsSmall
@@ -42,12 +49,16 @@ function computeCanvasDimensions(pieceSize, board, options, theme) {
       : 0;
 
   const boardSize = squareSize * board.size;
-  const unplayedWidth = options.unplayedPieces
-    ? Math.round(squareSize * 1.75)
-    : 0;
+  const unplayedWidth =
+    options.unplayedPieces && !options.verticalLayout
+      ? Math.round(squareSize * 1.75)
+      : 0;
+  const unplayedHeight =
+    options.unplayedPieces && options.verticalLayout ? squareSize : 0;
 
   const width = unplayedWidth + axisSize + boardSize + padding * 2;
-  const height = headerHeight + axisSize + boardSize + padding * 2;
+  const height =
+    headerHeight + axisSize + boardSize + unplayedHeight + padding * 2;
 
   return { width, height };
 }
