@@ -27,6 +27,7 @@ export const defaults = {
   bgAlpha: 1,
   transparent: false,
   hlSquares: true,
+  hlPieces: false,
   highlighter: null,
   transform: [0, 0],
   plyIsDone: true,
@@ -155,6 +156,10 @@ export function sanitizeOptions(options) {
   }
   if (options.axisLabels && options.axisLabelsSmall) {
     options.centerStackCounts = true;
+  }
+  // The last ply is shown by its pieces or by its squares, not both
+  if (options.hlPieces) {
+    options.hlSquares = false;
   }
   return options;
 }

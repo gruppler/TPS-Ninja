@@ -53,22 +53,26 @@ export const TPStoSVGString = function (options = {}) {
   }
 
   let hlSquares = [];
+  let hlPieces = [];
   let evalText = "";
+  let hlPly = null;
   if (options.plies && options.plies.length) {
     const plies = options.plies.map((ply) => board.doPly(ply));
-    let ply = last(plies);
-    hlSquares = ply.squares;
-    evalText = ply.evalText || "";
+    hlPly = last(plies);
+    evalText = hlPly.evalText || "";
     options.plyIsDone = true;
   } else if (options.ply) {
-    const ply = board.doPly(options.ply);
-    hlSquares = ply.squares;
-    evalText = ply.evalText || "";
+    hlPly = board.doPly(options.ply);
+    evalText = hlPly.evalText || "";
     options.plyIsDone = true;
   } else if (options.hl) {
-    let ply = new Ply(options.hl);
-    ply = ply.transform(board.size, options.transform);
-    hlSquares = ply.squares;
+    hlPly = new Ply(options.hl).transform(board.size, options.transform);
+  }
+  if (hlPly) {
+    hlSquares = hlPly.squares;
+    if (options.hlPieces) {
+      hlPieces = board.getPlyPieces(hlPly, options.plyIsDone);
+    }
   }
 
   // Dimensions
@@ -220,7 +224,17 @@ export const TPStoSVGString = function (options = {}) {
   }
 
   // Board Squares & Pieces
-  drawBoardSvg(svg, options, board, theme, hlSquares, xAxis, yAxis, dims);
+  drawBoardSvg(
+    svg,
+    options,
+    board,
+    theme,
+    hlSquares,
+    hlPieces,
+    xAxis,
+    yAxis,
+    dims,
+  );
 
   // Analysis Suggestions
   if (options.suggestions && isArray(options.suggestions)) {

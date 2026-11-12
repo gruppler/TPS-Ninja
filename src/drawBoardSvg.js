@@ -1,4 +1,8 @@
-import { withAlpha } from "./drawUtils.js";
+import {
+  getPieceOutlineWidth,
+  getStackOffset,
+  withAlpha,
+} from "./drawUtils.js";
 import { isDark, compositeColors } from "./colors.js";
 import { drawEvaluationBarSvg } from "./drawEvaluationBar.js";
 
@@ -99,6 +103,7 @@ export function drawBoardSvg(
   board,
   theme,
   hlSquares,
+  hlPieces,
   xAxis,
   yAxis,
   {
@@ -410,8 +415,45 @@ export function drawBoardSvg(
             );
           }
 
+          // Outline the pieces the last ply moved. All of a square's outlines
+          // are drawn before the first of those pieces, so that the pieces
+          // then cover everything but the rim around the group, and the group
+          // gets a single outline rather than one per piece.
+          const outlined = square.pieces.filter((piece) =>
+            hlPieces.includes(piece),
+          );
+          const drawPieceOutlines = () =>
+            outlined.forEach((piece) => {
+              const offset = getStackOffset(piece, board, pieceSpacing);
+              if (offset && !offset.isImmovable) {
+                drawPieceShapeSvg(
+                  svg,
+                  piece,
+                  sx + squareSize / 2,
+                  sy + squareSize / 2 + offset.y,
+                  false,
+                  {
+                    pieceSize,
+                    pieceRadius,
+                    pieceSpacing,
+                    immovableSize,
+                    wallSize,
+                  },
+                  {
+                    fill: "none",
+                    stroke: theme.colors.primary,
+                    strokeWidth:
+                      strokeWidth + getPieceOutlineWidth(squareSize) * 2,
+                  },
+                );
+              }
+            });
+
           // Pieces
           square.pieces.forEach((piece) => {
+            if (piece === outlined[0]) {
+              drawPieceOutlines();
+            }
             drawPieceSvg(
               svg,
               piece,
@@ -440,6 +482,62 @@ export function drawBoardSvg(
     );
 }
 
+// Draw a piece's shape around (cx, cy), in the given style
+function drawPieceShapeSvg(
+  svg,
+  piece,
+  cx,
+  cy,
+  isImmovable,
+  { pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize },
+  style,
+  filter,
+) {
+  if (piece.isCapstone) {
+    // Use a group with the shadow filter, then draw the circle inside
+    svg.openGroup({ filter });
+    svg.circle(cx, cy, pieceSize / 2, style);
+    svg.closeGroup();
+  } else if (piece.isStanding) {
+    svg.openGroup({
+      transform: `translate(${cx},${cy}) rotate(${piece.color === 1 ? -45 : 45})`,
+      filter,
+    });
+    svg.path(
+      svg.roundRectPath(
+        Math.round(-wallSize / 2),
+        Math.round(-pieceSize / 2),
+        wallSize,
+        pieceSize,
+        pieceRadius,
+      ),
+      style,
+    );
+    svg.closeGroup();
+  } else {
+    svg.openGroup({ filter });
+    svg.path(
+      isImmovable
+        ? svg.roundRectPath(
+            cx + Math.round(pieceSize / 2),
+            cy + Math.round(pieceSize / 2 - pieceSpacing),
+            immovableSize,
+            pieceSpacing,
+            pieceRadius / 2,
+          )
+        : svg.roundRectPath(
+            cx + Math.round(-pieceSize / 2),
+            cy + Math.round(-pieceSize / 2),
+            pieceSize,
+            pieceSize,
+            pieceRadius,
+          ),
+      style,
+    );
+    svg.closeGroup();
+  }
+}
+
 function drawPieceSvg(
   svg,
   piece,
@@ -464,25 +562,15 @@ function drawPieceSvg(
 ) {
   const pieces = piece.square ? piece.square.pieces : null;
   const z = piece.z();
-  const isOverLimit = pieces && pieces.length > board.size;
-  const isImmovable = isOverLimit && z < pieces.length - board.size;
 
   let y = 0;
+  let isImmovable = false;
 
   if (piece.square) {
     // Played
-    y -= pieceSpacing * z;
-    if (isOverLimit && !isImmovable) {
-      y += pieceSpacing * (pieces.length - board.size);
-    }
-    if (piece.isStanding && pieces.length > 1) {
-      y += pieceSpacing;
-    }
-    const overflow = Math.max(0, pieces.length - 10 - board.size);
-    if (isImmovable) {
-      if (z < overflow) return;
-      y += pieceSpacing * overflow;
-    }
+    const stackOffset = getStackOffset(piece, board, pieceSpacing);
+    if (!stackOffset) return;
+    ({ y, isImmovable } = stackOffset);
   } else {
     // Unplayed
     const isDBS = options.opening === "double black stack";
@@ -524,73 +612,24 @@ function drawPieceSvg(
   const hasBorder = theme.vars["piece-border-width"] > 0;
   const borderColor = theme.colors[`player${piece.color}border`];
 
-  if (piece.isCapstone) {
-    const fillColor = theme.colors[`player${piece.color}special`];
-    // Use a group with the shadow filter, then draw the circle inside
-    svg.openGroup({ filter: pieceShadowId });
-    svg.circle(cx, cy + y, pieceSize / 2, {
-      fill: fillColor,
+  drawPieceShapeSvg(
+    svg,
+    piece,
+    cx,
+    cy + y,
+    isImmovable,
+    { pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize },
+    {
+      fill: theme.colors[
+        `player${piece.color}${
+          piece.isCapstone || piece.isStanding ? "special" : "flat"
+        }`
+      ],
       stroke: hasBorder ? borderColor : undefined,
       strokeWidth: hasBorder ? strokeWidth : undefined,
-    });
-    svg.closeGroup();
-  } else if (piece.isStanding) {
-    const fillColor = theme.colors[`player${piece.color}special`];
-    const angle = piece.color === 1 ? -45 : 45;
-    const w = wallSize;
-    const h = pieceSize;
-    const rx = pieceRadius;
-    svg.openGroup({
-      transform: `translate(${cx},${cy + y}) rotate(${angle})`,
-      filter: pieceShadowId,
-    });
-    svg.path(
-      svg.roundRectPath(Math.round(-w / 2), Math.round(-h / 2), w, h, rx),
-      {
-        fill: fillColor,
-        stroke: hasBorder ? borderColor : undefined,
-        strokeWidth: hasBorder ? strokeWidth : undefined,
-      },
-    );
-    svg.closeGroup();
-  } else {
-    const fillColor = theme.colors[`player${piece.color}flat`];
-    if (isImmovable) {
-      svg.openGroup({ filter: pieceShadowId });
-      svg.path(
-        svg.roundRectPath(
-          cx + Math.round(pieceSize / 2),
-          cy + Math.round(y + pieceSize / 2 - pieceSpacing),
-          immovableSize,
-          pieceSpacing,
-          pieceRadius / 2,
-        ),
-        {
-          fill: fillColor,
-          stroke: hasBorder ? borderColor : undefined,
-          strokeWidth: hasBorder ? strokeWidth : undefined,
-        },
-      );
-      svg.closeGroup();
-    } else {
-      svg.openGroup({ filter: pieceShadowId });
-      svg.path(
-        svg.roundRectPath(
-          cx + Math.round(-pieceSize / 2),
-          cy + Math.round(y - pieceSize / 2),
-          pieceSize,
-          pieceSize,
-          pieceRadius,
-        ),
-        {
-          fill: fillColor,
-          stroke: hasBorder ? borderColor : undefined,
-          strokeWidth: hasBorder ? strokeWidth : undefined,
-        },
-      );
-      svg.closeGroup();
-    }
-  }
+    },
+    pieceShadowId,
+  );
 
   // Stack Count (only on top piece)
   const isTopPiece = pieces && z === pieces.length - 1;

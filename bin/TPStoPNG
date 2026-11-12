@@ -12,6 +12,8 @@ if (!options.length) {
       "  imageHeight     [number] Maximum image height in pixels (overrides imageSize)\n" +
       "  textSize        [xs|sm|md|lg|xl] Text size\n" +
       "  bgAlpha         [0, 1] Background opacity\n" +
+      "  hlSquares       [true|false] Highlight last ply's squares\n" +
+      "  hlPieces        [true|false] Outline last ply's pieces instead of its squares\n" +
       "  axisLabels      [true|false] Show board coordinate labels\n" +
       "  axisLabelsSmall [true|false] Show board coordinate labels inside the board\n" +
       "  turnIndicator   [true|false] Show turn indicator and player names\n" +
