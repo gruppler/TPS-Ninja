@@ -63,6 +63,39 @@ export function coordToCanvas(coord, { size, transform, squareSize, padding, axi
   };
 }
 
+// Where a played piece sits in its stack: how far above the square's center
+// it's drawn, and whether it's beyond the carry limit, where pieces are drawn
+// as tabs beside the stack. Null for a piece buried too deep in a very tall
+// stack to be drawn at all.
+export function getStackOffset(piece, board, pieceSpacing) {
+  const pieces = piece.square.pieces;
+  const z = piece.z();
+  const isOverLimit = pieces.length > board.size;
+  const isImmovable = isOverLimit && z < pieces.length - board.size;
+
+  let y = -pieceSpacing * z;
+  if (isOverLimit && !isImmovable) {
+    y += pieceSpacing * (pieces.length - board.size);
+  }
+  if (piece.isStanding && pieces.length > 1) {
+    y += pieceSpacing;
+  }
+  if (isImmovable) {
+    const overflow = Math.max(0, pieces.length - 10 - board.size);
+    if (z < overflow) {
+      return null;
+    }
+    y += pieceSpacing * overflow;
+  }
+
+  return { y: Math.round(y), isImmovable };
+}
+
+// How far the outline around the last ply's pieces reaches past their borders
+export function getPieceOutlineWidth(squareSize) {
+  return Math.max(1, Math.round(squareSize * 0.035));
+}
+
 export function withAlpha(color, alpha) {
   return color.substring(0, 7) + Math.round(256 * alpha).toString(16);
 }

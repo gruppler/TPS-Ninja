@@ -16,6 +16,7 @@ if (!options.length) {
       "  textSize       [xs|sm|md|lg|xl] Text size\n" +
       "  transparent    [true|false] Transparent background\n" +
       "  hlSquares      [true|false] Highlight last ply's squares\n" +
+      "  hlPieces       [true|false] Outline last ply's pieces instead of its squares\n" +
       "  axisLabels     [true|false] Show board coordinate labels\n" +
       "  turnIndicator  [true|false] Show turn indicator and player names\n" +
       "  hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header\n" +

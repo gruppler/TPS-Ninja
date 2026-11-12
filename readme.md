@@ -180,6 +180,7 @@ imageHeight     [number] Maximum image height in pixels (overrides imageSize)
 textSize        [xs|sm|md|lg|xl] Text size
 bgAlpha         [0, 1] Background opacity
 hlSquares       [true|false] Highlight last ply's squares
+hlPieces        [true|false] Outline last ply's pieces instead of its squares
 axisLabels      [true|false] Show board coordinate labels
 axisLabelsSmall [true|false] Show board coordinate labels inside the board
 turnIndicator   [true|false] Show turn indicator and player names
@@ -276,6 +277,7 @@ imageHeight    [number] Maximum image height in pixels (overrides imageSize)
 textSize       [xs|sm|md|lg|xl] Text size
 transparent    [true|false] Transparent background
 hlSquares      [true|false] Highlight last ply's squares
+hlPieces       [true|false] Outline last ply's pieces instead of its squares
 axisLabels     [true|false] Show board coordinate labels
 turnIndicator  [true|false] Show turn indicator and player names
 hideTurnIndicator [true|false] Hide the turn indicator, keeping the rest of the header

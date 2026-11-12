@@ -1,4 +1,9 @@
-import { roundRect, withAlpha } from "./drawUtils.js";
+import {
+  getPieceOutlineWidth,
+  getStackOffset,
+  roundRect,
+  withAlpha,
+} from "./drawUtils.js";
 import { isDark, compositeColors } from "./colors.js";
 import { drawEvaluationBarCanvas } from "./drawEvaluationBar.js";
 
@@ -85,6 +90,7 @@ export function createSquareDrawer(
   board,
   theme,
   hlSquares,
+  hlPieces,
   xAxis,
   yAxis,
   {
@@ -220,6 +226,65 @@ export function createSquareDrawer(
     ctx.restore();
   };
 
+  // Trace a piece's shape as the current path, around its square's center
+  const tracePiece = (piece, y, isImmovable) => {
+    if (piece.isCapstone) {
+      ctx.beginPath();
+      ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
+    } else if (piece.isStanding) {
+      ctx.save();
+      ctx.translate(0, y);
+      ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
+      roundRect(
+        ctx,
+        Math.round(-wallSize / 2),
+        Math.round(-pieceSize / 2),
+        wallSize,
+        pieceSize,
+        pieceRadius,
+      );
+      ctx.restore();
+    } else if (isImmovable) {
+      roundRect(
+        ctx,
+        Math.round(pieceSize / 2),
+        Math.round(y + pieceSize / 2 - pieceSpacing),
+        immovableSize,
+        pieceSpacing,
+        pieceRadius / 2,
+      );
+    } else {
+      roundRect(
+        ctx,
+        Math.round(-pieceSize / 2),
+        Math.round(y - pieceSize / 2),
+        pieceSize,
+        pieceSize,
+        pieceRadius,
+      );
+    }
+  };
+
+  // Outline the pieces the last ply moved. All of a square's outlines are
+  // stroked before the first of those pieces is drawn, so that the pieces then
+  // cover everything but the rim around the group, and the group gets a single
+  // outline rather than one per piece.
+  const outlineWidth = getPieceOutlineWidth(squareSize);
+  const drawPieceOutlines = (pieces) => {
+    ctx.save();
+    ctx.translate(squareSize / 2, squareSize / 2);
+    ctx.strokeStyle = theme.colors.primary;
+    ctx.lineWidth = strokeWidth + outlineWidth * 2;
+    pieces.forEach((piece) => {
+      const offset = getStackOffset(piece, board, pieceSpacing);
+      if (offset && !offset.isImmovable) {
+        tracePiece(piece, offset.y, false);
+        ctx.stroke();
+      }
+    });
+    ctx.restore();
+  };
+
   // Piece
   const drawPiece = (piece) => {
     ctx.save();
@@ -229,27 +294,17 @@ export function createSquareDrawer(
     ctx.translate(offset, offset);
 
     let y = 0;
+    let isImmovable = false;
     const z = piece.z();
-    const isOverLimit = pieces && pieces.length > board.size;
-    const isImmovable = isOverLimit && z < pieces.length - board.size;
 
     if (piece.square) {
       // Played
-      y -= pieceSpacing * z;
-      if (isOverLimit && !isImmovable) {
-        y += pieceSpacing * (pieces.length - board.size);
+      const stackOffset = getStackOffset(piece, board, pieceSpacing);
+      if (!stackOffset) {
+        ctx.restore();
+        return;
       }
-      if (piece.isStanding && pieces.length > 1) {
-        y += pieceSpacing;
-      }
-      const overflow = Math.max(0, pieces.length - 10 - board.size);
-      if (isImmovable) {
-        if (z < overflow) {
-          ctx.restore();
-          return;
-        }
-        y += pieceSpacing * overflow;
-      }
+      ({ y, isImmovable } = stackOffset);
     } else {
       // Unplayed
       const isDBS = options.opening === "double black stack";
@@ -288,46 +343,13 @@ export function createSquareDrawer(
 
     y = Math.round(y);
 
-    if (piece.isCapstone) {
-      ctx.fillStyle = theme.colors[`player${piece.color}special`];
-      ctx.beginPath();
-      ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
-    } else if (piece.isStanding) {
-      ctx.fillStyle = theme.colors[`player${piece.color}special`];
-      ctx.save();
-      ctx.translate(0, y);
-      ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
-      roundRect(
-        ctx,
-        Math.round(-wallSize / 2),
-        Math.round(-pieceSize / 2),
-        wallSize,
-        pieceSize,
-        pieceRadius,
-      );
-      ctx.restore();
-    } else {
-      ctx.fillStyle = theme.colors[`player${piece.color}flat`];
-      if (isImmovable) {
-        roundRect(
-          ctx,
-          Math.round(pieceSize / 2),
-          Math.round(y + pieceSize / 2 - pieceSpacing),
-          immovableSize,
-          pieceSpacing,
-          pieceRadius / 2,
-        );
-      } else {
-        roundRect(
-          ctx,
-          Math.round(-pieceSize / 2),
-          Math.round(y - pieceSize / 2),
-          pieceSize,
-          pieceSize,
-          pieceRadius,
-        );
-      }
-    }
+    ctx.fillStyle =
+      theme.colors[
+        `player${piece.color}${
+          piece.isCapstone || piece.isStanding ? "special" : "flat"
+        }`
+      ];
+    tracePiece(piece, y, isImmovable);
 
     // Fill
     ctx.save();
@@ -510,7 +532,15 @@ export function createSquareDrawer(
         drawSquareHighlight();
       }
 
-      square.pieces.forEach(drawPiece);
+      const outlined = square.pieces.filter((piece) =>
+        hlPieces.includes(piece),
+      );
+      square.pieces.forEach((piece) => {
+        if (piece === outlined[0]) {
+          drawPieceOutlines(outlined);
+        }
+        drawPiece(piece);
+      });
     }
 
     ctx.restore();
