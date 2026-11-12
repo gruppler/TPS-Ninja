@@ -34,7 +34,14 @@ export function computeCanvasDimensions(pieceSize, board, options, theme) {
     options.turnIndicator && !options.hideTurnIndicator
       ? Math.round(fontSize * 0.5)
       : 0;
-  const headerHeight = turnIndicatorHeight + flatCounterHeight;
+  // In vertical layout the move number gets a row of its own above the
+  // header, and the unplayed pieces sit below the board instead of beside it
+  const moveNumberRowHeight =
+    options.verticalLayout && options.moveNumber && options.unplayedPieces
+      ? Math.round(fontSize * 1.5)
+      : 0;
+  const headerHeight =
+    moveNumberRowHeight + flatCounterHeight + turnIndicatorHeight;
 
   const axisSize =
     options.axisLabels && !options.axisLabelsSmall
@@ -42,12 +49,16 @@ export function computeCanvasDimensions(pieceSize, board, options, theme) {
       : 0;
 
   const boardSize = squareSize * board.size;
-  const unplayedWidth = options.unplayedPieces
-    ? Math.round(squareSize * 1.75)
-    : 0;
+  const unplayedWidth =
+    options.unplayedPieces && !options.verticalLayout
+      ? Math.round(squareSize * 1.75)
+      : 0;
+  const unplayedHeight =
+    options.unplayedPieces && options.verticalLayout ? squareSize : 0;
 
   const width = unplayedWidth + axisSize + boardSize + padding * 2;
-  const height = headerHeight + axisSize + boardSize + padding * 2;
+  const height =
+    headerHeight + axisSize + boardSize + unplayedHeight + padding * 2;
 
   return { width, height };
 }
@@ -61,6 +72,39 @@ export function coordToCanvas(coord, { size, transform, squareSize, padding, axi
     x: padding + axisSize + col * squareSize + squareSize / 2,
     y: padding + headerHeight + (size - 1 - row) * squareSize + squareSize / 2,
   };
+}
+
+// Where a played piece sits in its stack: how far above the square's center
+// it's drawn, and whether it's beyond the carry limit, where pieces are drawn
+// as tabs beside the stack. Null for a piece buried too deep in a very tall
+// stack to be drawn at all.
+export function getStackOffset(piece, board, pieceSpacing) {
+  const pieces = piece.square.pieces;
+  const z = piece.z();
+  const isOverLimit = pieces.length > board.size;
+  const isImmovable = isOverLimit && z < pieces.length - board.size;
+
+  let y = -pieceSpacing * z;
+  if (isOverLimit && !isImmovable) {
+    y += pieceSpacing * (pieces.length - board.size);
+  }
+  if (piece.isStanding && pieces.length > 1) {
+    y += pieceSpacing;
+  }
+  if (isImmovable) {
+    const overflow = Math.max(0, pieces.length - 10 - board.size);
+    if (z < overflow) {
+      return null;
+    }
+    y += pieceSpacing * overflow;
+  }
+
+  return { y: Math.round(y), isImmovable };
+}
+
+// How far the outline around the last ply's pieces reaches past their borders
+export function getPieceOutlineWidth(squareSize) {
+  return Math.max(1, Math.round(squareSize * 0.035));
 }
 
 export function withAlpha(color, alpha) {

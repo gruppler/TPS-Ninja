@@ -432,6 +432,36 @@ export const Board = class {
     return ply;
   }
 
+  // The pieces a ply moves: the one it places, or the ones it carries. Once the
+  // ply is done they're found where they landed; before that, where they wait
+  // to be picked up, and a piece yet to be placed isn't on the board at all.
+  getPlyPieces(ply, isDone = true) {
+    const pieces = [];
+    const take = (coord, count) => {
+      const [x, y] = atoi(coord);
+      const square = this.squares[y] && this.squares[y][x];
+      if (square && count > 0) {
+        pieces.push(...square.pieces.slice(-count));
+      }
+    };
+
+    if (!ply.movement) {
+      // A placement fills an empty square, so everything on it was placed
+      // (two pieces, in a double black stack opening)
+      if (isDone) {
+        take(ply.squares[0], Infinity);
+      }
+    } else if (isDone) {
+      ply.stackDistribution.forEach((count, i) =>
+        take(ply.squares[i + 1], count),
+      );
+    } else {
+      take(ply.squares[0], Number(ply.pieceCount));
+    }
+
+    return pieces;
+  }
+
   playPiece(color, type, square) {
     const isStanding = /S|wall/.test(type);
     if (!(type in this.pieceCounts[1])) {
