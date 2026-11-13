@@ -1,5 +1,5 @@
 import {
-  getPieceOutlineWidth,
+  getPieceRing,
   getStackOffset,
   roundRect,
   withAlpha,
@@ -226,22 +226,29 @@ export function createSquareDrawer(
     ctx.restore();
   };
 
-  // Trace a piece's shape as the current path, around its square's center
-  const tracePiece = (piece, y, isImmovable) => {
+  // Trace a piece's shape as the current path, around its square's center,
+  // shrunk by `inset` on every side, with corners of `radius`
+  const tracePiece = (
+    piece,
+    y,
+    isImmovable,
+    inset = 0,
+    radius = pieceRadius,
+  ) => {
     if (piece.isCapstone) {
       ctx.beginPath();
-      ctx.arc(0, y, pieceSize / 2, 0, 2 * Math.PI);
+      ctx.arc(0, y, pieceSize / 2 - inset, 0, 2 * Math.PI);
     } else if (piece.isStanding) {
       ctx.save();
       ctx.translate(0, y);
       ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
-      roundRect(
-        ctx,
+      insetRoundRect(
         Math.round(-wallSize / 2),
         Math.round(-pieceSize / 2),
         wallSize,
         pieceSize,
-        pieceRadius,
+        radius,
+        inset,
       );
       ctx.restore();
     } else if (isImmovable) {
@@ -254,36 +261,33 @@ export function createSquareDrawer(
         pieceRadius / 2,
       );
     } else {
-      roundRect(
-        ctx,
+      insetRoundRect(
         Math.round(-pieceSize / 2),
         Math.round(y - pieceSize / 2),
         pieceSize,
         pieceSize,
-        pieceRadius,
+        radius,
+        inset,
       );
     }
   };
+  const insetRoundRect = (x, y, width, height, radius, inset) =>
+    roundRect(
+      ctx,
+      x + inset,
+      y + inset,
+      width - inset * 2,
+      height - inset * 2,
+      Math.min(radius, (width - inset * 2) / 2, (height - inset * 2) / 2),
+    );
 
-  // Outline the pieces the last ply moved. All of a square's outlines are
-  // stroked before the first of those pieces is drawn, so that the pieces then
-  // cover everything but the rim around the group, and the group gets a single
-  // outline rather than one per piece.
-  const outlineWidth = getPieceOutlineWidth(squareSize);
-  const drawPieceOutlines = (pieces) => {
-    ctx.save();
-    ctx.translate(squareSize / 2, squareSize / 2);
-    ctx.strokeStyle = theme.colors.primary;
-    ctx.lineWidth = strokeWidth + outlineWidth * 2;
-    pieces.forEach((piece) => {
-      const offset = getStackOffset(piece, board, pieceSpacing);
-      if (offset && !offset.isImmovable) {
-        tracePiece(piece, offset.y, false);
-        ctx.stroke();
-      }
-    });
-    ctx.restore();
-  };
+  // The ring on each of the last ply's pieces
+  const ring = getPieceRing(
+    squareSize,
+    theme.vars["piece-border-width"] > 0 ? strokeWidth : 0,
+    pieceRadius,
+    wallSize,
+  );
 
   // Piece
   const drawPiece = (piece) => {
@@ -349,7 +353,12 @@ export function createSquareDrawer(
           piece.isCapstone || piece.isStanding ? "special" : "flat"
         }`
       ];
-    tracePiece(piece, y, isImmovable);
+    // A ringed piece takes the ring's outer corners
+    const isRinged = piece.square && !isImmovable && hlPieces.includes(piece);
+    const radius = isRinged
+      ? ring[piece.isStanding ? "wall" : "piece"].pathRadius
+      : pieceRadius;
+    tracePiece(piece, y, isImmovable, 0, radius);
 
     // Fill
     ctx.save();
@@ -368,21 +377,26 @@ export function createSquareDrawer(
 
     // For walls, re-draw the shape for stroke since we restored context
     if (piece.isStanding && theme.vars["piece-border-width"] > 0) {
-      ctx.save();
-      ctx.translate(0, y);
-      ctx.rotate(((piece.color === 1 ? -45 : 45) * Math.PI) / 180);
-      roundRect(
-        ctx,
-        Math.round(-wallSize / 2),
-        Math.round(-pieceSize / 2),
-        wallSize,
-        pieceSize,
-        pieceRadius,
-      );
+      tracePiece(piece, y, false, 0, radius);
       ctx.strokeStyle = theme.colors[`player${piece.color}border`];
       ctx.lineWidth = strokeWidth;
       ctx.stroke();
-      ctx.restore();
+    }
+
+    // Ring, over the piece at its edge, with the border inside it
+    if (isRinged) {
+      const colors = {
+        primary: theme.colors.primary,
+        border: theme.colors[`player${piece.color}border`],
+        fill: ctx.fillStyle,
+      };
+      ring[piece.isStanding ? "wall" : "piece"].layers.forEach(
+        ({ color, inset, radius }) => {
+          tracePiece(piece, y, false, inset, radius);
+          ctx.fillStyle = colors[color];
+          ctx.fill();
+        },
+      );
     }
 
     // Stack Count (only on top piece)
@@ -532,15 +546,7 @@ export function createSquareDrawer(
         drawSquareHighlight();
       }
 
-      const outlined = square.pieces.filter((piece) =>
-        hlPieces.includes(piece),
-      );
-      square.pieces.forEach((piece) => {
-        if (piece === outlined[0]) {
-          drawPieceOutlines(outlined);
-        }
-        drawPiece(piece);
-      });
+      square.pieces.forEach(drawPiece);
     }
 
     ctx.restore();

@@ -32,7 +32,8 @@
     "PTNtoTPS": "bin/PTNtoTPS.js"
   },
   "scripts": {
-    "lint": "eslint --ext .js src"
+    "lint": "eslint --ext .js src",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "canvas": "^3.2.3",
