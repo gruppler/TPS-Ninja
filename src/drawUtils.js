@@ -21,7 +21,7 @@ export function computeCanvasDimensions(pieceSize, board, options, theme) {
   const roadSize = Math.round(squareSize * 0.3333);
 
   const strokeWidth = Math.round(
-    theme.vars["piece-border-width"] * squareSize * 0.013
+    theme.vars["piece-border-width"] * squareSize * 0.013,
   );
 
   const fontSize = (squareSize * textSizes[options.textSize] * board.size) / 5;
@@ -63,10 +63,18 @@ export function computeCanvasDimensions(pieceSize, board, options, theme) {
   return { width, height };
 }
 
-export function coordToCanvas(coord, { size, transform, squareSize, padding, axisSize, headerHeight }) {
+export function coordToCanvas(
+  coord,
+  { size, transform, squareSize, padding, axisSize, headerHeight },
+) {
   const bx = "abcdefgh".indexOf(coord[0]);
   const by = parseInt(coord.slice(1), 10) - 1;
-  const { x: col, y: row } = transformBoardXY(bx, by, size, transform || [0, 0]);
+  const { x: col, y: row } = transformBoardXY(
+    bx,
+    by,
+    size,
+    transform || [0, 0],
+  );
 
   return {
     x: padding + axisSize + col * squareSize + squareSize / 2,
@@ -102,9 +110,57 @@ export function getStackOffset(piece, board, pieceSpacing) {
   return { y: Math.round(y), isImmovable };
 }
 
-// How far the outline around the last ply's pieces reaches past their borders
+// How thick the ring on each of the last ply's pieces is, in every theme
 export function getPieceOutlineWidth(squareSize) {
-  return Math.max(1, Math.round(squareSize * 0.035));
+  return Math.max(2, Math.round(squareSize * 0.025));
+}
+
+// The ring on a piece of the last ply, drawn over the piece at its outer
+// edge, as layers filled in the piece's shape, each inset from the shape's
+// path (where its border is stroked) and with its own corner radius. Inside
+// the ring, the border goes on to meet the fill: what's left of it, and at
+// least one unit of it, the unit the theme's piece-border-width counts in.
+// The fill is redrawn last with the corners an unringed piece has, and the
+// layers outside it have corners concentric with it. A standing stone keeps
+// a third of its width unringed.
+export function getPieceRing(squareSize, strokeWidth, pieceRadius, wallSize) {
+  const unit = Math.max(1, Math.round(squareSize * 0.013));
+  const edge = strokeWidth / 2;
+  const layers = (width) => {
+    const border = strokeWidth
+      ? Math.max(Math.min(unit, strokeWidth), strokeWidth - width)
+      : 0;
+    // Concentric corners, from the fill's, which an unringed piece has too
+    const fillRadius = Math.max(0, pieceRadius - edge);
+    const result = [
+      {
+        color: "primary",
+        inset: -edge,
+        radius: fillRadius + border + width,
+      },
+    ];
+    if (border) {
+      result.push({
+        color: "border",
+        inset: width - edge,
+        radius: fillRadius + border,
+      });
+    }
+    result.push({
+      color: "fill",
+      inset: width + border - edge,
+      radius: fillRadius,
+    });
+    // The piece under the ring takes the ring's outer corners, so that none
+    // of it shows past them: this is the corner of its path
+    const pathRadius = Math.max(0, fillRadius + border + width - edge);
+    return { width, border, pathRadius, layers: result };
+  };
+  const width = getPieceOutlineWidth(squareSize);
+  return {
+    piece: layers(width),
+    wall: layers(Math.min(width, (wallSize + strokeWidth) / 3)),
+  };
 }
 
 export function withAlpha(color, alpha) {

@@ -1,8 +1,4 @@
-import {
-  getPieceOutlineWidth,
-  getStackOffset,
-  withAlpha,
-} from "./drawUtils.js";
+import { getPieceRing, getStackOffset, withAlpha } from "./drawUtils.js";
 import { isDark, compositeColors } from "./colors.js";
 import { drawEvaluationBarSvg } from "./drawEvaluationBar.js";
 
@@ -128,6 +124,14 @@ export function drawBoardSvg(
     fontSize,
   },
 ) {
+  // The ring on each of the last ply's pieces
+  const pieceRing = getPieceRing(
+    squareSize,
+    theme.vars["piece-border-width"] > 0 ? strokeWidth : 0,
+    pieceRadius,
+    wallSize,
+  );
+
   // Shadow filter for pieces
   const pieceShadowId = "pieceShadow";
   svg.shadowFilter(
@@ -415,45 +419,8 @@ export function drawBoardSvg(
             );
           }
 
-          // Outline the pieces the last ply moved. All of a square's outlines
-          // are drawn before the first of those pieces, so that the pieces
-          // then cover everything but the rim around the group, and the group
-          // gets a single outline rather than one per piece.
-          const outlined = square.pieces.filter((piece) =>
-            hlPieces.includes(piece),
-          );
-          const drawPieceOutlines = () =>
-            outlined.forEach((piece) => {
-              const offset = getStackOffset(piece, board, pieceSpacing);
-              if (offset && !offset.isImmovable) {
-                drawPieceShapeSvg(
-                  svg,
-                  piece,
-                  sx + squareSize / 2,
-                  sy + squareSize / 2 + offset.y,
-                  false,
-                  {
-                    pieceSize,
-                    pieceRadius,
-                    pieceSpacing,
-                    immovableSize,
-                    wallSize,
-                  },
-                  {
-                    fill: "none",
-                    stroke: theme.colors.primary,
-                    strokeWidth:
-                      strokeWidth + getPieceOutlineWidth(squareSize) * 2,
-                  },
-                );
-              }
-            });
-
           // Pieces
           square.pieces.forEach((piece) => {
-            if (piece === outlined[0]) {
-              drawPieceOutlines();
-            }
             drawPieceSvg(
               svg,
               piece,
@@ -474,6 +441,7 @@ export function drawBoardSvg(
                 stackCountFontSize,
                 axisLabelInsetPx: axisLabelFontSize * axisLabelInsetEm(),
                 isAxisLabelTextLight,
+                ring: hlPieces.includes(piece) ? pieceRing : null,
               },
             );
           });
@@ -492,11 +460,22 @@ function drawPieceShapeSvg(
   { pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize },
   style,
   filter,
+  inset = 0,
+  radius = pieceRadius,
 ) {
+  // A rounded rectangle shrunk by `inset` on every side
+  const insetRoundRectPath = (x, y, width, height) =>
+    svg.roundRectPath(
+      x + inset,
+      y + inset,
+      width - inset * 2,
+      height - inset * 2,
+      Math.min(radius, (width - inset * 2) / 2, (height - inset * 2) / 2),
+    );
   if (piece.isCapstone) {
     // Use a group with the shadow filter, then draw the circle inside
     svg.openGroup({ filter });
-    svg.circle(cx, cy, pieceSize / 2, style);
+    svg.circle(cx, cy, pieceSize / 2 - inset, style);
     svg.closeGroup();
   } else if (piece.isStanding) {
     svg.openGroup({
@@ -504,12 +483,11 @@ function drawPieceShapeSvg(
       filter,
     });
     svg.path(
-      svg.roundRectPath(
+      insetRoundRectPath(
         Math.round(-wallSize / 2),
         Math.round(-pieceSize / 2),
         wallSize,
         pieceSize,
-        pieceRadius,
       ),
       style,
     );
@@ -525,12 +503,11 @@ function drawPieceShapeSvg(
             pieceSpacing,
             pieceRadius / 2,
           )
-        : svg.roundRectPath(
+        : insetRoundRectPath(
             cx + Math.round(-pieceSize / 2),
             cy + Math.round(-pieceSize / 2),
             pieceSize,
             pieceSize,
-            pieceRadius,
           ),
       style,
     );
@@ -558,6 +535,7 @@ function drawPieceSvg(
     stackCountFontSize,
     axisLabelInsetPx = 0,
     isAxisLabelTextLight,
+    ring = null,
   },
 ) {
   const pieces = piece.square ? piece.square.pieces : null;
@@ -629,7 +607,40 @@ function drawPieceSvg(
       strokeWidth: hasBorder ? strokeWidth : undefined,
     },
     pieceShadowId,
+    0,
+    // A ringed piece takes the ring's outer corners
+    ring && piece.square && !isImmovable
+      ? ring[piece.isStanding ? "wall" : "piece"].pathRadius
+      : pieceRadius,
   );
+
+  // Ring, over the piece at its edge, with the border inside it
+  if (ring && piece.square && !isImmovable) {
+    const colors = {
+      primary: theme.colors.primary,
+      border: borderColor,
+      fill: theme.colors[
+        `player${piece.color}${
+          piece.isCapstone || piece.isStanding ? "special" : "flat"
+        }`
+      ],
+    };
+    ring[piece.isStanding ? "wall" : "piece"].layers.forEach(
+      ({ color, inset, radius }) =>
+        drawPieceShapeSvg(
+          svg,
+          piece,
+          cx,
+          cy + y,
+          false,
+          { pieceSize, pieceRadius, pieceSpacing, immovableSize, wallSize },
+          { fill: colors[color] },
+          undefined,
+          inset,
+          radius,
+        ),
+    );
+  }
 
   // Stack Count (only on top piece)
   const isTopPiece = pieces && z === pieces.length - 1;
